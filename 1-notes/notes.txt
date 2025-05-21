@@ -1,0 +1,26 @@
+
+
+// =================================================================
+// *** LMS *** //
+Superuser
+Admin
+Teacher
+Staff
+Pstudent
+
+
+
+// =================================================================
+// *** Packages *** //
+
+python.exe -m pip install --upgrade pip
+pip install django
+pip install drf-yasg
+pip install django-cors-headers
+pip install djangorestframework-simplejwt
+pip install Pillow
+pip install shortuuid
+
+
+
+
