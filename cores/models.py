@@ -14,6 +14,10 @@ from accounts.models import *
 
 
 # Create your models here.
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Category Section *** #
 class CategorySection(models.Model):
@@ -57,6 +61,10 @@ class CategorySection(models.Model):
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
         super(CategorySection, self).save(*args, **kwargs)
     
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Section Course *** #
 class SectionCourse(models.Model):
@@ -68,7 +76,7 @@ class SectionCourse(models.Model):
     category = models.ForeignKey(
         CategorySection, 
         on_delete=models.CASCADE, 
-        related_name='category_section',
+        related_name='category_section_course',
     )
 
     title = models.CharField(max_length=1_000)
@@ -102,6 +110,9 @@ class SectionCourse(models.Model):
     def total_course(self):
         return Course.objects.filter(section=self).count()
 
+    def total_question_bank(self):
+        return QuestionBank.objects.filter(section=self).count()
+
     def __str__(self):
         return f"{self.id}): ({self.title})"
     
@@ -110,6 +121,10 @@ class SectionCourse(models.Model):
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
         super(SectionCourse, self).save(*args, **kwargs)
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Course *** #
 class Course(models.Model):
@@ -166,7 +181,7 @@ class Course(models.Model):
         return teach_list
 
     def total_section(self):
-        return Section.objects.filter(course=self).count()
+        return SectionInCourse.objects.filter(course=self).count()
     
     @property
     def sections_count(self):
@@ -219,15 +234,16 @@ class Course(models.Model):
 #         return f"{self.id}): ({self.name})"
 
 
-class Section(models.Model):
+class SectionInCourse(models.Model):
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
-        related_name='sections',
+        related_name='course_sections',
     )
 
     title = models.CharField(max_length=1_000)
-    is_visible = models.BooleanField(default=True)
+
+    is_hidden = models.BooleanField(default=True)
     is_free = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -238,17 +254,17 @@ class Section(models.Model):
         verbose_name_plural = "5. Section"
     
     def total_item(self):
-        return Item.objects.filter(section=self).count()
+        return ItemInCourse.objects.filter(section=self).count()
 
     def __str__(self):
         return f"{self.id}): ({self.title})"
 
 
-class Item(models.Model):
+class ItemInCourse(models.Model):
     section = models.ForeignKey(
-        Section,
+        SectionInCourse,
         on_delete=models.CASCADE,
-        related_name='items',
+        related_name='section_item',
     )
 
     ITEM_TYPES = (
@@ -266,7 +282,7 @@ class Item(models.Model):
     video_file = models.FileField(upload_to="courses/videos", null=True, blank=True)
     video_url = models.URLField(null=True, blank=True)
 
-    is_visible = models.BooleanField(default=True)
+    is_hidden = models.BooleanField(default=True)
     is_free = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -277,11 +293,11 @@ class Item(models.Model):
         return f"{self.id}): ({self.title})"
 
 
-class File(models.Model):
+class FileInCourse(models.Model):
     item = models.ForeignKey(
-        Item,
+        ItemInCourse,
         on_delete=models.CASCADE,
-        related_name='files',
+        related_name='item_file',
     )
 
     title = models.CharField(max_length=255)
@@ -300,11 +316,11 @@ class File(models.Model):
         return f"{self.id}): ({self.name})"
 
 
-class Question(models.Model):
+class QuestionInCourse(models.Model):
     item = models.ForeignKey(
-        Item,
+        ItemInCourse,
         on_delete=models.CASCADE,
-        related_name='questions',
+        related_name='item_question',
     )
 
     QUESTION_TYPES = (
@@ -334,21 +350,26 @@ class Question(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Student Course Enrollment *** #
 class StudentCourseEnrollment(models.Model):
-    course = models.ForeignKey(
-        Course,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name='enrolled_courses',
-    )
     student=models.ForeignKey(
         User,
         null=True,
         on_delete=models.CASCADE,
         related_name='enrolled_student',
     )
+    course = models.ForeignKey(
+        Course,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='enrolled_courses',
+    )
+
     enrolled_time=models.DateTimeField(auto_now_add=True)
     
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -364,24 +385,24 @@ class StudentCourseEnrollment(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Course Rating *** #
 class CourseRating(models.Model):
-    course = models.ForeignKey(
-        Course,
-        on_delete=models.CASCADE,
-        null=True,
-    )
     student = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         null=True,
     )
-    rating = models.PositiveBigIntegerField(default=0)
-    reviews = models.TextField(max_length=10_000, null=True, blank=True)
-    review_time = models.DateTimeField(auto_now_add=True)
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        null=True,
+    )
 
-    is_hidden = models.BooleanField(default=False)
     STATUS = (
         ("مرفوض", "مرفوض"), 
         ("قيد المعالجة", "قيد المعالجة"),
@@ -392,6 +413,13 @@ class CourseRating(models.Model):
         choices=STATUS, 
         default="مرفوض",
     )
+
+    rating = models.PositiveBigIntegerField(default=0)
+    reviews = models.TextField(max_length=10_000, null=True, blank=True)
+    review_time = models.DateTimeField(auto_now_add=True)
+
+    is_hidden = models.BooleanField(default=False)
+    
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -407,6 +435,10 @@ class CourseRating(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Student Favorite Course *** #
 class StudentFavoriteCourse(models.Model):
@@ -418,7 +450,8 @@ class StudentFavoriteCourse(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    status = models.BooleanField(default=False)
+
+    is_hidden = models.BooleanField(default=False)
 
     
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -434,6 +467,10 @@ class StudentFavoriteCourse(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Teacher Student Chat *** #
 class TeacherStudentChat(models.Model):
@@ -445,6 +482,7 @@ class TeacherStudentChat(models.Model):
         User,
         on_delete=models.CASCADE,
     )
+
     msg_to=models.TextField()
     msg_from=models.CharField(max_length=10_000)
     msg_time=models.DateTimeField(auto_now_add=True)
@@ -462,6 +500,129 @@ class TeacherStudentChat(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
+# =================================================================
+# *** Questions Banks *** #
+class QuestionBank(models.Model):
+    """Question bank model containing groups of questions"""
+    # section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name='question_banks')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='courses',
+    )
+    section = models.ForeignKey(
+        SectionCourse, 
+        on_delete=models.CASCADE, 
+        related_name='section_course_question_bank',
+    )
+    
+    title = models.CharField(max_length=1_000)
+    description = models.TextField(max_length=10_000, null=True, blank=True)
+    
+    image = models.ImageField(upload_to='questionsbanks/banks/', null=True, blank=True)
+    image_url = models.URLField(null=True, blank=True)
+    
+    is_hidden = models.BooleanField(default=False)
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural="1) Questions Banks"
+
+    @property
+    def question_count(self):
+        return self.questions.count()
+    
+    @property
+    def display_image(self):
+        if self.image:
+            return self.image.url
+        return self.image_url
+    
+    
+    def total_question_in_bank(self):
+        return QuestionInBank.objects.filter(question_bank=self).count()
+
+    
+    def __str__(self):
+        return f"{self.id}): ({self.title})"
+    
+
+class QuestionInBank(models.Model):
+    """Question model with text or image"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='question_in_bank',
+    )
+    question_bank = models.ForeignKey(
+        QuestionBank, 
+        on_delete=models.CASCADE, 
+        related_name='questions_question_in_bank'
+    )
+
+    text = models.TextField(max_length=10_000)
+    
+    image = models.ImageField(upload_to='questionsbanks/questions/', null=True, blank=True)
+    image_url = models.URLField(null=True, blank=True)
+    
+    is_hidden = models.BooleanField(default=False)
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural="2) Question Bank"
+
+    @property
+    def display_image(self):
+        if self.image:
+            return self.image.url
+        return self.image_url
+    
+    def __str__(self):
+        return f"{self.id}): ({self.title[:50]})"
+    
+
+
+class ChoiceQuestionInBank(models.Model):
+    """Answer choices for questions"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='choice_question_in_bank',
+    )
+    question = models.ForeignKey(
+        QuestionInBank, 
+        on_delete=models.CASCADE, 
+        related_name='questions_choices_question_bank'
+    )
+
+    text = models.CharField(max_length=1_000)
+    is_correct = models.BooleanField(default=False)
+        
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural="3) Choice Question Bank"
+
+    def __str__(self):
+        return f"{self.id}): ({self.title[:30]})"
+
+
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** ContactUs *** #
 class ContactUsUser(models.Model):
@@ -523,6 +684,10 @@ class ContactUsUser(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # *** Review *** #
 class ReviewUser(models.Model):
@@ -530,21 +695,7 @@ class ReviewUser(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    # course=models.ForeignKey(
-    #     Course,
-    #     on_delete=models.CASCADE,
-    #     null=True,
-    # )
 
-    first_name = models.CharField(max_length=1_000)
-    message = models.TextField(
-        max_length=10_000, 
-        null=True, 
-        blank=True,
-    )
-    rating=models.PositiveBigIntegerField(default=0)
-    # rating = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')])
-    is_hidden = models.BooleanField(default=False)
     STATUS = (
         ("مرفوض", "مرفوض"), 
         ("قيد المعالجة", "قيد المعالجة"),
@@ -555,6 +706,17 @@ class ReviewUser(models.Model):
         choices=STATUS, 
         default="مرفوض",
     )
+
+    first_name = models.CharField(max_length=1_000)
+    message = models.TextField(
+        max_length=10_000, 
+        null=True, 
+        blank=True,
+    )
+    rating=models.PositiveBigIntegerField(default=0)
+    # rating = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')])
+
+    is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -575,6 +737,10 @@ class ReviewUser(models.Model):
 
 
 
+
+
+
+# ******************************************************************************
 # =================================================================
 # ***  *** #
 # class CategoryPost(models.Model):

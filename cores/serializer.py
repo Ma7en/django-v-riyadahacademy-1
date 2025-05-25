@@ -10,6 +10,8 @@ from rest_framework import serializers
 from cores import models
 
 
+
+
 # *****************************************************************
 # =================================================================
 # *** Category Section *** #
@@ -28,6 +30,9 @@ class CategorySectionSerializer(serializers.ModelSerializer):
             else:
                 print(f"Method is - {request.method}")
                 self.Meta.depth = 2
+
+
+
 
 
 # *****************************************************************
@@ -51,40 +56,42 @@ class SectionCourseSerializer(serializers.ModelSerializer):
 
 
 
+
+
 # *****************************************************************
 # =================================================================
 # *** Course *** #
-
-class QuestionSerializer(serializers.ModelSerializer):
+class QuestionInCourseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.Question
+        model = models.QuestionInCourse
         fields = "__all__"
 
 
-class FileSerializer(serializers.ModelSerializer):
+class FileInCourseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.File
+        model = models.FileInCourse
         fields = "__all__"
 
 
-class ItemSerializer(serializers.ModelSerializer):
-    files = FileSerializer(many=True, read_only=True)
-    questions = QuestionSerializer(many=True, read_only=True)
+class ItemInCourseSerializer(serializers.ModelSerializer):
+    files = FileInCourseSerializer(many=True, read_only=True)
+    questions = QuestionInCourseSerializer(many=True, read_only=True)
 
     class Meta:
-        model = models.Item
+        model = models.ItemInCourse
         fields = "__all__"
 
-class SectionSerializer(serializers.ModelSerializer):
-    items = ItemSerializer(many=True, read_only=True)
+
+class SectionInCourseSerializer(serializers.ModelSerializer):
+    items = ItemInCourseSerializer(many=True, read_only=True)
 
     class Meta:
-        model = models.Section
+        model = models.SectionInCourse
         fields = "__all__"
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    sections = SectionSerializer(many=True, read_only=True)
+    sections = SectionInCourseSerializer(many=True, read_only=True)
     sections_count = serializers.IntegerField(read_only=True)
     # students_count = serializers.IntegerField(read_only=True)
     lessons_count = serializers.IntegerField(read_only=True)
@@ -103,6 +110,9 @@ class CourseSerializer(serializers.ModelSerializer):
             else:
                 print(f"Method is - {request.method}")
                 self.Meta.depth = 2
+
+
+
 
 
 
@@ -216,6 +226,91 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
 
 # *****************************************************************
 # =================================================================
+# *** Questions Banks *** #
+class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ChoiceQuestionInBank
+        # fields = ['id', 'text', 'is_correct']
+        fields = "__all__"
+
+class QuestionInBankSerializer(serializers.ModelSerializer):
+    choices = ChoiceQuestionInBankSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = models.QuestionInBank
+        # fields = ['id', 'text', 'image', 'image_url', 'display_image', 'choices']
+        fields = "__all__"
+
+class QuestionInBankDetailSerializer(serializers.ModelSerializer):
+    choices = ChoiceQuestionInBankSerializer(many=True)
+    
+    class Meta:
+        model = models.QuestionInBank
+        # fields = ['id', 'text', 'image', 'image_url', 'display_image', 'choices']
+        fields = "__all__"
+    
+    def create(self, validated_data):
+        choices_data = validated_data.pop('choices')
+        question = models.QuestionInBank.objects.create(**validated_data)
+        
+        for choice_data in choices_data:
+            models.ChoiceQuestionInBank.objects.create(question=question, **choice_data)
+        
+        return question
+    
+    def update(self, instance, validated_data):
+        choices_data = validated_data.pop('choices', None)
+        
+        # Update question fields
+        instance.text = validated_data.get('text', instance.text)
+        
+        instance.image = validated_data.get('image', instance.image)
+        instance.image_url = validated_data.get('image_url', instance.image_url)
+
+        instance.save()
+        
+        # Update choices if provided
+        if choices_data is not None:
+            # Delete existing choices
+            instance.choices.all().delete()
+            
+            # Create new choices
+            for choice_data in choices_data:
+                models.ChoiceQuestionInBank.objects.create(question=instance, **choice_data)
+        
+        return instance
+
+
+class QuestionBankListSerializer(serializers.ModelSerializer):
+    question_count = serializers.IntegerField(read_only=True)
+    section_name = serializers.CharField(source='section.name', read_only=True)
+    
+    class Meta:
+        model = models.QuestionBank
+        fields = "__all__"
+        # fields = ['id', 'title', 'description', 'image', 'image_url', 
+        #           'display_image', 'section', 'section_name', 'question_count']
+
+class QuestionBankDetailSerializer(serializers.ModelSerializer):
+    questions = QuestionInCourseSerializer(many=True, read_only=True)
+    section_name = serializers.CharField(source='section.name', read_only=True)
+    
+    class Meta:
+        model = models.QuestionBank 
+        fields = "__all__"
+        # fields = ['id', 'title', 'description', 'image', 'image_url', 
+        #           'display_image', 'section', 'section_name', 'questions']
+
+
+class QuestionBankResultSerializer(serializers.Serializer): # QuizResult
+    question_id = serializers.IntegerField()
+    selected_choice_id = serializers.IntegerField()
+
+
+
+
+# *****************************************************************
+# =================================================================
 # *** ContactUs *** #
 class ContactUsUserSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
@@ -296,6 +391,12 @@ class ReviewUserSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = models.Report
 #         fields = "__all__"
+
+
+
+
+
+
 
 
 # *****************************************************************
