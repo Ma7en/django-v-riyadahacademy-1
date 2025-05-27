@@ -116,7 +116,7 @@ class CourseListAPI(generics.ListCreateAPIView):
     pagination_class = StandardResultSetPagination
 
     def get_queryset(self):
-        qs=super().get_queryset()
+        qs = super().get_queryset()
         if 'result' in self.request.GET:
             limit = int(self.request.GET['result'])
             qs = models.Course.objects.all().order_by('-id')[:limit]
@@ -212,6 +212,34 @@ class QuestionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
 #     serializer_class = serializer.QuestionSerializer
 
 
+
+
+
+
+# *****************************************************************
+# =================================================================
+# *** Coupon Course *** #
+class CouponCourseList(generics.ListCreateAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializer.CouponCourseSerializer
+    pagination_class = StandardResultSetPagination
+
+
+class CouponCoursePK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializer.CouponCourseSerializer
+
+
+class CouponCourseSearch(generics.ListCreateAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializer.CouponCourseSerializer
+    pagination_class = StandardResultSetPagination
+
+    def get_queryset(self):
+        if 'searchcoupon' in self.kwargs:
+            search = self.kwargs['searchcoupon']
+            coupon = models.CouponCourse.objects.get(name=search)
+            return coupon
 
 
 # *****************************************************************
@@ -357,9 +385,9 @@ class StudentFavoriteCourseListAPI(generics.ListCreateAPIView):
 
 
 def remove_favorite_course(request,course_id,student_id):
-    student=models.User.objects.filter(id=student_id).first()
-    course=models.Course.objects.filter(id=course_id).first()
-    favoriteStatus=models.StudentFavoriteCourse.objects.filter(course=course,student=student).delete()
+    student = models.User.objects.filter(id=student_id).first()
+    course = models.Course.objects.filter(id=course_id).first()
+    favoriteStatus = models.StudentFavoriteCourse.objects.filter(course=course,student=student).delete()
 
     if favoriteStatus:
         return JsonResponse({'bool':True})
@@ -524,57 +552,171 @@ class QuestionInBankViewSet(viewsets.ModelViewSet):
         
         return queryset
 
-class QuestionBankResultView(APIView):
+
+# old code 
+# class QuestionBankResultView(APIView):
+#     def post(self, request, question_bank_id):
+#         """Calculate quiz results"""
+#         # Get the question bank
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+        
+#         # Validate the request data
+#         serializer = serializer.QuestionBankResultSerializer(data=request.data, many=True)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # Process the results
+#         answers = serializer.validated_data
+#         total_questions = len(answers)
+#         correct_answers = 0
+#         results = []
+        
+#         for answer in answers:
+#             question_id = answer['question_id']
+#             selected_choice_id = answer['selected_choice_id']
+            
+#             # Get the question and its correct choice
+#             question = get_object_or_404(models.QuestionInBank, pk=question_id)
+#             correct_choice = question.choices.filter(is_correct=True).first()
+            
+#             # Check if the answer is correct
+#             is_correct = correct_choice.id == selected_choice_id if correct_choice else False
+#             if is_correct:
+#                 correct_answers += 1
+            
+#             # Add to results
+#             results.append({
+#                 'question_id': question_id,
+#                 'question_text': question.text,
+#                 'selected_choice_id': selected_choice_id,
+#                 'correct_choice_id': correct_choice.id if correct_choice else None,
+#                 'is_correct': is_correct
+#             })
+        
+#         # Calculate percentage
+#         percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+#         return Response({
+#             'total_questions': total_questions,
+#             'correct_answers': correct_answers,
+#             'percentage': round(percentage, 2),
+#             'results': results
+#         })
+
+# 
+# class QuestionBankResultView(APIView):
+#     def post(self, request, question_bank_id):
+#         """Calculate quiz results"""
+#         # Get the question bank
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+        
+#         # Get all questions for this bank
+#         all_questions = models.QuestionInBank.objects.filter(question_bank_id=question_bank_id)
+        
+#         # Validate the request data
+#         serializer = serializer.QuestionBankResultSerializer(data=request.data, many=True)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # Process the results
+#         submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
+#         total_questions = all_questions.count()
+#         correct_answers = 0
+#         results = []
+        
+#         for question in all_questions:
+#             question_id = question.id
+#             selected_choice_id = submitted_answers.get(question_id)
+            
+#             # Get the correct choice
+#             correct_choice = question.choices.filter(is_correct=True).first()
+            
+#             # Check if the answer is correct (only if answered)
+#             is_answered = question_id in submitted_answers
+#             is_correct = False
+            
+#             if is_answered and correct_choice:
+#                 is_correct = correct_choice.id == selected_choice_id
+#                 if is_correct:
+#                     correct_answers += 1
+            
+#             # Add to results
+#             results.append({
+#                 'question_id': question_id,
+#                 'question_text': question.text,
+#                 'is_answered': is_answered,
+#                 'selected_choice_id': selected_choice_id,
+#                 'correct_choice_id': correct_choice.id if correct_choice else None,
+#                 'is_correct': is_correct,
+#                 'choices': [
+#                     {
+#                         'id': choice.id,
+#                         'text': choice.text,
+#                         'is_correct': choice.is_correct
+#                     }
+#                     for choice in question.choices.all()
+#                 ]
+#             })
+        
+#         # Calculate percentage
+#         percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+#         return Response({
+#             'total_questions': total_questions,
+#             'answered_questions': len(submitted_answers),
+#             'correct_answers': correct_answers,
+#             'percentage': round(percentage, 2),
+#             'results': results
+#         })
+
+
+# 
+class StudentQuestionBankResultSaveView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, question_bank_id):
-        """Calculate quiz results"""
-        # Get the question bank
         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
         
-        # Validate the request data
-        serializer = serializer.QuestionBankResultSerializer(data=request.data, many=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        result_data = {
+            'user': request.user.id,
+            'question_bank': question_bank.id,
+            'answered_questions': request.data.get('answered_questions'),
+            'correct_answers': request.data.get('correct_answers'),
+            'percentage': request.data.get('percentage'),
+            'total_questions': request.data.get('total_questions'),
+        }
         
-        # Process the results
-        answers = serializer.validated_data
-        total_questions = len(answers)
-        correct_answers = 0
-        results = []
+        result_serializer = serializer.StudentQuestionBankResultSerializer(data=result_data)
+        if not result_serializer.is_valid():
+            return Response(result_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        for answer in answers:
-            question_id = answer['question_id']
-            selected_choice_id = answer['selected_choice_id']
-            
-            # Get the question and its correct choice
-            question = get_object_or_404(models.QuestionInBank, pk=question_id)
-            correct_choice = question.choices.filter(is_correct=True).first()
-            
-            # Check if the answer is correct
-            is_correct = correct_choice.id == selected_choice_id if correct_choice else False
-            if is_correct:
-                correct_answers += 1
-            
-            # Add to results
-            results.append({
-                'question_id': question_id,
-                'question_text': question.text,
-                'selected_choice_id': selected_choice_id,
-                'correct_choice_id': correct_choice.id if correct_choice else None,
-                'is_correct': is_correct
-            })
+        quiz_result = result_serializer.save()
         
-        # Calculate percentage
-        percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        answers_data = request.data.get('results', [])
+        for answer_data in answers_data:
+            selected_choice = next(
+                (c for c in answer_data.get('choices', []) if c['id'] == answer_data.get('selected_choice_id')),
+                None
+            )
+            correct_choice = next(
+                (c for c in answer_data.get('choices', []) if c.get('is_correct', False)),
+                None
+            )
+            
+            answer_data['quiz_result'] = quiz_result.id
+            answer_data['selected_choice_text'] = selected_choice['text'] if selected_choice else None
+            answer_data['correct_choice_text'] = correct_choice['text'] if correct_choice else None
+            answer_data['all_choices'] = answer_data.get('choices', [])
+            
+            answer_serializer = serializer.StudentQuestionBankSerializer(data=answer_data)
+            if answer_serializer.is_valid():
+                answer_serializer.save()
         
         return Response({
-            'total_questions': total_questions,
-            'correct_answers': correct_answers,
-            'percentage': round(percentage, 2),
-            'results': results
-        })
-
-
-
+            'status': 'success',
+            'result_id': quiz_result.id
+        }, status=status.HTTP_201_CREATED)
+    
 
 
 # *****************************************************************

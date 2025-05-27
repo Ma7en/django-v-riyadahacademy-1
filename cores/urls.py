@@ -109,6 +109,25 @@ urlpatterns = [
     # path('courses/', include(router.urls)),
 
     # =================================================================
+    # *** Coupon Course *** #
+    path(
+        "coupon-course/list/",
+        views.CouponCourseList.as_view(),
+        name="coupon-course-list",
+    ),
+    path(
+        "coupon-course/<int:pk>/",
+        views.CouponCoursePK.as_view(),
+        name="coupon-course-pk",
+    ),
+    path(
+        "coupon-course/<str:searchcoupon>/",
+        views.CouponCourseSearch.as_view(),
+        name="coupon-course-search",
+    ),
+    
+
+    # =================================================================
     # *** Student Enroll Course *** #
     path(
         'student-enroll-course/list/', 
@@ -272,6 +291,12 @@ urlpatterns = [
         'question-bank/results/<int:question_bank_id>/', 
         views.QuestionBankResultView.as_view(), 
         name='quiz-results',
+    ),
+
+    path(
+        'quiz-results/save/<int:question_bank_id>/',
+        views.StudentQuestionBankResultSaveView.as_view(),
+        name='save-QuestionBank-results'
     ),
 
     # ================================================================

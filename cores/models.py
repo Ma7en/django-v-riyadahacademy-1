@@ -6,6 +6,8 @@ import shortuuid
 from django.db import models
 from django.db import models
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 
 # 
@@ -144,6 +146,7 @@ class Course(models.Model):
     image = models.ImageField(upload_to="courses/images", null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
     duration = models.CharField(max_length=100, null=True, blank=True)
+
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
@@ -183,6 +186,13 @@ class Course(models.Model):
     def total_section(self):
         return SectionInCourse.objects.filter(course=self).count()
     
+    def total_enrolled_students(self):
+        return StudentCourseEnrollment.objects.filter(course=self).count()
+    
+    def course_rating(self):
+        course_rating = CourseRating.objects.filter(course=self).aggregate(avg_rating=models.Avg('rating'))
+        return course_rating['avg_rating']
+    
     @property
     def sections_count(self):
         return self.sections.count()
@@ -201,12 +211,14 @@ class Course(models.Model):
     # def students_count(self):
     #     return self.student_progress.count()
     
-    def total_enrolled_students(self):
-        return StudentCourseEnrollment.objects.filter(course=self).count()
+    @property
+    def price_after_discount(self):
+        """Calculate original price before discount"""
+        if self.discount > 0:
+            original = self.price - self.discount
+            return original
+        return self.price
     
-    def course_rating(self):
-        course_rating = CourseRating.objects.filter(course=self).aggregate(avg_rating=models.Avg('rating'))
-        return course_rating['avg_rating']
     
     def __str__(self):
         return f"{self.id}): ({self.title})"
@@ -347,6 +359,30 @@ class QuestionInCourse(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.text[:50]})"
 
+
+
+
+
+
+
+# ******************************************************************************
+# =================================================================
+# *** Coupon Course *** #
+class CouponCourse(models.Model):
+    """Coupon model for course discounts"""
+    name = models.CharField(max_length=1_000, unique=True)  
+    discount = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)]
+    )
+
+    is_hidden = models.BooleanField(default=False)
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.id}): ({self.name})"
 
 
 
@@ -512,7 +548,7 @@ class QuestionBank(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='courses',
+        related_name='question_bank',
     )
     section = models.ForeignKey(
         SectionCourse, 
@@ -617,6 +653,68 @@ class ChoiceQuestionInBank(models.Model):
 
     def __str__(self):
         return f"{self.id}): ({self.title[:30]})"
+
+
+
+class StudentQuestionBankResult(models.Model):
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='question_bank',
+    )
+    question_bank = models.ForeignKey(
+        QuestionBank, 
+        on_delete=models.CASCADE,
+        related_name='question_bank_bank_result',
+    )
+
+    answered_questions = models.PositiveIntegerField()
+    correct_answers = models.PositiveIntegerField()
+    percentage = models.FloatField()
+    total_questions = models.PositiveIntegerField()
+
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.id}): ({self.user}) - ({self.question_bank})"
+    
+
+class StudentQuestionBankAnswer(models.Model):
+    question_bank_result = models.ForeignKey(
+        StudentQuestionBankResult, 
+        on_delete=models.CASCADE,
+        related_name='question_bank_answers', 
+    )
+
+    question_id = models.PositiveIntegerField()
+    question_text = models.TextField()
+    is_answered = models.BooleanField()
+    selected_choice_id = models.PositiveIntegerField(null=True, blank=True)
+    selected_choice_text = models.TextField(null=True, blank=True)
+    correct_choice_id = models.PositiveIntegerField(null=True, blank=True)
+    correct_choice_text = models.TextField(null=True, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+    all_choices = models.JSONField(default=list)
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.id}): ({self.question_text})" 
+
+
+
 
 
 

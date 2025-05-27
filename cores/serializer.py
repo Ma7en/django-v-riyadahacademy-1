@@ -119,6 +119,18 @@ class CourseSerializer(serializers.ModelSerializer):
 # *****************************************************************
 # =================================================================
 # ***  *** #
+
+class CouponCourseSerializer(serializers.ModelSerializer):
+    """Serializer for Coupon model (admin view)"""
+    class Meta:
+        model = models.CouponCourse
+        fields = '__all__'
+
+
+
+# *****************************************************************
+# =================================================================
+# ***  *** #
 # class TeacherDashboardSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model=models.Teacher
@@ -305,6 +317,24 @@ class QuestionBankDetailSerializer(serializers.ModelSerializer):
 class QuestionBankResultSerializer(serializers.Serializer): # QuizResult
     question_id = serializers.IntegerField()
     selected_choice_id = serializers.IntegerField()
+
+
+
+class StudentQuestionBankResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.StudentQuestionBankResult
+        fields = '__all__'
+        read_only_fields = ('user', 'created_at')
+
+class StudentQuestionBankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.StudentQuestionBankAnswer
+        fields = '__all__'
+        extra_kwargs = {
+            'all_choices': {'write_only': True}
+        }
+
+
 
 
 
