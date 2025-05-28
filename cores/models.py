@@ -20,7 +20,7 @@ from accounts.models import *
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Category Section *** #
 class CategorySection(models.Model):
     user = models.ForeignKey(
@@ -67,7 +67,7 @@ class CategorySection(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Section Course *** #
 class SectionCourse(models.Model):
     user = models.ForeignKey(
@@ -127,7 +127,7 @@ class SectionCourse(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Course *** #
 class Course(models.Model):
     user = models.ForeignKey(
@@ -229,21 +229,7 @@ class Course(models.Model):
         super(Course, self).save(*args, **kwargs)
 
 
-# class Instructor(models.Model):
-#     course = models.ForeignKey(
-#         Course,
-#         on_delete=models.CASCADE,
-#         related_name='instructors',
-#     )
-
-#     name = models.CharField(max_length=1_000)
-#     title = models.CharField(max_length=1_000, null=True, blank=True)
-#     bio = models.TextField(max_length=10_000, null=True, blank=True)
-#     image = models.ImageField(upload_to="instructors", null=True, blank=True)
-#     image_url = models.URLField(null=True, blank=True)
-
-#     def __str__(self):
-#         return f"{self.id}): ({self.name})"
+ 
 
 
 class SectionInCourse(models.Model):
@@ -366,7 +352,7 @@ class QuestionInCourse(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Coupon Course *** #
 class CouponCourse(models.Model):
     """Coupon model for course discounts"""
@@ -390,7 +376,7 @@ class CouponCourse(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Student Course Enrollment *** #
 class StudentCourseEnrollment(models.Model):
     student=models.ForeignKey(
@@ -425,7 +411,7 @@ class StudentCourseEnrollment(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Course Rating *** #
 class CourseRating(models.Model):
     student = models.ForeignKey(
@@ -440,14 +426,14 @@ class CourseRating(models.Model):
     )
 
     STATUS = (
-        ("مرفوض", "مرفوض"), 
-        ("قيد المعالجة", "قيد المعالجة"),
-        ("منشور", "منشور"),
+        ("unacceptable", "مرفوض"), 
+        ("under-processing", "قيد المعالجة"),
+        ("publication", "منشور"),
     )
     status = models.CharField(
         max_length=1_000, 
         choices=STATUS, 
-        default="مرفوض",
+        default="unacceptable",
     )
 
     rating = models.PositiveBigIntegerField(default=0)
@@ -475,7 +461,7 @@ class CourseRating(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Student Favorite Course *** #
 class StudentFavoriteCourse(models.Model):
     course = models.ForeignKey(
@@ -507,7 +493,7 @@ class StudentFavoriteCourse(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Teacher Student Chat *** #
 class TeacherStudentChat(models.Model):
     teacher = models.ForeignKey(
@@ -540,7 +526,7 @@ class TeacherStudentChat(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Questions Banks *** #
 class QuestionBank(models.Model):
     """Question bank model containing groups of questions"""
@@ -721,7 +707,7 @@ class StudentQuestionBankAnswer(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** ContactUs *** #
 class ContactUsUser(models.Model):
     user = models.ForeignKey(
@@ -730,19 +716,43 @@ class ContactUsUser(models.Model):
         related_name='contactus_user',
     )
 
+    STATUS = (
+        ("new", "جديد"),
+        ("under-processing", "قيد المعالجة"),
+        ("reply", "تم الرد"),
+    )
+    status = models.CharField(
+        max_length=1_000, 
+        choices=STATUS, 
+        default="new",
+    )
+
     full_name = models.CharField(max_length=1_000)
     email = models.EmailField()
+
+    # phone_number = models.CharField(
+    #     max_length=11,
+    #     validators=[
+    #         RegexValidator(
+    #             regex="^01[0|1|2|5][0-9]{8}$",
+    #             message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+    #         )
+    #     ],
+    #     null=True,
+    #     blank=True,
+    # )
     phone_number = models.CharField(
-        max_length=11,
+        max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
+        unique=True,
         validators=[
             RegexValidator(
-                regex="^01[0|1|2|5][0-9]{8}$",
-                message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+                regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
+                message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        null=True,
-        blank=True,
+        verbose_name="رقم الجوال السعودي"
     )
+
     titleofmessage = models.CharField(max_length=1_000)
     message = models.TextField(
         max_length=10_000, 
@@ -752,17 +762,6 @@ class ContactUsUser(models.Model):
 
     quick_reply = models.BooleanField(default=False)
     is_hidden = models.BooleanField(default=False)
-
-    STATUS = (
-        ("جديد", "جديد"),
-        ("قيد المعالجة", "قيد المعالجة"),
-        ("تم الرد", "تم الرد"),
-    )
-    status = models.CharField(
-        max_length=1_000, 
-        choices=STATUS, 
-        default="جديد",
-    )
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -786,7 +785,7 @@ class ContactUsUser(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # *** Review *** #
 class ReviewUser(models.Model):
     user = models.ForeignKey(
@@ -795,14 +794,14 @@ class ReviewUser(models.Model):
     )
 
     STATUS = (
-        ("مرفوض", "مرفوض"), 
-        ("قيد المعالجة", "قيد المعالجة"),
-        ("منشور", "منشور"),
+        ("unacceptable", "مرفوض"), 
+        ("under-processing", "قيد المعالجة"),
+        ("publication", "منشور"),
     )
     status = models.CharField(
         max_length=1_000, 
         choices=STATUS, 
-        default="مرفوض",
+        default="unacceptable",
     )
 
     first_name = models.CharField(max_length=1_000)
@@ -839,7 +838,7 @@ class ReviewUser(models.Model):
 
 
 # ******************************************************************************
-# =================================================================
+# ==============================================================================
 # ***  *** #
 # class CategoryPost(models.Model):
 #     user = models.ForeignKey(
@@ -964,5 +963,5 @@ class ReviewUser(models.Model):
 #     def __str__(self):
 #         return f"Report by: ({self.user.username} on {self.post.title})"
 
-# =================================================================
+# ==============================================================================
 # ***  *** #

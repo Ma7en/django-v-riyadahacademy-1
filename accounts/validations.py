@@ -12,7 +12,13 @@ from rest_framework.serializers import ValidationError
 from rest_framework.exceptions import APIException
 
 
-# ================================================================
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Custom Validation Error *** #
 class CustomValidationError(APIException):
     status_code = 400
     default_detail = []
@@ -24,7 +30,13 @@ class CustomValidationError(APIException):
         self.detail = detail
 
 
-# ================================================================
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Validate Password *** #
 def validate_password(password, password2):
     """
     Validates the password and raises CustomValidationError if invalid.
@@ -84,7 +96,13 @@ def validate_password(password, password2):
         raise CustomValidationError(errors)
 
 
-# ================================================================
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Validate Email *** #
 def validate_email(email):
     """
     Validates the email format, local part, and domain.
@@ -145,7 +163,13 @@ def validate_email(email):
         raise CustomValidationError(errors)
 
 
-# ================================================================
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Validate First & Last Name *** #
 def validate_first_last_name(first_name, last_name):
     """
     Validates first and last name.
@@ -181,7 +205,13 @@ def validate_first_last_name(first_name, last_name):
         )
 
 
-# ================================================================
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Validate Phone Number *** #
 def validate_phone_number(value):
     """
     Validates the phone number format.
@@ -211,8 +241,13 @@ def validate_phone_number(value):
         raise CustomValidationError(errors)
 
 
-# ================================================================
-# full_namec
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Validate Full Name *** #
 def validate_full_name(value):
     """
     Validates a full name input and splits it into first and last name.
@@ -247,4 +282,13 @@ def validate_full_name(value):
     }
 
 
-# ================================================================
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** *** #
+
+
+

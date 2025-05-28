@@ -83,7 +83,7 @@ class CourseList(generics.ListCreateAPIView):
     # queryset = models.Course.objects.all()
     serializer_class = serializer.CourseSerializer
     pagination_class = StandardResultSetPagination
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -96,7 +96,7 @@ class CourseList(generics.ListCreateAPIView):
 class CoursePK(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.Course.objects.all()
     serializer_class = serializer.CourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -242,6 +242,10 @@ class CouponCourseSearch(generics.ListCreateAPIView):
             return coupon
 
 
+
+
+
+
 # *****************************************************************
 # =================================================================
 # *** Student Enroll Course *** #
@@ -351,6 +355,8 @@ def fetch_rating_status(request,student_id,course_id):
         return JsonResponse({'bool':True})
     else:
         return JsonResponse({'bool':False})
+
+
 
 
 

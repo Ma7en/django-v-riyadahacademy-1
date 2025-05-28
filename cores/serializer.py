@@ -119,7 +119,6 @@ class CourseSerializer(serializers.ModelSerializer):
 # *****************************************************************
 # =================================================================
 # ***  *** #
-
 class CouponCourseSerializer(serializers.ModelSerializer):
     """Serializer for Coupon model (admin view)"""
     class Meta:

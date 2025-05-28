@@ -20,24 +20,28 @@ from django.dispatch import receiver
 from .managers import UserManager
 
 
-# =================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** User *** #
 class User(AbstractBaseUser):
     email = models.EmailField(
         # verbose_name="email address",
-        max_length=500,
+        max_length=1_000,
         unique=True,
     )
-    first_name = models.CharField(max_length=500)
-    last_name = models.CharField(max_length=500)
+    first_name = models.CharField(max_length=1_000)
+    last_name = models.CharField(max_length=1_000)
 
     username = models.CharField(
-        max_length=300,
+        max_length=1_000,
         null=True,
         blank=True,
     )
     full_name = models.CharField(
-        max_length=300,
+        max_length=1_000,
         null=True,
         blank=True,
     )
@@ -71,7 +75,11 @@ class User(AbstractBaseUser):
         super(User, self).save(*args, **kwargs)
 
 
-# =================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Admin Profile  *** #
 class AdminProfile(models.Model):
     user = models.OneToOneField(
@@ -92,27 +100,60 @@ class AdminProfile(models.Model):
         blank=True,
     )
 
+    POWERS_CHOICES = (
+        ("Complete", "كاملة"),
+        ("Medium", "متوسطة"),
+        ("Limited", "محدودة"),
+    )
+    powers = models.CharField(
+        max_length=30,
+        choices=POWERS_CHOICES,
+        default="Complete",
+        null=True,
+        blank=True,
+    )
+
     image = models.ImageField(
         upload_to="user/admin",
         default="user/default-user.png",
         null=True,
         blank=True,
     )
+
+    bio = models.TextField(
+        max_length=10_00, 
+        null=True, 
+        blank=True,
+    )
+
+    # phone_number = models.CharField(
+    #     max_length=11,
+    #     validators=[
+    #         RegexValidator(
+    #             regex="^01[0|1|2|5][0-9]{8}$",
+    #             message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+    #         )
+    #     ],
+    #     null=True,
+    #     blank=True,
+    # )
     phone_number = models.CharField(
-        max_length=11,
+        max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
+        unique=True,
         validators=[
             RegexValidator(
-                regex="^01[0|1|2|5][0-9]{8}$",
-                message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+                regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
+                message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        null=True,
-        blank=True,
+        verbose_name="رقم الجوال السعودي"
     )
     age = models.PositiveIntegerField(
         null=True,
         blank=True,
     )
+
+    
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -126,7 +167,11 @@ class AdminProfile(models.Model):
         return f"{self.id}): ({self.user.email})"
 
 
-# =================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Teacher Profile *** #
 class TeacherProfile(models.Model):
     user = models.OneToOneField(
@@ -153,16 +198,34 @@ class TeacherProfile(models.Model):
         null=True,
         blank=True,
     )
+    # phone_number = models.CharField(
+    #     max_length=11,
+    #     validators=[
+    #         RegexValidator(
+    #             regex="^01[0|1|2|5][0-9]{8}$",
+    #             message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+    #         )
+    #     ],
+    #     null=True,
+    #     blank=True,
+    # )
+    
+    bio = models.TextField(
+        max_length=10_00, 
+        null=True, 
+        blank=True,
+    )
+
     phone_number = models.CharField(
-        max_length=11,
+        max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
+        unique=True,
         validators=[
             RegexValidator(
-                regex="^01[0|1|2|5][0-9]{8}$",
-                message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+                regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
+                message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        null=True,
-        blank=True,
+        verbose_name="رقم الجوال السعودي"
     )
     age = models.PositiveIntegerField(
         null=True,
@@ -183,7 +246,11 @@ class TeacherProfile(models.Model):
         )
 
 
-# =================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Staff Profile *** #
 class StaffProfile(models.Model):
     user = models.OneToOneField(
@@ -210,16 +277,34 @@ class StaffProfile(models.Model):
         null=True,
         blank=True,
     )
+    
+    bio = models.TextField(
+        max_length=10_00, 
+        null=True, 
+        blank=True,
+    )
+
+    # phone_number = models.CharField(
+    #     max_length=11,
+    #     validators=[
+    #         RegexValidator(
+    #             regex="^01[0|1|2|5][0-9]{8}$",
+    #             message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+    #         )
+    #     ],
+    #     null=True,
+    #     blank=True,
+    # )
     phone_number = models.CharField(
-        max_length=11,
+        max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
+        unique=True,
         validators=[
             RegexValidator(
-                regex="^01[0|1|2|5][0-9]{8}$",
-                message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+                regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
+                message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        null=True,
-        blank=True,
+        verbose_name="رقم الجوال السعودي"
     )
     age = models.PositiveIntegerField(
         null=True,
@@ -238,7 +323,11 @@ class StaffProfile(models.Model):
         return f"{self.id}): ({self.phone_number})"
 
 
-# =================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Student Profile *** #
 class StudentProfile(models.Model):
     user = models.OneToOneField(
@@ -265,16 +354,34 @@ class StudentProfile(models.Model):
         null=True,
         blank=True,
     )
+    
+    bio = models.TextField(
+        max_length=10_00, 
+        null=True, 
+        blank=True,
+    )
+    
+    # phone_number = models.CharField(
+    #     max_length=11,
+    #     validators=[
+    #         RegexValidator(
+    #             regex="^01[0|1|2|5][0-9]{8}$",
+    #             message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+    #         )
+    #     ],
+    #     null=True,
+    #     blank=True,
+    # )
     phone_number = models.CharField(
-        max_length=11,
+        max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
+        unique=True,
         validators=[
             RegexValidator(
-                regex="^01[0|1|2|5][0-9]{8}$",
-                message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+                regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
+                message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        null=True,
-        blank=True,
+        verbose_name="رقم الجوال السعودي"
     )
 
     age = models.PositiveIntegerField(
@@ -294,7 +401,11 @@ class StudentProfile(models.Model):
         return f"{self.id}): ({self.phone_number})"
 
 
-# ================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** (Verify Account) *** #
 class OneTimeOTP(models.Model):
     user = models.ForeignKey(
@@ -323,5 +434,12 @@ class OneTimeOTP(models.Model):
         return f"{self.id}): {self.otp} OTP Code"
 
 
-# =================================================================
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  *** #
+
+
+
