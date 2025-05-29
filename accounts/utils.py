@@ -246,6 +246,8 @@ def send_change_password_confirm(user):
 # ==============================================================================
 # *** Return Response *** #
 def FunReturn(code, message, status, data=""):
+    success = ""
+
     if code == 0:
         success = "True"
     elif code == 1:

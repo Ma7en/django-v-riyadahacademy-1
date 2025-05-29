@@ -255,8 +255,8 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
                 self.Meta.depth = 3
 
         def to_representation(self,instance):
-            representation=super(TeacherStudentChatSerializer, self).to_representation(instance)
-            representation['msg_time']=instance.msg_time.strftime("%Y-%m-%d %H:%M")
+            representation = super(TeacherStudentChatSerializer, self).to_representation(instance)
+            representation['msg_time'] = instance.msg_time.strftime("%Y-%m-%d %H:%M")
             return representation
 
 

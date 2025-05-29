@@ -48,7 +48,7 @@ from rest_framework.permissions import (
 
 # 
 from . import models
-from . import serializer
+from . import serializers
 
 
 
@@ -74,13 +74,13 @@ class StandardResultSetPagination(PageNumberPagination):
 # *** Category Section *** #
 class CategorySectionList(generics.ListCreateAPIView):
     queryset = models.CategorySection.objects.all()
-    serializer_class = serializer.CategorySectionSerializer
+    serializer_class = serializers.CategorySectionSerializer
     pagination_class = StandardResultSetPagination
 
 
 class CategorySectionPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CategorySection.objects.all()
-    serializer_class = serializer.CategorySectionSerializer
+    serializer_class = serializers.CategorySectionSerializer
 
 
 
@@ -93,13 +93,13 @@ class CategorySectionPK(generics.RetrieveUpdateDestroyAPIView):
 # *** Section Course *** #
 class SectionCourseList(generics.ListCreateAPIView):
     queryset = models.SectionCourse.objects.all()
-    serializer_class = serializer.SectionCourseSerializer
+    serializer_class = serializers.SectionCourseSerializer
     pagination_class = StandardResultSetPagination
 
 
 class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.SectionCourse.objects.all()
-    serializer_class = serializer.SectionCourseSerializer
+    serializer_class = serializers.SectionCourseSerializer
 
 
 
@@ -110,7 +110,7 @@ class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
 # *** Course *** #
 class CourseList(generics.ListCreateAPIView):
     # queryset = models.Course.objects.all()
-    serializer_class = serializer.CourseSerializer
+    serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -124,7 +124,7 @@ class CourseList(generics.ListCreateAPIView):
 
 class CoursePK(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.Course.objects.all()
-    serializer_class = serializer.CourseSerializer
+    serializer_class = serializers.CourseSerializer
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -137,7 +137,7 @@ class CoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 class CourseListAPI(generics.ListCreateAPIView):
     queryset = models.Course.objects.all()
-    serializer_class = serializer.CourseSerializer
+    serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
 
     def get_queryset(self):
@@ -169,7 +169,7 @@ class CourseListAPI(generics.ListCreateAPIView):
 
 
 class CourseListCreate(generics.ListCreateAPIView):
-    serializer_class = serializer.CourseSerializer
+    serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
     permission_classes = [IsAuthenticated]
 
@@ -181,7 +181,7 @@ class CourseListCreate(generics.ListCreateAPIView):
 
 
 class CourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = serializer.CourseSerializer
+    serializer_class = serializers.CourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -192,7 +192,7 @@ class CourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     
 
 class PublicCourseList(generics.ListAPIView):
-    serializer_class = serializer.CourseSerializer
+    serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
     
     def get_queryset(self):
@@ -227,16 +227,16 @@ class PublicCourseList(generics.ListAPIView):
 # *** Section In Course *** #
 class SectionInCourseList(generics.ListCreateAPIView):
     queryset = models.SectionInCourse.objects.all()
-    serializer_class = serializer.SectionInCourseSerializer
+    serializer_class = serializers.SectionInCourseSerializer
 
 
 class SectionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.SectionInCourse.objects.all()
-    serializer_class = serializer.SectionInCourseSerializer
+    serializer_class = serializers.SectionInCourseSerializer
 
 
 class SectionInCourseListCreate(generics.ListCreateAPIView):
-    serializer_class = serializer.SectionInCourseSerializer
+    serializer_class = serializers.SectionInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -250,7 +250,7 @@ class SectionInCourseListCreate(generics.ListCreateAPIView):
 
 
 class SectionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = serializer.SectionInCourseSerializer
+    serializer_class = serializers.SectionInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -265,17 +265,17 @@ class SectionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView
 # *** Lesson In Course *** #
 class LessonInCourseList(generics.ListCreateAPIView):
     queryset = models.LessonInCourse.objects.all()
-    serializer_class = serializer.LessonInCourseSerializer
+    serializer_class = serializers.LessonInCourseSerializer
 
 
 class LessonInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.LessonInCourse.objects.all()
-    serializer_class = serializer.LessonInCourseSerializer
+    serializer_class = serializers.LessonInCourseSerializer
 
 
 
 class LessonInCourseListCreate(generics.ListCreateAPIView):
-    serializer_class = serializer.LessonInCourseSerializer
+    serializer_class = serializers.LessonInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -289,7 +289,7 @@ class LessonInCourseListCreate(generics.ListCreateAPIView):
 
 
 class LessonInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = serializer.LessonInCourseSerializer
+    serializer_class = serializers.LessonInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -299,7 +299,7 @@ class LessonInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView)
 
 class LessonCreateView(generics.CreateAPIView):
     queryset = models.LessonInCourse.objects.all()
-    serializer_class = serializer.LessonInCourseSerializer
+    serializer_class = serializers.LessonInCourseSerializer
 
     def create(self, request, *args, **kwargs):
         section_id = kwargs.get('section_id')
@@ -354,16 +354,16 @@ class LessonCreateView(generics.CreateAPIView):
 # *** File In Course *** #
 class FileInCourseList(generics.ListCreateAPIView):
     queryset = models.FileInCourse.objects.all()
-    serializer_class = serializer.FileInCourseSerializer
+    serializer_class = serializers.FileInCourseSerializer
 
 
 class FileInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.FileInCourse.objects.all()
-    serializer_class = serializer.FileInCourseSerializer
+    serializer_class = serializers.FileInCourseSerializer
 
 
 class FileInCourseListCreate(generics.ListCreateAPIView):
-    serializer_class = serializer.FileInCourseSerializer
+    serializer_class = serializers.FileInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -377,7 +377,7 @@ class FileInCourseListCreate(generics.ListCreateAPIView):
 
 
 class FileInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = serializer.FileInCourseSerializer
+    serializer_class = serializers.FileInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -387,7 +387,7 @@ class FileInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
 class FileInCourseCreateView(generics.CreateAPIView):
     queryset = models.FileInCourse.objects.all()
-    serializer_class = serializer.FileInCourseSerializer
+    serializer_class = serializers.FileInCourseSerializer
 
     def create(self, request, *args, **kwargs):
         lesson_id = kwargs.get('lesson_id')
@@ -420,16 +420,16 @@ class FileInCourseCreateView(generics.CreateAPIView):
 # *** Question In Course *** #
 class QuestionInCourseList(generics.ListCreateAPIView):
     queryset = models.QuestionInCourse.objects.all()
-    serializer_class = serializer.QuestionInCourseSerializer
+    serializer_class = serializers.QuestionInCourseSerializer
 
 
 class QuestionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.QuestionInCourse.objects.all()
-    serializer_class = serializer.QuestionInCourseSerializer
+    serializer_class = serializers.QuestionInCourseSerializer
 
 
 class QuestionInCourseListCreate(generics.ListCreateAPIView):
-    serializer_class = serializer.QuestionInCourseSerializer
+    serializer_class = serializers.QuestionInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -443,7 +443,7 @@ class QuestionInCourseListCreate(generics.ListCreateAPIView):
 
 
 class QuestionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = serializer.QuestionInCourseSerializer
+    serializer_class = serializers.QuestionInCourseSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -453,7 +453,7 @@ class QuestionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIVie
 
 class QuestionCreateView(generics.CreateAPIView):
     queryset = models.QuestionInCourse.objects.all()
-    serializer_class = serializer.QuestionInCourseSerializer
+    serializer_class = serializers.QuestionInCourseSerializer
 
     def create(self, request, *args, **kwargs):
         lesson_id = kwargs.get('lesson_id')
@@ -513,18 +513,18 @@ class QuestionCreateView(generics.CreateAPIView):
 # *** Coupon Course *** #
 class CouponCourseList(generics.ListCreateAPIView):
     queryset = models.CouponCourse.objects.all()
-    serializer_class = serializer.CouponCourseSerializer
+    serializer_class = serializers.CouponCourseSerializer
     pagination_class = StandardResultSetPagination
 
 
 class CouponCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CouponCourse.objects.all()
-    serializer_class = serializer.CouponCourseSerializer
+    serializer_class = serializers.CouponCourseSerializer
 
 
 class CouponCourseSearch(generics.ListCreateAPIView):
     queryset = models.CouponCourse.objects.all()
-    serializer_class = serializer.CouponCourseSerializer
+    serializer_class = serializers.CouponCourseSerializer
     pagination_class = StandardResultSetPagination
 
     def get_queryset(self):
@@ -601,26 +601,26 @@ class CoursePaymentResultView(APIView):
 # *** Student Enroll Course *** #
 class StudentEnrollCourseList(generics.ListCreateAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
-    serializer_class = serializer.StudentCourseEnrollSerializer
+    serializer_class = serializers.StudentCourseEnrollSerializer
     pagination_class = StandardResultSetPagination
 
 
 class StudentEnrollCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
-    serializer_class = serializer.StudentCourseEnrollSerializer
+    serializer_class = serializers.StudentCourseEnrollSerializer
 
 
 class EnrolledStuentPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
-    serializer_class = serializer.StudentCourseEnrollSerializer
+    serializer_class = serializers.StudentCourseEnrollSerializer
 
 
 def fetch_enroll_status(request,student_id,course_id):
     student = models.User.objects.filter(id=student_id).first()
     course = models.Course.objects.filter(id=course_id).first()
-    enrollStatus = models.StudentCourseEnrollment.objects.filter(course=course,student=student).count()
+    enroll_status = models.StudentCourseEnrollment.objects.filter(course=course,student=student).count()
 
-    if enrollStatus:
+    if enroll_status:
         return JsonResponse({'bool':True})
     else:
         return JsonResponse({'bool':False})
@@ -629,7 +629,7 @@ def fetch_enroll_status(request,student_id,course_id):
 
 class EnrolledStuentList(generics.ListCreateAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
-    serializer_class = serializer.StudentCourseEnrollSerializer
+    serializer_class = serializers.StudentCourseEnrollSerializer
 
     def get_queryset(self):
         if 'course_id' in self.kwargs:
@@ -670,20 +670,20 @@ class EnrolledStuentList(generics.ListCreateAPIView):
 # *** Course Rating ***
 class CourseRatingList(generics.ListCreateAPIView):
     queryset = models.CourseRating.objects.all()
-    serializer_class = serializer.CourseRatingSerializer
+    serializer_class = serializers.CourseRatingSerializer
     pagination_class = StandardResultSetPagination
 
 
 class CourseRatingPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CourseRating.objects.all()
-    serializer_class = serializer.CourseRatingSerializer
+    serializer_class = serializers.CourseRatingSerializer
 
 
 
 
 class CourseRatingListAPI(generics.ListCreateAPIView):
     queryset = models.CourseRating.objects.all()
-    serializer_class = serializer.CourseRatingSerializer
+    serializer_class = serializers.CourseRatingSerializer
     pagination_class = StandardResultSetPagination
 
     def get_queryset(self):
@@ -701,9 +701,9 @@ class CourseRatingListAPI(generics.ListCreateAPIView):
 def fetch_rating_status(request,student_id,course_id):
     student = models.User.objects.filter(id=student_id).first()
     course = models.Course.objects.filter(id=course_id).first()
-    ratingStatus = models.CourseRating.objects.filter(course=course,student=student).count()
+    rating_status = models.CourseRating.objects.filter(course=course,student=student).count()
 
-    if ratingStatus:
+    if rating_status:
         return JsonResponse({'bool':True})
     else:
         return JsonResponse({'bool':False})
@@ -721,20 +721,20 @@ def fetch_rating_status(request,student_id,course_id):
 # *** Student Favorite Course ***
 class StudentFavoriteCourseList(generics.ListCreateAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
-    serializer_class = serializer.StudentFavoriteCourseSerializer
+    serializer_class = serializers.StudentFavoriteCourseSerializer
     pagination_class = StandardResultSetPagination
 
 
 class StudentFavoriteCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
-    serializer_class = serializer.StudentFavoriteCourseSerializer
+    serializer_class = serializers.StudentFavoriteCourseSerializer
 
 
 
 
 class StudentFavoriteCourseListAPI(generics.ListCreateAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
-    serializer_class = serializer.StudentFavoriteCourseSerializer
+    serializer_class = serializers.StudentFavoriteCourseSerializer
     pagination_class = StandardResultSetPagination
 
     def get_queryset(self):
@@ -747,9 +747,9 @@ class StudentFavoriteCourseListAPI(generics.ListCreateAPIView):
 def remove_favorite_course(request,course_id,student_id):
     student = models.User.objects.filter(id=student_id).first()
     course = models.Course.objects.filter(id=course_id).first()
-    favoriteStatus = models.StudentFavoriteCourse.objects.filter(course=course,student=student).delete()
+    favorite_status = models.StudentFavoriteCourse.objects.filter(course=course,student=student).delete()
 
-    if favoriteStatus:
+    if favorite_status:
         return JsonResponse({'bool':True})
     else:
         return JsonResponse({'bool':False})
@@ -765,12 +765,12 @@ def remove_favorite_course(request,course_id,student_id):
 # *** Teacher Student Chat ***
 class TeacherStudentChatList(generics.ListCreateAPIView):
     queryset = models.TeacherStudentChat.objects.all()
-    serializer_class = serializer.TeacherStudentChatSerializer
+    serializer_class = serializers.TeacherStudentChatSerializer
     pagination_class = StandardResultSetPagination
 
 class TeacherStudentChatPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.TeacherStudentChat.objects.all()
-    serializer_class = serializer.TeacherStudentChatSerializer
+    serializer_class = serializers.TeacherStudentChatSerializer
 
 
 
@@ -780,14 +780,14 @@ def TeacherStudentChatBot(request,teacher_id,student_id):
     student = models.User.objects.get(id=student_id)
     msg_to = request.POST.get('msg_to')
     msg_from = request.POST.get('msg_from')
-    msgRes = models.TeacherStudentChat.objects.create(
+    msg_res = models.TeacherStudentChat.objects.create(
         teacher=teacher,
         student=student,
         msg_to=msg_to,
         msg_from=msg_from
     )
 
-    if msgRes:
+    if msg_res:
         return JsonResponse({'bool':True,'msg':'Message sended'})
     else:
         return JsonResponse({'bool':False,'msg':'Message failed'})
@@ -795,7 +795,7 @@ def TeacherStudentChatBot(request,teacher_id,student_id):
 
 class TeacherStudentChatListAPI(generics.ListAPIView):
     queryset = models.TeacherStudentChat.objects.all()
-    serializer_class = serializer.TeacherStudentChatSerializer
+    serializer_class = serializers.TeacherStudentChatSerializer
 
     def get_queryset(self):
         teacher_id = self.kwargs['teacher_id']
@@ -810,17 +810,17 @@ def GroupTeacherStudentChatBot(request,teacher_id):
     teacher = models.User.objects.get(id=teacher_id)
     msg_to = request.POST.get('msg_to')
     msg_from = request.POST.get('msg_from')
-    enrolledList = models.StudentCourseEnrollment.objects.filter(course__teacher=teacher).distinct()
+    enrolled_list = models.StudentCourseEnrollment.objects.filter(course__teacher=teacher).distinct()
     
-    for enrolled in enrolledList:
-        msgRes = models.TeacherStudentChat.objects.create(
+    for enrolled in enrolled_list:
+        msg_res = models.TeacherStudentChat.objects.create(
             teacher=teacher,
             student=enrolled.student,
             msg_to=msg_to,
             msg_from=msg_from
         )
 
-    if msgRes:
+    if msg_res:
         return JsonResponse({'bool':True,'msg':'Message sended'})
     else:
         return JsonResponse({'bool':False,'msg':'Message failed'})
@@ -870,7 +870,7 @@ class GetUserProgressView(APIView):
     
     def get(self, request):
         courses_progress = models.CourseProgress.objects.filter(user=request.user)
-        serializer = serializer.CourseProgressSerializer(courses_progress, many=True, context={'request': request})
+        serializer = serializers.CourseProgressSerializer(courses_progress, many=True, context={'request': request})
         return Response(serializer.data)
 
 
@@ -950,7 +950,7 @@ class StudentGenerateCertificateView(APIView):
             # تحقق من وجود شهادة مسبقة
             if models.StudentCertificate.objects.filter(user=user, course=course).exists():
                 certificate = models.StudentCertificate.objects.get(user=user, course=course)
-                serializer = serializer.StudentCertificateSerializer(certificate)
+                serializer = serializers.StudentCertificateSerializer(certificate)
                 return Response(serializer.data)
             
             # إنشاء شهادة جديدة
@@ -1003,7 +1003,7 @@ class StudentGenerateCertificateView(APIView):
             certificate.certificate_url = certificate_url
             certificate.save()
             
-            serializer = serializer.StudentCertificateSerializer(certificate)
+            serializer = serializers.StudentCertificateSerializer(certificate)
             return Response(serializer.data)
             
         except models.Course.DoesNotExist:
@@ -1018,7 +1018,7 @@ class StudentCertificatesView(APIView):
     
     def get(self, request):
         certificates = models.StudentCertificate.objects.filter(user=request.user)
-        serializer = serializer.StudentCertificateSerializer(certificates, many=True)
+        serializer = serializers.StudentCertificateSerializer(certificates, many=True)
         return Response(serializer.data)
 
 
@@ -1028,7 +1028,7 @@ class StudentVerifyCertificateView(APIView):
     def get(self, request, verification_code):
         try:
             certificate = models.StudentCertificate.objects.get(verification_code=verification_code)
-            serializer = serializer.StudentCertificateSerializer(certificate)
+            serializer = serializers.StudentCertificateSerializer(certificate)
             return Response(serializer.data)
         except models.StudentCertificate.DoesNotExist:
             return Response(
@@ -1045,7 +1045,7 @@ class StudentVerifyCertificateView(APIView):
 # *** Question Bank ***
 class QuestionBankList(generics.ListCreateAPIView):
     # queryset = models.QuestionBank.objects.all()
-    serializer_class = serializer.QuestionBankListSerializer
+    serializer_class = serializers.QuestionBankListSerializer
     pagination_class = StandardResultSetPagination
     permission_classes = [IsAuthenticated]
 
@@ -1058,7 +1058,7 @@ class QuestionBankList(generics.ListCreateAPIView):
 
 class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.QuestionBank.objects.all()
-    serializer_class = serializer.QuestionBankListSerializer
+    serializer_class = serializers.QuestionBankListSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -1075,15 +1075,15 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     
     def get_serializer_class(self):
         if self.action == 'retrieve':
-            return serializer.QuestionBankDetailSerializer
-        return serializer.QuestionBankListSerializer
+            return serializers.QuestionBankDetailSerializer
+        return serializers.QuestionBankListSerializer
     
     @action(detail=True, methods=['get'])
     def questions(self, request, pk=None):
         """Get all questions for a question bank"""
         question_bank = self.get_object()
         questions = question_bank.questions.all()
-        serializer = QuestionSerializer(questions, many=True)
+        serializer = serializers.QuestionBankListSerializer(questions, many=True)
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
@@ -1098,7 +1098,7 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
         # Serialize questions but exclude is_correct from choices
         serialized_questions = []
         for question in questions:
-            question_data = QuestionSerializer(question).data
+            question_data = serializers.QuestionBankListSerializer(question).data
             
             # Remove is_correct field from choices
             for choice in question_data['choices']:
@@ -1109,13 +1109,14 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
         
         return Response(serialized_questions)
 
+
 class QuestionInBankViewSet(viewsets.ModelViewSet):
     queryset = models.QuestionInBank.objects.all()
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
-            return serializer.QuestionInBankDetailSerializer
-        return serializer.QuestionInBankSerializer
+            return serializers.QuestionInBankDetailSerializer
+        return serializers.QuestionInBankSerializer
     
     def get_queryset(self):
         queryset = models.QuestionInBank.objects.all()
@@ -1177,76 +1178,77 @@ class QuestionInBankViewSet(viewsets.ModelViewSet):
 #             'results': results
 #         })
 
+
 # 
-# class QuestionBankResultView(APIView):
-#     def post(self, request, question_bank_id):
-#         """Calculate quiz results"""
-#         # Get the question bank
-#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+class QuestionBankResultView(APIView):
+    def post(self, request, question_bank_id):
+        """Calculate quiz results"""
+        # Get the question bank
+        question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
         
-#         # Get all questions for this bank
-#         all_questions = models.QuestionInBank.objects.filter(question_bank_id=question_bank_id)
+        # Get all questions for this bank
+        all_questions = models.QuestionInBank.objects.filter(question_bank_id=question_bank_id)
         
-#         # Validate the request data
-#         serializer = serializer.QuestionBankResultSerializer(data=request.data, many=True)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Validate the request data
+        serializer = serializers.QuestionBankResultSerializer(data=request.data, many=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-#         # Process the results
-#         submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
-#         total_questions = all_questions.count()
-#         correct_answers = 0
-#         results = []
+        # Process the results
+        submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
+        total_questions = all_questions.count()
+        correct_answers = 0
+        results = []
         
-#         for question in all_questions:
-#             question_id = question.id
-#             selected_choice_id = submitted_answers.get(question_id)
+        for question in all_questions:
+            question_id = question.id
+            selected_choice_id = submitted_answers.get(question_id)
             
-#             # Get the correct choice
-#             correct_choice = question.choices.filter(is_correct=True).first()
+            # Get the correct choice
+            correct_choice = question.choices.filter(is_correct=True).first()
             
-#             # Check if the answer is correct (only if answered)
-#             is_answered = question_id in submitted_answers
-#             is_correct = False
+            # Check if the answer is correct (only if answered)
+            is_answered = question_id in submitted_answers
+            is_correct = False
             
-#             if is_answered and correct_choice:
-#                 is_correct = correct_choice.id == selected_choice_id
-#                 if is_correct:
-#                     correct_answers += 1
+            if is_answered and correct_choice:
+                is_correct = correct_choice.id == selected_choice_id
+                if is_correct:
+                    correct_answers += 1
             
-#             # Add to results
-#             results.append({
-#                 'question_id': question_id,
-#                 'question_text': question.text,
-#                 'is_answered': is_answered,
-#                 'selected_choice_id': selected_choice_id,
-#                 'correct_choice_id': correct_choice.id if correct_choice else None,
-#                 'is_correct': is_correct,
-#                 'choices': [
-#                     {
-#                         'id': choice.id,
-#                         'text': choice.text,
-#                         'is_correct': choice.is_correct
-#                     }
-#                     for choice in question.choices.all()
-#                 ]
-#             })
+            # Add to results
+            results.append({
+                'question_id': question_id,
+                'question_text': question.text,
+                'is_answered': is_answered,
+                'selected_choice_id': selected_choice_id,
+                'correct_choice_id': correct_choice.id if correct_choice else None,
+                'is_correct': is_correct,
+                'choices': [
+                    {
+                        'id': choice.id,
+                        'text': choice.text,
+                        'is_correct': choice.is_correct
+                    }
+                    for choice in question.choices.all()
+                ]
+            })
         
-#         # Calculate percentage
-#         percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        # Calculate percentage
+        percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
         
-#         return Response({
-#             'total_questions': total_questions,
-#             'answered_questions': len(submitted_answers),
-#             'correct_answers': correct_answers,
-#             'percentage': round(percentage, 2),
-#             'results': results
-#         })
+        return Response({
+            'total_questions': total_questions,
+            'answered_questions': len(submitted_answers),
+            'correct_answers': correct_answers,
+            'percentage': round(percentage, 2),
+            'results': results
+        })
 
 
 # 
 class StudentQuestionBankResultSaveView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request, question_bank_id):
         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
@@ -1260,7 +1262,7 @@ class StudentQuestionBankResultSaveView(APIView):
             'total_questions': request.data.get('total_questions'),
         }
         
-        result_serializer = serializer.StudentQuestionBankResultSerializer(data=result_data)
+        result_serializer = serializers.StudentQuestionBankResultSerializer(data=result_data)
         if not result_serializer.is_valid():
             return Response(result_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -1282,7 +1284,7 @@ class StudentQuestionBankResultSaveView(APIView):
             answer_data['correct_choice_text'] = correct_choice['text'] if correct_choice else None
             answer_data['all_choices'] = answer_data.get('choices', [])
             
-            answer_serializer = serializer.StudentQuestionBankSerializer(data=answer_data)
+            answer_serializer = serializers.StudentQuestionBankSerializer(data=answer_data)
             if answer_serializer.is_valid():
                 answer_serializer.save()
         
@@ -1372,7 +1374,7 @@ class StudentQuestionBankResultSaveView(APIView):
 # (List of contact us -> [GET, POST])
 class ContactUsListAPIView(generics.ListCreateAPIView):
     # queryset = models.ContactUsUser.objects.all()
-    serializer_class = serializer.ContactUsUserSerializer
+    serializer_class = serializers.ContactUsUserSerializer
     pagination_class = StandardResultSetPagination
     permission_classes = [IsAuthenticated]
 
@@ -1387,7 +1389,7 @@ class ContactUsListAPIView(generics.ListCreateAPIView):
 # (List of contact us -> [GET, POST, PUT, DELETE])
 class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.ContactUsUser.objects.all()
-    serializer_class = serializer.ContactUsUserSerializer
+    serializer_class = serializers.ContactUsUserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -1409,7 +1411,7 @@ class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
 # (List of review -> [GET, POST])
 class ReviewUserListAPIView(generics.ListCreateAPIView):
     # queryset = models.ReviewUser.objects.all()
-    serializer_class = serializer.ReviewUserSerializer
+    serializer_class = serializers.ReviewUserSerializer
     pagination_class = StandardResultSetPagination
     permission_classes = [IsAuthenticated]
 
@@ -1424,7 +1426,7 @@ class ReviewUserListAPIView(generics.ListCreateAPIView):
 # (List of review -> [GET, POST, PUT, DELETE])
 class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.ReviewUser.objects.all()
-    serializer_class = serializer.ReviewUserSerializer
+    serializer_class = serializers.ReviewUserSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

@@ -683,6 +683,9 @@ class StudentCertificate(models.Model):
     issued_at = models.DateTimeField(auto_now_add=True)
     pdf_file = models.FileField(upload_to='course/certificates/', null=True, blank=True)
     
+    issue_date = models.DateTimeField(auto_now_add=True)
+    completion_date = models.DateTimeField()
+    certificate_pdf = models.FileField(upload_to='course/certificates/', null=True, blank=True)
     certificate_url = models.URLField(null=True, blank=True)
     verification_code = models.CharField(max_length=16, unique=True)
 
@@ -700,6 +703,8 @@ class StudentCertificate(models.Model):
         if not self.verification_code:
             self.verification_code = self.generate_verification_code()
         super().save(*args, **kwargs)
+
+
 
 
 

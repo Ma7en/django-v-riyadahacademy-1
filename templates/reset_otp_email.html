@@ -3,6 +3,8 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <!--  -->
         <title>Email Confirmation</title>
 
         <!-- style -->
@@ -68,6 +70,7 @@
                 .container {
                     margin: 10px;
                 }
+
                 .sec_img {
                     margin-left: -50px;
                 }
@@ -86,7 +89,9 @@
 
             <div class="header">
                 <h2>Password Reset Request</h2>
+
                 <p>Hello {{ name }},</p>
+
                 <p>
                     We received a request to reset your password. Please use the
                     OTP below to reset your password:
@@ -98,6 +103,7 @@
                     If you did not request a password reset, please ignore this
                     email.
                 </p>
+
                 <p>The OTP will expire in 10 minutes.</p>
             </div>
 
@@ -106,6 +112,7 @@
                     If you have any questions, feel free to reach out to our
                     support team.
                 </p>
+
                 <p>
                     © <span id="fullyear">{{ current_year }}</span> Mazen Saad.
                     All rights reserved.

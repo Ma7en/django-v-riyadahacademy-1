@@ -2701,6 +2701,7 @@ class PublicLoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data  # Extract the validated user
             user_data = serializers.UserSerializer(user).data
+            user_profile = ""
 
             # Step 2: 
             if not user.is_verified:
