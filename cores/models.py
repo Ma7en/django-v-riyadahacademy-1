@@ -419,6 +419,12 @@ class QuestionInCourse(models.Model):
 # *** Coupon Course *** #
 class CouponCourse(models.Model):
     """Coupon model for course discounts"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='coupon_course',
+    )
+
     name = models.CharField(max_length=1_000, unique=True)  
     discount = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(100)]
@@ -623,8 +629,14 @@ class TeacherStudentChat(models.Model):
 
 # ->
 class LessonInCourseCompletion(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    lesson = models.ForeignKey(LessonInCourse, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+    )
+    lesson = models.ForeignKey(
+        LessonInCourse, 
+        on_delete=models.CASCADE,
+    )
 
     is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -642,8 +654,14 @@ class LessonInCourseCompletion(models.Model):
 
 
 class CourseProgress(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+    )
+    course = models.ForeignKey(
+        Course, 
+        on_delete=models.CASCADE,
+    )
 
     progress_percentage = models.FloatField(default=0)
     last_updated = models.DateTimeField(auto_now=True)

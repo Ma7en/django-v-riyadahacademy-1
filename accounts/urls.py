@@ -98,6 +98,8 @@ urlpatterns = [
         views.AdminConfirmResetPasswordView.as_view(),
         name="admin-confirm-reset-password",
     ),
+
+
     # ================================================================
     # *** 2) Teacher *** #
     # (Registration)
@@ -184,6 +186,8 @@ urlpatterns = [
         views.TeacherConfirmResetPasswordView.as_view(),
         name="teacher-confirm-reset-password",
     ),
+
+
     # ================================================================
     # *** 3) Staff *** #
     # (Registration)
@@ -270,6 +274,8 @@ urlpatterns = [
         views.StaffConfirmResetPasswordView.as_view(),
         name="staff-confirm-reset-password",
     ),
+
+    
     # ================================================================
     # *** 4) Student *** #
     # (Registration)

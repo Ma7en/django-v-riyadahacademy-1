@@ -10,7 +10,7 @@ from . import models
 
 # ******************************************************************************
 # ==============================================================================
-# *** Course *** #
+# *** Category & Section *** #
 admin.site.register(models.CategorySection)
 admin.site.register(models.SectionCourse)
 
@@ -49,7 +49,7 @@ admin.site.register(models.StudentFavoriteCourse)
 
 # ******************************************************************************
 # ==============================================================================
-# *** Student Course *** #
+# *** Teacher Student Chat *** #
 admin.site.register(models.TeacherStudentChat)
 
 
@@ -61,6 +61,7 @@ admin.site.register(models.TeacherStudentChat)
 # ==============================================================================
 # *** Student Progress Course *** #
 admin.site.register(models.LessonInCourseCompletion)
+admin.site.register(models.CourseProgress)
 
 
 
@@ -69,7 +70,7 @@ admin.site.register(models.LessonInCourseCompletion)
 
 # ******************************************************************************
 # ==============================================================================
-# *** Student Progress Course *** #
+# *** Student Certificate *** #
 admin.site.register(models.StudentCertificate)
 
 
