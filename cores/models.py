@@ -575,10 +575,12 @@ class TeacherStudentChat(models.Model):
     teacher = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='teacher_chats'
     )
     student=models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='student_chats'
     )
 
     msg_to=models.TextField()
@@ -735,7 +737,7 @@ class QuestionBank(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='question_bank',
+        related_name='question_banks',
     )
     section = models.ForeignKey(
         SectionCourse, 
@@ -850,7 +852,7 @@ class StudentQuestionBankResult(models.Model):
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE,
-        related_name='question_bank',
+        related_name='student_question_bank_results',
     )
     question_bank = models.ForeignKey(
         QuestionBank, 

@@ -28,16 +28,16 @@ class CategorySectionSerializer(serializers.ModelSerializer):
         model = models.CategorySection
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
-        super(CategorySectionSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-            print('Method is POST')
-            self.Meta.depth = 0
-            print(self.Meta.depth)
-        else:
-            print(f"Method is - {request.method}")
-            self.Meta.depth = 2
+    # def __init__(self, *args, **kwargs):
+    #     super(CategorySectionSerializer, self).__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #         print('Method is POST')
+    #         self.Meta.depth = 0
+    #         print(self.Meta.depth)
+    #     else:
+    #         print(f"Method is - {request.method}")
+    #         self.Meta.depth = 2
 
 
 
@@ -55,16 +55,16 @@ class SectionCourseSerializer(serializers.ModelSerializer):
         model = models.SectionCourse
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
-        super(SectionCourseSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-            print('Method is POST')
-            self.Meta.depth = 0
-            print(self.Meta.depth)
-        else:
-            print(f"Method is - {request.method}")
-            self.Meta.depth = 2
+    # def __init__(self, *args, **kwargs):
+    #     super(SectionCourseSerializer, self).__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #         print('Method is POST')
+    #         self.Meta.depth = 0
+    #         print(self.Meta.depth)
+    #     else:
+    #         print(f"Method is - {request.method}")
+    #         self.Meta.depth = 2
 
 
 
@@ -107,24 +107,25 @@ class SectionInCourseSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     
-    section_course = SectionCourseSerializer(read_only=True)
+    # section_course = SectionCourseSerializer(read_only=True)
+    # section_course = SectionCourseSerializer(read_only=True, context={'request': None})
+    
     sections = SectionInCourseSerializer(many=True, read_only=True)
 
-    sections_count = serializers.IntegerField(read_only=True)
-    # students_count = serializers.IntegerField(read_only=True)
+    sections_count = serializers.IntegerField(read_only=True) 
     lessons_count = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = models.Course
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method in ['POST', 'PUT', 'PATCH']:
-            self.Meta.depth = 0
-        else:
-            self.Meta.depth = 2
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method in ['POST', 'PUT', 'PATCH']:
+    #         self.Meta.depth = 0
+    #     else:
+    #         self.Meta.depth = 2
 
     # def __init__(self, *args, **kwargs):
     #         super(CourseSerializer, self).__init__(*args, **kwargs)
@@ -182,23 +183,23 @@ class CouponCourseSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Student Course Enroll *** #
 class StudentCourseEnrollSerializer(serializers.ModelSerializer):
-    student = serializers.UserSerializer(read_only=True)
+    student = UserSerializer(read_only=True)
     course = CourseSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.StudentCourseEnrollment
         fields = '__all__'
 
-    def __init__(self, *args, **kwargs):
-        super(StudentCourseEnrollSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-            print('Method is POST')
-            self.Meta.depth = 0
-            print(self.Meta.depth)
-        else:
-            print(f"Method is - {request.method}")
-            self.Meta.depth = 2
+    # def __init__(self, *args, **kwargs):
+    #     super(StudentCourseEnrollSerializer, self).__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #         print('Method is POST')
+    #         self.Meta.depth = 0
+    #         print(self.Meta.depth)
+    #     else:
+    #         print(f"Method is - {request.method}")
+    #         self.Meta.depth = 2
 
 
 
@@ -216,16 +217,16 @@ class CourseRatingSerializer(serializers.ModelSerializer):
         model = models.CourseRating
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
-        super(CourseRatingSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-            print('Method is POST')
-            self.Meta.depth = 0
-            print(self.Meta.depth)
-        else:
-            print(f"Method is - {request.method}")
-            self.Meta.depth = 2
+    # def __init__(self, *args, **kwargs):
+    #     super(CourseRatingSerializer, self).__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #         print('Method is POST')
+    #         self.Meta.depth = 0
+    #         print(self.Meta.depth)
+    #     else:
+    #         print(f"Method is - {request.method}")
+    #         self.Meta.depth = 2
 
 
 
@@ -241,16 +242,16 @@ class StudentFavoriteCourseSerializer(serializers.ModelSerializer):
         model = models.StudentFavoriteCourse
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
-        super(StudentFavoriteCourseSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-            print('Method is POST')
-            self.Meta.depth = 0
-            print(self.Meta.depth)
-        else:
-            print(f"Method is - {request.method}")
-            self.Meta.depth = 2
+    # def __init__(self, *args, **kwargs):
+    #     super(StudentFavoriteCourseSerializer, self).__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #         print('Method is POST')
+    #         self.Meta.depth = 0
+    #         print(self.Meta.depth)
+    #     else:
+    #         print(f"Method is - {request.method}")
+    #         self.Meta.depth = 2
 
 
 
@@ -264,16 +265,16 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
         model = models.TeacherStudentChat
         fields = "__all__"
 
-    def __init__(self, *args, **kwargs):
-        super(TeacherStudentChatSerializer, self).__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-            print('Method is POST')
-            self.Meta.depth = 0
-            print(self.Meta.depth)
-        else:
-            print(f"Method is - {request.method}")
-            self.Meta.depth = 3
+    # def __init__(self, *args, **kwargs):
+    #     super(TeacherStudentChatSerializer, self).__init__(*args, **kwargs)
+    #     request = self.context.get('request')
+    #     if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #         print('Method is POST')
+    #         self.Meta.depth = 0
+    #         print(self.Meta.depth)
+    #     else:
+    #         print(f"Method is - {request.method}")
+    #         self.Meta.depth = 3
 
     def to_representation(self,instance):
         representation = super(TeacherStudentChatSerializer, self).to_representation(instance)
@@ -485,7 +486,7 @@ class StudentQuestionBankAnswerSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** ContactUs *** #
 class ContactUsUserSerializer(serializers.ModelSerializer):
-    user = serializers.UserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     slug = serializers.SlugField(read_only=True)
 
     class Meta:
@@ -501,7 +502,7 @@ class ContactUsUserSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Review *** #
 class ReviewUserSerializer(serializers.ModelSerializer):
-    user = serializers.UserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     slug = serializers.SlugField(read_only=True)
 
     class Meta:
