@@ -1,6 +1,9 @@
 venv
 __pycache__
 .idea/
+.idea
+.idea#
+.idea/*
 media/chat-audio
 media/chat-images
 *.sqlite3

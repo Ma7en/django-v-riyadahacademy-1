@@ -1,5 +1,8 @@
 # 
 import random
+import requests
+import uuid
+
 
 
 # 
@@ -9,6 +12,22 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.flatpages.models import FlatPage
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.conf import settings
+from django.core.files.base import ContentFile
+
+
+
+# 
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+
+
+# 
+from io import BytesIO
+from datetime import datetime
 
 
 # 
@@ -25,27 +44,33 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
 )
 
+
+
 # 
-from cores import models
-from cores import serializer
+from . import models
+from . import serializer
 
 
 
 # Create your views here.
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Pagination *** #
 class StandardResultSetPagination(PageNumberPagination):
     page_size=8
     page_size_query_param='page_size'
-    max_page_size=1
+    max_page_size = 100
 
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Category Section *** #
 class CategorySectionList(generics.ListCreateAPIView):
     queryset = models.CategorySection.objects.all()
@@ -61,8 +86,10 @@ class CategorySectionPK(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Section Course *** #
 class SectionCourseList(generics.ListCreateAPIView):
     queryset = models.SectionCourse.objects.all()
@@ -76,8 +103,10 @@ class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Course *** #
 class CourseList(generics.ListCreateAPIView):
     # queryset = models.Course.objects.all()
@@ -104,10 +133,6 @@ class CoursePK(generics.RetrieveUpdateDestroyAPIView):
             return models.Course.objects.all()
         else:
             return models.Course.objects.filter(user=user)
-
-
-
-
 
 
 class CourseListAPI(generics.ListCreateAPIView):
@@ -143,50 +168,315 @@ class CourseListAPI(generics.ListCreateAPIView):
 
 
 
+class CourseListCreate(generics.ListCreateAPIView):
+    serializer_class = serializer.CourseSerializer
+    pagination_class = StandardResultSetPagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return models.Course.objects.all()
+        return models.Course.objects.filter(user=user)
+
+
+class CourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializer.CourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return models.Course.objects.all()
+        return models.Course.objects.filter(user=user)
+    
+
+class PublicCourseList(generics.ListAPIView):
+    serializer_class = serializer.CourseSerializer
+    pagination_class = StandardResultSetPagination
+    
+    def get_queryset(self):
+        queryset = models.Course.objects.filter(is_hidden=False)
+        
+        # # Filter by category
+        # category = self.request.query_params.get('category')
+        # if category:
+        #     queryset = queryset.filter(category__id=category)
+
+        # Filter by section
+        section = self.request.query_params.get('section')
+        if section:
+            queryset = queryset.filter(section__id=section)
+        
+        # Filter by level
+        level = self.request.query_params.get('level')
+        if level:
+            queryset = queryset.filter(level=level)
+        
+        # Search
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | 
+                Q(description__icontains=search))
+        
+        return queryset
+
+
+
+# *** Section In Course *** #
 class SectionInCourseList(generics.ListCreateAPIView):
     queryset = models.SectionInCourse.objects.all()
     serializer_class = serializer.SectionInCourseSerializer
+
 
 class SectionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.SectionInCourse.objects.all()
     serializer_class = serializer.SectionInCourseSerializer
 
 
+class SectionInCourseListCreate(generics.ListCreateAPIView):
+    serializer_class = serializer.SectionInCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        course_id = self.kwargs.get('course_id')
+        return models.SectionInCourse.objects.filter(course__id=course_id)
+
+    def perform_create(self, serializer):
+        course_id = self.kwargs.get('course_id')
+        course = models.Course.objects.get(id=course_id)
+        serializer.save(course=course)
 
 
-class ItemInCourseList(generics.ListCreateAPIView):
-    queryset = models.ItemInCourse.objects.all()
-    serializer_class = serializer.ItemInCourseSerializer
+class SectionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializer.SectionInCourseSerializer
+    permission_classes = [IsAuthenticated]
 
-class ItemInCoursePK(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.ItemInCourse.objects.all()
-    serializer_class = serializer.ItemInCourseSerializer
+    def get_queryset(self):
+        course_id = self.kwargs.get('course_id')
+        return models.SectionInCourse.objects.filter(course__id=course_id)
+    
 
 
 
 
+
+# *** Lesson In Course *** #
+class LessonInCourseList(generics.ListCreateAPIView):
+    queryset = models.LessonInCourse.objects.all()
+    serializer_class = serializer.LessonInCourseSerializer
+
+
+class LessonInCoursePK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.LessonInCourse.objects.all()
+    serializer_class = serializer.LessonInCourseSerializer
+
+
+
+class LessonInCourseListCreate(generics.ListCreateAPIView):
+    serializer_class = serializer.LessonInCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        section_id = self.kwargs.get('section_id')
+        return models.LessonInCourse.objects.filter(section__id=section_id)
+
+    def perform_create(self, serializer):
+        section_id = self.kwargs.get('section_id')
+        section = models.SectionInCourse.objects.get(id=section_id)
+        serializer.save(section=section)
+
+
+class LessonInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializer.LessonInCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        section_id = self.kwargs.get('section_id')
+        return models.LessonInCourse.objects.filter(section__id=section_id)
+
+
+class LessonCreateView(generics.CreateAPIView):
+    queryset = models.LessonInCourse.objects.all()
+    serializer_class = serializer.LessonInCourseSerializer
+
+    def create(self, request, *args, **kwargs):
+        section_id = kwargs.get('section_id')
+        section = models.SectionInCourse.objects.get(id=section_id)
+        
+        data = request.data.copy()
+        data['section'] = section.id
+        
+        # Handle video file upload if present
+        if 'video_file' in request.FILES:
+            data['video_file'] = request.FILES['video_file']
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Handle files and questions if provided
+        lesson = serializer.instance
+        
+        # Process files
+        if 'files' in request.FILES:
+            files = request.FILES.getlist('files')
+            for file in files:
+                models.FileInCourse.objects.create(
+                    lesson=lesson,
+                    name=file.name,
+                    file=file,
+                    size=file.size,
+                    file_type=file.content_type
+                )
+        
+        # Process questions (for assessments)
+        if data.get('type') == 'assessment' and 'questions' in data:
+            questions_data = data.get('questions', [])
+            for question_data in questions_data:
+                models.QuestionInCourse.objects.create(
+                    lesson=lesson,
+                    question_type=question_data.get('question_type'),
+                    text=question_data.get('text'),
+                    image_url=question_data.get('image_url'),
+                    options=question_data.get('options', []),
+                    correct_answer=question_data.get('correct_answer', 0)
+                )
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+
+
+
+
+# *** File In Course *** #
 class FileInCourseList(generics.ListCreateAPIView):
     queryset = models.FileInCourse.objects.all()
     serializer_class = serializer.FileInCourseSerializer
+
 
 class FileInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.FileInCourse.objects.all()
     serializer_class = serializer.FileInCourseSerializer
 
 
+class FileInCourseListCreate(generics.ListCreateAPIView):
+    serializer_class = serializer.FileInCourseSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        lesson_id = self.kwargs.get('lesson_id')
+        return models.FileInCourse.objects.filter(lesson__id=lesson_id)
+
+    def perform_create(self, serializer):
+        lesson_id = self.kwargs.get('lesson_id')
+        lesson = models.LessonInCourse.objects.get(id=lesson_id)
+        serializer.save(lesson=lesson)
+
+
+class FileInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializer.FileInCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        lesson_id = self.kwargs.get('lesson_id')
+        return models.FileInCourse.objects.filter(lesson__id=lesson_id)
     
+
+class FileInCourseCreateView(generics.CreateAPIView):
+    queryset = models.FileInCourse.objects.all()
+    serializer_class = serializer.FileInCourseSerializer
+
+    def create(self, request, *args, **kwargs):
+        lesson_id = kwargs.get('lesson_id')
+        lesson = models.LessonInCourse.objects.get(id=lesson_id)
+        
+        # Handle multiple file uploads
+        files = request.FILES.getlist('files')
+        created_files = []
+        
+        for file in files:
+            file_data = {
+                'lesson': lesson.id,
+                'name': file.name,
+                'file': file,
+                'size': file.size,
+                'file_type': file.content_type,
+            }
+            
+            serializer = self.get_serializer(data=file_data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            created_files.append(serializer.data)
+        
+        return Response(created_files, status=status.HTTP_201_CREATED)
+
+
+
+
+
+# *** Question In Course *** #
 class QuestionInCourseList(generics.ListCreateAPIView):
     queryset = models.QuestionInCourse.objects.all()
     serializer_class = serializer.QuestionInCourseSerializer
+
 
 class QuestionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.QuestionInCourse.objects.all()
     serializer_class = serializer.QuestionInCourseSerializer
 
 
+class QuestionInCourseListCreate(generics.ListCreateAPIView):
+    serializer_class = serializer.QuestionInCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        lesson_id = self.kwargs.get('lesson_id')
+        return models.QuestionInCourse.objects.filter(lesson__id=lesson_id)
+
+    def perform_create(self, serializer):
+        lesson_id = self.kwargs.get('lesson_id')
+        lesson = models.LessonInCourse.objects.get(id=lesson_id)
+        serializer.save(lesson=lesson)
 
 
+class QuestionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializer.QuestionInCourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        lesson_id = self.kwargs.get('lesson_id')
+        return models.QuestionInCourse.objects.filter(lesson__id=lesson_id)
+
+
+class QuestionCreateView(generics.CreateAPIView):
+    queryset = models.QuestionInCourse.objects.all()
+    serializer_class = serializer.QuestionInCourseSerializer
+
+    def create(self, request, *args, **kwargs):
+        lesson_id = kwargs.get('lesson_id')
+        lesson = models.LessonInCourse.objects.get(id=lesson_id)
+        
+        # Handle multiple questions
+        questions_data = request.data if isinstance(request.data, list) else [request.data]
+        created_questions = []
+        
+        for question_data in questions_data:
+            question_data['lesson'] = lesson.id
+            
+            # Handle image file upload if present
+            if 'image_file' in request.FILES:
+                question_data['image_file'] = request.FILES['image_file']
+            
+            serializer = self.get_serializer(data=question_data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            created_questions.append(serializer.data)
+        
+        return Response(created_questions, status=status.HTTP_201_CREATED)
+    
 
 
 
@@ -216,8 +506,10 @@ class QuestionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Coupon Course *** #
 class CouponCourseList(generics.ListCreateAPIView):
     queryset = models.CouponCourse.objects.all()
@@ -246,8 +538,66 @@ class CouponCourseSearch(generics.ListCreateAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Course Payment Checkout *** #
+class CourseCreateCheckoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        course_id = request.data.get("course_id")
+        course = models.Course.objects.get(id=course_id)
+
+        url = f"{settings.HYPERPAY_BASE_URL}/v1/checkouts"
+        data = {
+            'entityId': settings.HYPERPAY_ENTITY_ID,
+            'amount': str(course.price),
+            'currency': 'SAR',
+            'paymentType': 'DB',
+        }
+        headers = {
+            'Authorization': f"Bearer {settings.HYPERPAY_ACCESS_TOKEN}"
+        }
+        response = requests.post(url, data=data, headers=headers)
+        return Response(response.json())
+
+class CoursePaymentResultView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        resource_path = request.GET.get('resourcePath')
+        course_id = request.GET.get('course_id')
+
+        url = f"{settings.HYPERPAY_BASE_URL}{resource_path}"
+        headers = {
+            'Authorization': f"Bearer {settings.HYPERPAY_ACCESS_TOKEN}"
+        }
+        response = requests.get(url, headers=headers)
+        result = response.json()
+
+        if result.get("result", {}).get("code") == "000.100.110":  # successful payment
+            models.StudentCourseEnrollment.objects.get_or_create(
+                user=request.user,
+                course_id=course_id,
+                defaults={"payment_id": result.get("id")}
+            )
+            return Response({
+                "status": "success", 
+                "message": "Enrollment recorded"
+                })
+        return Response({
+            "status": "failed", 
+            "message": "Payment not successful"
+            })
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Student Enroll Course *** #
 class StudentEnrollCourseList(generics.ListCreateAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
@@ -313,8 +663,10 @@ class EnrolledStuentList(generics.ListCreateAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Course Rating ***
 class CourseRatingList(generics.ListCreateAPIView):
     queryset = models.CourseRating.objects.all()
@@ -362,8 +714,10 @@ def fetch_rating_status(request,student_id,course_id):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Student Favorite Course ***
 class StudentFavoriteCourseList(generics.ListCreateAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
@@ -404,8 +758,10 @@ def remove_favorite_course(request,course_id,student_id):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Teacher Student Chat ***
 class TeacherStudentChatList(generics.ListCreateAPIView):
     queryset = models.TeacherStudentChat.objects.all()
@@ -472,8 +828,220 @@ def GroupTeacherStudentChatBot(request,teacher_id):
 
 
 
-# *****************************************************************
-# =================================================================
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Progress Course *** #
+class TrackLessonProgressView(APIView):
+    # permission_classes = [IsAuthenticated]
+    
+    def post(self, request, lesson_id):
+        try:
+            lesson = models.LessonInCourse.objects.get(id=lesson_id)
+            completion, created = models.LessonInCourseCompletion.objects.get_or_create(
+                user=request.user,
+                lesson=lesson
+            )
+            
+            if not completion.is_completed:
+                completion.is_completed = True
+                completion.completed_at = timezone.now()
+                completion.save()
+            
+            # Update course progress
+            course_progress, _ = models.CourseProgress.objects.get_or_create(
+                user=request.user,
+                course=lesson.section.course
+            )
+            course_progress.update_progress()
+            
+            return Response({
+                'status': 'success',
+                'message': 'Lesson progress updated',
+                'progress': course_progress.progress_percentage
+            })
+        
+        except models.LessonInCourse.DoesNotExist:
+            return Response({'error': 'Lesson not found'}, status=404)
+
+
+class GetUserProgressView(APIView):
+    # permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        courses_progress = models.CourseProgress.objects.filter(user=request.user)
+        serializer = serializer.CourseProgressSerializer(courses_progress, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Certificate ***
+def student_generate_certificate(request, enrollment_id):
+    enrollment = models.StudentCourseEnrollment.objects.get(id=enrollment_id)
+    
+    # تحقق من أن الطالب قد أكمل الكورس
+    # if not enrollment.completed:
+    #     return HttpResponse("Course not completed yet", status=400)
+    
+    # إنشاء PDF في الذاكرة
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    
+    # إعداد الصفحة
+    width, height = A4
+    
+    # إضافة خلفية (اختياري)
+    # p.drawImage("path/to/certificate_template.jpg", 0, 0, width=width, height=height)
+    
+    # إضافة محتوى الشهادة
+    p.setFont("Helvetica-Bold", 24)
+    p.drawCentredString(width/2, height-150, "شهادة إنجاز")
+    
+    p.setFont("Helvetica", 18)
+    p.drawCentredString(width/2, height-200, "تعلن منصة الريادة بأن")
+    
+    p.setFont("Helvetica-Bold", 20)
+    p.drawCentredString(width/2, height-250, f"{enrollment.student.get_full_name()}")
+    
+    p.setFont("Helvetica", 16)
+    p.drawCentredString(width/2, height-300, "قد أكمل بنجاح دورة")
+    
+    p.setFont("Helvetica-Bold", 18)
+    p.drawCentredString(width/2, height-350, f"{enrollment.course.title}")
+    
+    p.setFont("Helvetica", 14)
+    p.drawCentredString(width/2, height-400, f"بتاريخ: {enrollment.completion_date.strftime('%Y-%m-%d')}")
+    
+    p.setFont("Helvetica", 12)
+    p.drawCentredString(width/2, 100, f"رقم الشهادة: {enrollment.certificate_id}")
+    
+    # حفظ PDF
+    p.showPage()
+    p.save()
+    
+    buffer.seek(0)
+    
+    # إنشاء response
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="certificate_{enrollment.certificate_id}.pdf"'
+    
+    return response
+
+
+class StudentGenerateCertificateView(APIView):
+    # permission_classes = [IsAuthenticated]
+    
+    def post(self, request, course_id):
+        try:
+            course = models.Course.objects.get(id=course_id)
+            user = request.user
+            
+            # تحقق من إكمال الكورس
+            # progress = CourseProgress.objects.filter(user=user, course=course).first()
+            # if not progress or progress.progress_percentage < 100:
+            #     return Response(
+            #         {'error': 'Course not completed yet'}, 
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
+            
+            # تحقق من وجود شهادة مسبقة
+            if models.StudentCertificate.objects.filter(user=user, course=course).exists():
+                certificate = models.StudentCertificate.objects.get(user=user, course=course)
+                serializer = serializer.StudentCertificateSerializer(certificate)
+                return Response(serializer.data)
+            
+            # إنشاء شهادة جديدة
+            buffer = BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+            
+            # تصميم الشهادة
+            p.setFont("Helvetica-Bold", 24)
+            p.drawCentredString(width/2, height-150, "Certificate of Completion")
+            
+            p.setFont("Helvetica", 16)
+            p.drawCentredString(width/2, height-200, f"This is to certify that")
+            
+            p.setFont("Helvetica-Bold", 20)
+            p.drawCentredString(width/2, height-240, user.get_full_name())
+            
+            p.setFont("Helvetica", 16)
+            p.drawCentredString(width/2, height-280, f"has successfully completed the course")
+            
+            p.setFont("Helvetica-Bold", 18)
+            p.drawCentredString(width/2, height-320, course.title)
+            
+            p.setFont("Helvetica", 14)
+            p.drawCentredString(width/2, height-360, f"Issued on: {datetime.now().strftime('%B %d, %Y')}")
+            
+            p.setFont("Helvetica", 10)
+            p.drawCentredString(width/2, height-400, f"Verification Code: {str(uuid.uuid4().hex)[:16].upper()}")
+            
+            p.showPage()
+            p.save()
+            
+            # حفظ ملف PDF
+            buffer.seek(0)
+            pdf_content = ContentFile(buffer.getvalue())
+            
+            certificate = models.StudentCertificate(
+                user=user,
+                course=course,
+                completion_date=datetime.now()
+            )
+            certificate.certificate_pdf.save(
+                f"certificate_{user.id}_{course.id}.pdf", 
+                pdf_content
+            )
+            certificate.save()
+            
+            # إنشاء رابط للشهادة
+            certificate_url = request.build_absolute_uri(certificate.certificate_pdf.url)
+            certificate.certificate_url = certificate_url
+            certificate.save()
+            
+            serializer = serializer.StudentCertificateSerializer(certificate)
+            return Response(serializer.data)
+            
+        except models.Course.DoesNotExist:
+            return Response(
+                {'error': 'Course not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class StudentCertificatesView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        certificates = models.StudentCertificate.objects.filter(user=request.user)
+        serializer = serializer.StudentCertificateSerializer(certificates, many=True)
+        return Response(serializer.data)
+
+
+class StudentVerifyCertificateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request, verification_code):
+        try:
+            certificate = models.StudentCertificate.objects.get(verification_code=verification_code)
+            serializer = serializer.StudentCertificateSerializer(certificate)
+            return Response(serializer.data)
+        except models.StudentCertificate.DoesNotExist:
+            return Response(
+                {
+                    'error': 'Invalid verification code'
+                }, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Question Bank ***
 class QuestionBankList(generics.ListCreateAPIView):
     # queryset = models.QuestionBank.objects.all()
@@ -725,61 +1293,81 @@ class StudentQuestionBankResultSaveView(APIView):
     
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** ContactUs ***
 # (List of contact us -> [GET, POST])
 class ContactUsListAPIView(generics.ListCreateAPIView):
@@ -813,8 +1401,10 @@ class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Review ***
 # (List of review -> [GET, POST])
 class ReviewUserListAPIView(generics.ListCreateAPIView):
@@ -846,8 +1436,10 @@ class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
         
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***
 # # class CategoryListView(generics.ListCreateAPIView):
 # #     queryset = models.Category.objects.all()
@@ -948,6 +1540,8 @@ class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  ***

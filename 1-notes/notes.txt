@@ -120,7 +120,18 @@ implementation 'androidx.appcompat:appcompat:1.6.1'
 
 https://chatgpt.com/share/68272897-be18-8011-a901-afe471960a5d
 
+
+certificate
+
 https://chatgpt.com/share/68276198-6968-8011-9c81-a5b21192869d
+
+
+
+->
+https://chat.deepseek.com/a/chat/s/9c128bcf-0dc7-4058-a8d2-ef99f712b125
+
+https://chat.deepseek.com/a/chat/s/dbc1ff5e-4331-45e6-ae55-a5909be77011
+
 
 
 me

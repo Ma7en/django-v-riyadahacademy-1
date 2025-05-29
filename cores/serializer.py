@@ -12,8 +12,10 @@ from cores import models
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Category Section *** #
 class CategorySectionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,8 +37,10 @@ class CategorySectionSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Section Course *** #
 class SectionCourseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,8 +62,10 @@ class SectionCourseSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Course *** #
 class QuestionInCourseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -73,17 +79,17 @@ class FileInCourseSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ItemInCourseSerializer(serializers.ModelSerializer):
+class LessonInCourseSerializer(serializers.ModelSerializer):
     files = FileInCourseSerializer(many=True, read_only=True)
     questions = QuestionInCourseSerializer(many=True, read_only=True)
 
     class Meta:
-        model = models.ItemInCourse
+        model = models.LessonInCourse
         fields = "__all__"
 
 
 class SectionInCourseSerializer(serializers.ModelSerializer):
-    items = ItemInCourseSerializer(many=True, read_only=True)
+    items = LessonInCourseSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.SectionInCourse
@@ -91,7 +97,9 @@ class SectionInCourseSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    section_course = SectionCourseSerializer(read_only=True)
     sections = SectionInCourseSerializer(many=True, read_only=True)
+
     sections_count = serializers.IntegerField(read_only=True)
     # students_count = serializers.IntegerField(read_only=True)
     lessons_count = serializers.IntegerField(read_only=True)
@@ -101,23 +109,33 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def __init__(self, *args, **kwargs):
-            super(CourseSerializer, self).__init__(*args, **kwargs)
-            request = self.context.get('request')
-            if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
-                print('Method is POST')
-                self.Meta.depth = 0
-                print(self.Meta.depth)
-            else:
-                print(f"Method is - {request.method}")
-                self.Meta.depth = 2
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method in ['POST', 'PUT', 'PATCH']:
+            self.Meta.depth = 0
+        else:
+            self.Meta.depth = 2
+
+    # def __init__(self, *args, **kwargs):
+    #         super(CourseSerializer, self).__init__(*args, **kwargs)
+    #         request = self.context.get('request')
+    #         if request and request.method == 'POST' or request.method == 'PUT' or request.method == 'PATCH':
+    #             print('Method is POST')
+    #             self.Meta.depth = 0
+    #             print(self.Meta.depth)
+    #         else:
+    #             print(f"Method is - {request.method}")
+    #             self.Meta.depth = 2
 
 
 
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  *** #
 class CouponCourseSerializer(serializers.ModelSerializer):
     """Serializer for Coupon model (admin view)"""
@@ -127,8 +145,10 @@ class CouponCourseSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  *** #
 # class TeacherDashboardSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -145,8 +165,9 @@ class CouponCourseSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+# ******************************************************************************
+# ==============================================================================
 # *** Student Course Enroll *** #
 class StudentCourseEnrollSerializer(serializers.ModelSerializer):        
         class Meta:
@@ -167,8 +188,10 @@ class StudentCourseEnrollSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Course Rating *** #
 class CourseRatingSerializer(serializers.ModelSerializer):
         class Meta:
@@ -188,8 +211,9 @@ class CourseRatingSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+# ******************************************************************************
+# ==============================================================================
 # *** Student Favorite Course *** #
 class StudentFavoriteCourseSerializer(serializers.ModelSerializer):
         class Meta:
@@ -209,8 +233,10 @@ class StudentFavoriteCourseSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Teacher Student Chat *** #
 class TeacherStudentChatSerializer(serializers.ModelSerializer):
     class Meta :
@@ -235,8 +261,78 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Progress Course *** #
+# class StudentProgressSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = models.StudentProgressCourse
+#         fields = '__all__'
+
+# class CourseProgressSerializer(serializers.ModelSerializer):
+#     progress = serializers.SerializerMethodField()
+    
+#     class Meta:
+#         model = models.Course
+#         fields = ['id', 'title', 'progress']
+    
+#     def get_progress(self, obj):
+#         user = self.context['request'].user
+#         progress = models.StudentProgressCourse.objects.filter(user=user, course=obj).aggregate(
+#             avg_progress=models.Avg('progress_percentage')
+#         )
+#         return progress['avg_progress'] or 0
+
+
+# ->
+class LessonInCourseCompletionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.LessonInCourseCompletion
+        fields = "__all__"
+
+class CourseProgressSerializer(serializers.ModelSerializer):
+    course_title = serializers.CharField(source='course.title', read_only=True)
+    course_image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = models.CourseProgress
+        fields = "__all__"
+    
+    def get_course_image(self, obj):
+        request = self.context.get('request')
+        if obj.course.image:
+            return request.build_absolute_uri(obj.course.image.url)
+        return None
+    
+
+
+
+    
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Certificate *** #
+class StudentCertificateSerializer(serializers.ModelSerializer):
+    enrollment = StudentCourseEnrollSerializer(many=True, read_only=True)
+
+    course_title = serializers.CharField(source='enrollment.course.title', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = models.StudentCertificate
+        fields = "__all__"
+    
+    def get_user_name(self, obj):
+        return obj.user.get_full_name()
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Questions Banks *** #
 class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
     class Meta:
@@ -338,8 +434,10 @@ class StudentQuestionBankSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** ContactUs *** #
 class ContactUsUserSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
@@ -351,8 +449,10 @@ class ContactUsUserSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Review *** #
 class ReviewUserSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
@@ -364,8 +464,10 @@ class ReviewUserSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  *** #
 # class CategoryPostSerializer(serializers.ModelSerializer):
 #     slug = serializers.SlugField(read_only=True)
@@ -428,6 +530,8 @@ class ReviewUserSerializer(serializers.ModelSerializer):
 
 
 
-# *****************************************************************
-# =================================================================
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  *** #

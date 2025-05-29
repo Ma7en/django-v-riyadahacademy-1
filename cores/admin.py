@@ -13,18 +13,65 @@ from . import models
 # *** Course *** #
 admin.site.register(models.CategorySection)
 admin.site.register(models.SectionCourse)
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Course *** #
 admin.site.register(models.Course)
 admin.site.register(models.SectionInCourse)
-admin.site.register(models.ItemInCourse)
+admin.site.register(models.LessonInCourse)
 admin.site.register(models.FileInCourse)
 admin.site.register(models.QuestionInCourse)
-admin.site.register(models.Course)
 
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Coupon Course *** #
+admin.site.register(models.CouponCourse)
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Course *** #
 admin.site.register(models.StudentCourseEnrollment)
 admin.site.register(models.CourseRating)
 admin.site.register(models.StudentFavoriteCourse)
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Course *** #
 admin.site.register(models.TeacherStudentChat)
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Progress Course *** #
+admin.site.register(models.LessonInCourseCompletion)
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Progress Course *** #
+admin.site.register(models.StudentCertificate)
+
 
 
 
@@ -61,6 +108,8 @@ class QuestionBankAdmin(admin.ModelAdmin):
 admin.site.register(models.QuestionBank, QuestionBankAdmin)
 admin.site.register(models.QuestionInBank, QuestionAdmin)
 admin.site.register(models.ChoiceQuestionInBank)
+admin.site.register(models.StudentQuestionBankResult)
+admin.site.register(models.StudentQuestionBankAnswer)
 
 
 
@@ -70,6 +119,7 @@ admin.site.register(models.ChoiceQuestionInBank)
 # *** Contact & Review *** #
 admin.site.register(models.ContactUsUser)
 admin.site.register(models.ReviewUser)
+
 
 
 

@@ -100,9 +100,95 @@ urlpatterns = [
     ),
     path(
         'search-courses/<str:searchstring>/', 
-        views.CourseList.as_view(),
+        views.CourseListAPI.as_view(),
         name="course-list-search",
     ),
+
+
+    # Course URLs
+    path(
+        'courses/', 
+        views.CourseListCreate.as_view(), 
+        name='course-list',
+    ),
+    path(
+        'courses/<int:pk>/', 
+        views.CourseRetrieveUpdateDestroy.as_view(), 
+        name='course-detail',
+    ),
+    path(
+        'public/courses/', 
+        views.PublicCourseList.as_view(), 
+        name='public-course-list',
+    ),
+
+    
+    # Section URLs (nested under courses)
+    path(
+        'courses/<int:course_id>/sections/', 
+        views.SectionInCourseListCreate.as_view(), 
+        name='section-list',
+    ),
+    path(
+        'courses/<int:course_id>/sections/<int:pk>/', 
+        views.SectionInCourseRetrieveUpdateDestroy.as_view(), 
+        name='section-detail',
+    ),
+
+    
+    # Lesson URLs (nested under sections)
+    path(
+        'sections/<int:section_id>/lessons/', 
+        views.LessonInCourseListCreate.as_view(), 
+        name='lesson-list',
+    ),
+    path(
+        'sections/<int:section_id>/lessons/<int:pk>/', 
+        views.LessonInCourseRetrieveUpdateDestroy.as_view(), 
+        name='lesson-detail',
+    ),
+    path(
+        'sections/<int:section_id>/lessons/', 
+        views.LessonCreateView.as_view(), 
+        name='lesson-create',
+    ),
+    
+
+    # File URLs (nested under lessons)
+    path(
+        'lessons/<int:lesson_id>/files/', 
+        views.FileInCourseListCreate.as_view(), 
+        name='lesson-file-list',
+    ),
+    path(
+        'lessons/<int:lesson_id>/files/<int:pk>/', 
+        views.FileInCourseRetrieveUpdateDestroy.as_view(), 
+        name='lesson-file-detail',
+    ),
+    path(
+        'lessons/<int:lesson_id>/files/', 
+        views.FileInCourseCreateView.as_view(), 
+        name='lesson-file-create',
+    ),
+
+    
+    # Question URLs (nested under lessons)
+    path(
+        'lessons/<int:lesson_id>/questions/', 
+        views.QuestionInCourseListCreate.as_view(), 
+        name='question-list',
+    ),
+    path(
+        'lessons/<int:lesson_id>/questions/<int:pk>/', 
+        views.QuestionInCourseRetrieveUpdateDestroy.as_view(), 
+        name='question-detail',
+    ),
+    path(
+        'lessons/<int:lesson_id>/questions/', 
+        views.QuestionCreateView.as_view(), 
+        name='question-create',
+    ),
+
     
     # =================================================================
     # ***  *** #
@@ -126,6 +212,19 @@ urlpatterns = [
         name="coupon-course-search",
     ),
     
+
+    # =================================================================
+    # *** Course Payment Checkout *** #
+    path(
+        'create-checkout/', 
+        views.CourseCreateCheckoutView.as_view(), 
+        name='create-checkout',
+    ),
+    path(
+        'payment-result/', 
+        views.CoursePaymentResultView.as_view(), 
+        name='payment-result',
+    ),
 
     # =================================================================
     # *** Student Enroll Course *** #
@@ -271,6 +370,43 @@ urlpatterns = [
         'send-group-message-teacher-student-chat/<int:teacher_id>/', 
         views.GroupTeacherStudentChatBot, 
         name="Group-Chat-Bot",
+    ),
+
+    # ================================================================
+    # *** ) Student Progress Course *** #
+    path(
+        'track-progress/<int:lesson_id>/', 
+        views.TrackLessonProgressView.as_view(), 
+        name='track-progress',
+    ),
+    path(
+        'user-progress/', 
+        views.GetUserProgressView.as_view(), 
+        name='user-progress',
+    ),
+
+    # ================================================================
+    # *** ) Student Certificate *** #
+    path(
+        'certificate/<int:enrollment_id>/', 
+        views.student_generate_certificate, 
+        name='generate_certificate',
+    ),
+
+    path(
+        'certificates/generate/<int:course_id>/', 
+        views.StudentGenerateCertificateView.as_view(), 
+        name='generate-certificate'
+    ),
+    path(
+        'certificates/my-certificates/', 
+        views.StudentCertificatesView.as_view(), 
+        name='user-certificates'
+    ),
+    path(
+        'certificates/verify/<str:verification_code>/', 
+        views.StudentVerifyCertificateView.as_view(), 
+        name='verify-certificate'
     ),
 
     # ================================================================

@@ -22,3 +22,17 @@ pip install Pillow
 ```
 
 
+```
+pip install reportlab
+```
+
+
+
+
+
+
+
+
+
+
+

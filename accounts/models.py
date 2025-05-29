@@ -146,7 +146,9 @@ class AdminProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي"
+        verbose_name="رقم الجوال السعودي",
+        null=True, 
+        blank=True,
     )
     age = models.PositiveIntegerField(
         null=True,
@@ -155,7 +157,7 @@ class AdminProfile(models.Model):
 
     
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     # class Meta:
     #     """
@@ -225,14 +227,16 @@ class TeacherProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي"
+        verbose_name="رقم الجوال السعودي",
+        null=True, 
+        blank=True,
     )
     age = models.PositiveIntegerField(
         null=True,
         blank=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     # class Meta:
     #     """
@@ -304,14 +308,16 @@ class StaffProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي"
+        verbose_name="رقم الجوال السعودي",
+        null=True, 
+        blank=True,
     )
     age = models.PositiveIntegerField(
         null=True,
         blank=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     # class Meta:
     #     """
@@ -360,7 +366,7 @@ class StudentProfile(models.Model):
         null=True, 
         blank=True,
     )
-    
+
     # phone_number = models.CharField(
     #     max_length=11,
     #     validators=[
@@ -381,7 +387,9 @@ class StudentProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي"
+        verbose_name="رقم الجوال السعودي",
+        null=True, 
+        blank=True,
     )
 
     age = models.PositiveIntegerField(
@@ -389,7 +397,7 @@ class StudentProfile(models.Model):
         blank=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     # class Meta:
     #     """
@@ -422,7 +430,7 @@ class OneTimeOTP(models.Model):
         # unique=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     def is_expired(self):
         expiry_time = self.created_at + timedelta(minutes=10)

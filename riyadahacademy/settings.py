@@ -23,13 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b&hbm751*d@*(x2_c4g$)!r52a@@wpw@&^9+())1pkf!24437t'
+# SECURITY WARNING: keep the secret key used in production secret! 
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-b&hbm751*d@*(x2_c4g$)!r52a@@wpw@&^9+())1pkf!24437t')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
 #
+# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 ALLOWED_HOSTS = ["*"]
 
 
@@ -148,11 +150,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 #
 AUTH_USER_MODEL = "accounts.User"
 CORS_ALLOW_ALL_ORIGINS = True
 
+# CORS settings
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:5174').split(',')
+# CORS_ALLOWED_ORIGINS = ["*"]
+CORS_ALLOW_CREDENTIALS = True
 
 # 
 X_FRAME_OPTIONS = 'ALLOWALL'
@@ -160,21 +168,25 @@ XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
 
 
 
-# smtp google
+# =====================================================================================
+# SMTP Google
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_HOST = "smtp.gmail.com"
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = "m9ee9m@gmail.com"
-# EMAIL_HOST_PASSWORD = "mpqxfsllvcoldawc"
+# EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER, "m9ee9m@gmail.com")
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+# FROM_EMAIL = os.getenv("FROM_EMAIL", "m9ee9m@gmail.com")
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-# FROM_EMAIL = "m9ee9m@gmail.com"
 
 
-# smtp localhost
+# =====================================================================================
+# SMTP Localhost
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 1025
 DEFAULT_FROM_EMAIL = "no-reply@localhost"
 FROM_EMAIL = "no-reply@localhost"
 EMAIL_HOST_USER = "no-reply@localhost"
+
+

@@ -1,5 +1,7 @@
 #
 import shortuuid
+import json
+
 
 
 #
@@ -46,14 +48,16 @@ class CategorySection(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        verbose_name_plural="2. Categories Sections"
 
     def total_section_course(self):
         return SectionCourse.objects.filter(category=self).count()
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="2. Categories Sections"
 
     def __str__(self) :
         return f"{self.id}): ({self.title})"
@@ -103,17 +107,18 @@ class SectionCourse(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural="3. Section Course"
 
     def total_course(self):
         return Course.objects.filter(section=self).count()
 
     def total_question_bank(self):
         return QuestionBank.objects.filter(section=self).count()
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="3. Section Course"
 
     def __str__(self):
         return f"{self.id}): ({self.title})"
@@ -140,15 +145,30 @@ class Course(models.Model):
         on_delete=models.CASCADE, 
         related_name='section_course',
     )
+    
+    LEVEL_CHOICES = [
+        ('beginner', 'مبتدئ'),
+        ('intermediate', 'متوسط'),
+        ('advanced', 'متقدم'),
+    ]
+    level = models.CharField(
+        max_length=1_000, 
+        null=True, 
+        blank=True,
+    )
 
     title = models.CharField(max_length=1_000)
     description = models.TextField(max_length=10_000, null=True, blank=True)
-    image = models.ImageField(upload_to="courses/images", null=True, blank=True)
+    image = models.ImageField(upload_to="course/images", null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
     duration = models.CharField(max_length=100, null=True, blank=True)
 
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=0)
+    reviews_count = models.PositiveIntegerField(default=0)
+    students_count = models.PositiveIntegerField(default=0)
     
     # 
     # lesson_count = models.PositiveIntegerField(default=0)
@@ -160,7 +180,6 @@ class Course(models.Model):
     # reviews_count = models.PositiveIntegerField(default=0)
     
     language = models.CharField(max_length=1_000, null=True, blank=True)
-    level = models.CharField(max_length=1_000, null=True, blank=True)
     tag = models.TextField(max_length=1_000, null=True, blank=True)
     techs = models.TextField(max_length=10_000, null=True, blank=True)
 
@@ -171,24 +190,34 @@ class Course(models.Model):
 
     is_hidden = models.BooleanField(default=False)
 
+    last_updated = models.CharField(max_length=100, null=True, blank=True)
+
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name_plural = "4. Courses"
 
     def teach_list(self):
         teach_list = self.techs.split(',')
         return teach_list
 
+
     def total_section(self):
         return SectionInCourse.objects.filter(course=self).count()
-    
+
+
+    def total_lesson(self):
+        return LessonInCourse.objects.filter(section__course=self).count()
+
+
+    def lessons_count(self):
+        return sum(section.items.count() for section in self.sections.all())
+
+
     def total_enrolled_students(self):
         return StudentCourseEnrollment.objects.filter(course=self).count()
-    
+
+
     def course_rating(self):
         course_rating = CourseRating.objects.filter(course=self).aggregate(avg_rating=models.Avg('rating'))
         return course_rating['avg_rating']
@@ -196,30 +225,42 @@ class Course(models.Model):
     @property
     def sections_count(self):
         return self.sections.count()
-    
-    # def total_item(self):
-    #     return Item.objects.filter(section__course=self).count()
 
+    # 
+    # old code 
+    # @property
+    # def lessons_count(self):
+    #     count = 0
+    #     for section in self.sections.all():
+    #         count += section.items.count()
+    #     return count
     @property
     def lessons_count(self):
-        count = 0
-        for section in self.sections.all():
-            count += section.items.count()
-        return count
+        return sum(section.items.count() for section in self.sections.all())
+    
 
     # @property
     # def students_count(self):
     #     return self.student_progress.count()
     
+    # 
+    # old code
+    # @property
+    # def price_after_discount(self):
+    #     """Calculate original price before discount"""
+    #     if self.discount > 0:
+    #         original = self.price - self.discount
+    #         return original
+    #     return self.price
     @property
     def price_after_discount(self):
-        """Calculate original price before discount"""
-        if self.discount > 0:
-            original = self.price - self.discount
-            return original
-        return self.price
+        return self.price - self.discount
     
-    
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "4. Courses"
+
     def __str__(self):
         return f"{self.id}): ({self.title})"
 
@@ -227,9 +268,6 @@ class Course(models.Model):
         if self.slug == "" or self.slug is None:
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
         super(Course, self).save(*args, **kwargs)
-
-
- 
 
 
 class SectionInCourse(models.Model):
@@ -244,70 +282,82 @@ class SectionInCourse(models.Model):
     is_hidden = models.BooleanField(default=True)
     is_free = models.BooleanField(default=False)
 
+    order = models.PositiveIntegerField(default=0)
+
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ['order']
         verbose_name_plural = "5. Section"
     
-    def total_item(self):
-        return ItemInCourse.objects.filter(section=self).count()
+    def total_lesson(self):
+        return LessonInCourse.objects.filter(section=self).count()
 
     def __str__(self):
         return f"{self.id}): ({self.title})"
 
 
-class ItemInCourse(models.Model):
+class LessonInCourse(models.Model):
     section = models.ForeignKey(
         SectionInCourse,
         on_delete=models.CASCADE,
-        related_name='section_item',
+        related_name='section_lesson',
     )
 
-    ITEM_TYPES = (
+    LESSON_TYPES = (
         ('video', 'Video'),
         ('assessment', 'Assessment'),
         ('document', 'Document'),
     )
-    type = models.CharField(max_length=1_000, choices=ITEM_TYPES)
+    type = models.CharField(max_length=1_000, choices=LESSON_TYPES)
    
     title = models.CharField(max_length=1_000)
     duration = models.CharField(max_length=1_000, null=True, blank=True)
     description = models.TextField(max_length=10_000, null=True, blank=True)
 
-    # For video items
-    video_file = models.FileField(upload_to="courses/videos", null=True, blank=True)
+    # For video lessons
+    video_file = models.FileField(upload_to="course/lesson/videos", null=True, blank=True)
     video_url = models.URLField(null=True, blank=True)
+
+    # For document lessons
+    content = models.TextField(max_length=10_000, null=True, blank=True)
 
     is_hidden = models.BooleanField(default=True)
     is_free = models.BooleanField(default=False)
 
+    order = models.PositiveIntegerField(default=0)
+
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['order']
 
     def __str__(self):
-        return f"{self.id}): ({self.title})"
+        return f"{self.id}): ({self.section.course.title}) - ({self.section.title}) - ({self.title})"
 
 
 class FileInCourse(models.Model):
-    item = models.ForeignKey(
-        ItemInCourse,
+    lesson = models.ForeignKey(
+        LessonInCourse,
         on_delete=models.CASCADE,
-        related_name='item_file',
+        related_name='lesson_file',
     )
 
-    title = models.CharField(max_length=255)
-    file = models.FileField(upload_to="courses/file", null=True, blank=True)
+    title = models.CharField(max_length=1_000)
+    file = models.FileField(upload_to="course/lesson/file", null=True, blank=True)
+    file_url = models.URLField(null=True, blank=True)
 
-    name = models.CharField(max_length=1_000)
-    size = models.PositiveIntegerField(default=0)
-    type = models.CharField(max_length=1_000)
+    name = models.CharField(max_length=1_000, null=True, blank=True)
+    size = models.PositiveIntegerField(default=0, null=True, blank=True)
+    type = models.CharField(max_length=1_000, null=True, blank=True)
     url = models.URLField(null=True, blank=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -315,35 +365,48 @@ class FileInCourse(models.Model):
 
 
 class QuestionInCourse(models.Model):
-    item = models.ForeignKey(
-        ItemInCourse,
+    lesson = models.ForeignKey(
+        LessonInCourse,
         on_delete=models.CASCADE,
-        related_name='item_question',
+        related_name='lesson_question',
     )
 
     QUESTION_TYPES = (
-        ('text', 'Text'),
-        ('image-url', 'Image URL'),
-        ('image-upload', 'Image Upload'),
+        ('text', 'نص'),
+        ('image-url', 'صورة من رابط'),
+        ('image-upload', 'صورة مرفوعة'),
     )
-    question_type = models.CharField(max_length=100, choices=QUESTION_TYPES)
+    question_type = models.CharField(
+        max_length=100, 
+        choices=QUESTION_TYPES,
+    )
     
     text = models.TextField(max_length=10_000, null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
-    image_file = models.ImageField(upload_to="courses/question", null=True, blank=True)
+    image_file = models.ImageField(upload_to="course/question/images", null=True, blank=True)
+
     # image_file = models.JSONField(null=True, blank=True)
+    
     options = models.JSONField(default=list)
     correct_answer = models.PositiveIntegerField(default=0)
     
+    order = models.PositiveIntegerField(default=0)
+    
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def get_options(self):
+        if isinstance(self.options, str):
+            return json.loads(self.options)
+        return self.options or []
+
     class Meta:
+        ordering = ['order']
         verbose_name_plural="6. Question"
 
     def __str__(self):
-        return f"{self.id}): ({self.text[:50]})"
+        return f"{self.id}): ({self.lesson.title}) - ({self.text[:50]})"
 
 
 
@@ -364,7 +427,7 @@ class CouponCourse(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
@@ -379,7 +442,7 @@ class CouponCourse(models.Model):
 # ==============================================================================
 # *** Student Course Enrollment *** #
 class StudentCourseEnrollment(models.Model):
-    student=models.ForeignKey(
+    student = models.ForeignKey(
         User,
         null=True,
         on_delete=models.CASCADE,
@@ -392,17 +455,24 @@ class StudentCourseEnrollment(models.Model):
         related_name='enrolled_courses',
     )
 
-    enrolled_time=models.DateTimeField(auto_now_add=True)
+    enrolled_time = models.DateTimeField(auto_now_add=True)
+
+    payment_id = models.CharField(max_length=1_000, null=True, blank=True)
     
+    completed = models.BooleanField(default=False)  # إضافة حقل للإكمال
+    completion_date = models.DateTimeField(null=True, blank=True)  # تاريخ الإكمال
+    certificate_id = models.UUIDField(default=uuid.uuid4, editable=False, null=True, blank=True) # unique=True
+
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta:        
+        ordering = ['-created_at']
         verbose_name_plural="6. Enrolled Courses"
 
     def __str__(self) :
-        return f"{self.id}): ({self.course})-({self.student})"
+        return f"{self.id}): ({self.course.title}) - ({self.student})"
 
 
 
@@ -444,7 +514,7 @@ class CourseRating(models.Model):
     
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:        
@@ -452,7 +522,7 @@ class CourseRating(models.Model):
         verbose_name_plural="7. Course Ratings"
 
     def __str__(self):
-        return f"{self.id}): ({self.course})-({self.student})-({self.rating})"
+        return f"{self.id}): ({self.course}) - ({self.student}) - ({self.rating})"
 
 
 
@@ -477,15 +547,15 @@ class StudentFavoriteCourse(models.Model):
 
     
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ['-created_at']
         verbose_name_plural="8. Student Favorite Course"
 
     def __str__(self):
-        return f"{self.id}): ({self.course})-({self.student})"
-
+        return f"{self.id}): ({self.course}) - ({self.student})"
 
 
 
@@ -510,18 +580,126 @@ class TeacherStudentChat(models.Model):
     msg_time=models.DateTimeField(auto_now_add=True)
     
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
          verbose_name_plural="17. ChatBot "
 
     def __str__(self):
-        return f"{self.id}): ({self.teacher})-({self.student})"
+        return f"{self.id}): ({self.teacher}) - ({self.student})"
 
 
 
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Progress Course *** #
+# class StudentProgressCourse(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress')
+#     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='user_progress')
+#     section = models.ForeignKey(SectionInCourse, on_delete=models.CASCADE, null=True, blank=True)
+#     lesson = models.ForeignKey(LessonInCourse, on_delete=models.CASCADE, null=True, blank=True)
+    
+#     # حالة الإكمال
+#     is_completed = models.BooleanField(default=False)
+#     completed_at = models.DateTimeField(null=True, blank=True)
+    
+#     # تتبع المشاهدة/القراءة
+#     progress_percentage = models.PositiveIntegerField(default=0)
+#     last_accessed = models.DateTimeField(auto_now=True)
+    
+#     class Meta:
+#         unique_together = ('user', 'course', 'lesson')
+#         ordering = ['-last_accessed']
+
+#     def __str__(self):
+#         return f"{self.user.email} - {self.course.title} ({self.progress_percentage}%)"
+
+
+
+# ->
+class LessonInCourseCompletion(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    lesson = models.ForeignKey(LessonInCourse, on_delete=models.CASCADE)
+
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    last_accessed = models.DateTimeField(auto_now=True)
+        
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        
+    def __str__(self):
+        return f"{self.user.email} - {self.lesson.title}"
+
+
+class CourseProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+
+    progress_percentage = models.FloatField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+        
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'course')
+        
+    def update_progress(self):
+        total_lessons = self.course.lessons_count()
+        completed_lessons = LessonInCourseCompletion.objects.filter(
+            user=self.user,
+            lesson__section__course=self.course,
+            is_completed=True
+        ).count()
+        
+        self.progress_percentage = (completed_lessons / total_lessons) * 100 if total_lessons > 0 else 0
+        self.save()
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Certificate *** #
+class StudentCertificate(models.Model):
+    enrollment = models.OneToOneField(
+        StudentCourseEnrollment,
+        on_delete=models.CASCADE,
+        related_name='certificate'
+    )
+
+    issued_at = models.DateTimeField(auto_now_add=True)
+    pdf_file = models.FileField(upload_to='course/certificates/', null=True, blank=True)
+    
+    certificate_url = models.URLField(null=True, blank=True)
+    verification_code = models.CharField(max_length=16, unique=True)
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def generate_verification_code(self):
+        return str(uuid.uuid4().hex)[:16].upper()
+
+    def __str__(self):
+        return f"{self.id}): ({self.enrollment.student}) - ({self.enrollment.course})"
+    
+    def save(self, *args, **kwargs):
+        if not self.verification_code:
+            self.verification_code = self.generate_verification_code()
+        super().save(*args, **kwargs)
 
 
 
@@ -551,11 +729,12 @@ class QuestionBank(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural="1) Questions Banks"
+    
+    
+    def total_question_in_bank(self):
+        return QuestionInBank.objects.filter(question_bank=self).count()
 
     @property
     def question_count(self):
@@ -567,10 +746,11 @@ class QuestionBank(models.Model):
             return self.image.url
         return self.image_url
     
-    
-    def total_question_in_bank(self):
-        return QuestionInBank.objects.filter(question_bank=self).count()
 
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="1) Questions Banks"
+    
     
     def __str__(self):
         return f"{self.id}): ({self.title})"
@@ -597,20 +777,21 @@ class QuestionInBank(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural="2) Question Bank"
 
     @property
     def display_image(self):
         if self.image:
             return self.image.url
         return self.image_url
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="2) Question Bank"
     
     def __str__(self):
-        return f"{self.id}): ({self.title[:50]})"
+        return f"{self.id}): ({self.text[:50]})"
     
 
 
@@ -631,14 +812,14 @@ class ChoiceQuestionInBank(models.Model):
     is_correct = models.BooleanField(default=False)
         
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name_plural="3) Choice Question Bank"
 
     def __str__(self):
-        return f"{self.id}): ({self.title[:30]})"
+        return f"{self.id}): ({self.text[:30]})"
 
 
 
@@ -661,7 +842,7 @@ class StudentQuestionBankResult(models.Model):
 
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
 
@@ -690,7 +871,7 @@ class StudentQuestionBankAnswer(models.Model):
     all_choices = models.JSONField(default=list)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -750,7 +931,9 @@ class ContactUsUser(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي"
+        verbose_name="رقم الجوال السعودي",
+        null=True, 
+        blank=True,
     )
 
     titleofmessage = models.CharField(max_length=1_000)
@@ -764,13 +947,14 @@ class ContactUsUser(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.id}): ({self.titleofmessage})"
     
     class Meta:
+        ordering = ['-created_at']
         verbose_name_plural = "11. ContactUs"
 
     def save(self, *args, **kwargs):
@@ -816,7 +1000,7 @@ class ReviewUser(models.Model):
     is_hidden = models.BooleanField(default=False)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -855,7 +1039,7 @@ class ReviewUser(models.Model):
 #     likes = models.ManyToManyField(User, related_name="likes_category", blank=True,)
 
 #     slug = models.SlugField(unique=True, null=True, blank=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 #     updated_at = models.DateTimeField(auto_now=True)
 
 #     def __str__(self):
@@ -884,7 +1068,7 @@ class ReviewUser(models.Model):
 #     views = models.PositiveIntegerField(default=0)
 #     likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
 
-#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 #     updated_at = models.DateTimeField(auto_now=True)
 
 #     def __str__(self):
@@ -897,7 +1081,7 @@ class ReviewUser(models.Model):
 #     text = models.TextField(max_length=10_000)
 #     likes = models.ManyToManyField(User, related_name='liked_comments', blank=True)
     
-#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 #     updated_at = models.DateTimeField(auto_now=True)
 
 #     def __str__(self):
@@ -910,7 +1094,7 @@ class ReviewUser(models.Model):
 #     text = models.TextField(max_length=10_000)
 #     likes = models.ManyToManyField(User, related_name='liked_replies', blank=True,)
     
-#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 #     updated_at = models.DateTimeField(auto_now=True)
 
 #     def __str__(self):
@@ -937,7 +1121,7 @@ class ReviewUser(models.Model):
 #     message = models.CharField(max_length=1_000)
 #     is_read = models.BooleanField(default=False)
     
-#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 #     updated_at = models.DateTimeField(auto_now=True)
 
 #     def __str__(self):
@@ -957,7 +1141,7 @@ class ReviewUser(models.Model):
 #     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reports',)
 #     details = models.TextField(blank=True, null=True)
     
-#     created_at = models.DateTimeField(auto_now_add=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 #     updated_at = models.DateTimeField(auto_now=True)
 
 #     def __str__(self):
