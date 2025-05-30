@@ -106,8 +106,10 @@ class QuestionBankAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description')
     list_filter = ('section',)
  
-admin.site.register(models.QuestionBank, QuestionBankAdmin)
-admin.site.register(models.QuestionInBank, QuestionAdmin)
+# admin.site.register(models.QuestionBank, QuestionBankAdmin)
+# admin.site.register(models.QuestionInBank, QuestionAdmin)
+admin.site.register(models.QuestionBank)
+admin.site.register(models.QuestionInBank)
 admin.site.register(models.ChoiceQuestionInBank)
 admin.site.register(models.StudentQuestionBankResult)
 admin.site.register(models.StudentQuestionBankAnswer)

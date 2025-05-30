@@ -11,6 +11,8 @@ from django.contrib.auth.hashers import check_password
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db.models import Q
+
 
 
 
@@ -23,6 +25,7 @@ from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response 
 from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
@@ -37,6 +40,21 @@ from rest_framework.permissions import (
 from . import models, serializers, utils
 # from . import validations
 
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** 0) Pagination *** #
+class StandardResultSetPagination(PageNumberPagination):
+    page_size=9
+    page_size_query_param='page_size'
+    max_page_size = 100
+
+
+class Space(generics.ListCreateAPIView):
+    pass
 
 
 
@@ -713,8 +731,24 @@ class AdminConfirmResetPasswordView(APIView):
         )
 
 
+class AdminsSearchList(generics.ListCreateAPIView):
+    queryset = models.User.objects.filter(is_admin=True)
+    # queryset = models.User.objects.all()
+    serializer_class = serializers.UserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
 
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                |Q(username__icontains=search)
+                |Q(email__icontains=search)
+                )
+        return qs
 
 
 
@@ -1384,6 +1418,25 @@ class TeacherConfirmResetPasswordView(APIView):
             status.HTTP_200_OK,
             teacher_data,
         )
+
+
+class TeachersSearchList(generics.ListCreateAPIView):
+    queryset = models.User.objects.filter(is_teacher=True)
+    serializer_class = serializers.UserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                |Q(username__icontains=search)
+                |Q(email__icontains=search)
+                )
+        return qs
 
 
 
@@ -2057,6 +2110,25 @@ class StaffConfirmResetPasswordView(APIView):
             status.HTTP_200_OK,
             staff_data,
         )
+
+
+class StaffsSearchList(generics.ListCreateAPIView):
+    queryset = models.User.objects.filter(is_staff=True)
+    serializer_class = serializers.UserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                |Q(username__icontains=search)
+                |Q(email__icontains=search)
+                )
+        return qs
 
 
 
@@ -2734,6 +2806,25 @@ class StudentConfirmResetPasswordView(APIView):
         )
 
 
+class StudentsSearchList(generics.ListCreateAPIView):
+    queryset = models.User.objects.filter(is_student=True)
+    serializer_class = serializers.UserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                |Q(username__icontains=search)
+                |Q(email__icontains=search)
+                )
+        return qs
+
+
 
 
 
@@ -2852,6 +2943,25 @@ class PublicIDView(APIView):
             status.HTTP_200_OK,
             user_data,
         )
+
+
+class PublicUserSearchList(generics.ListCreateAPIView):
+    queryset = models.User.objects.all()
+    serializer_class = serializers.UserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                |Q(username__icontains=search)
+                |Q(email__icontains=search)
+                )
+        return qs
 
 
 

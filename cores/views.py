@@ -60,11 +60,13 @@ from . import serializers
 # ==============================================================================
 # *** Pagination *** #
 class StandardResultSetPagination(PageNumberPagination):
-    page_size=8
+    page_size=9
     page_size_query_param='page_size'
     max_page_size = 100
 
 
+class Space(generics.ListCreateAPIView):
+    pass
 
 
 
@@ -76,15 +78,31 @@ class CategorySectionList(generics.ListCreateAPIView):
     queryset = models.CategorySection.objects.all()
     serializer_class = serializers.CategorySectionSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
 
 class CategorySectionPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CategorySection.objects.all()
     serializer_class = serializers.CategorySectionSerializer
+    # permission_classes = [IsAuthenticated]
 
 
+class CategorySectionSearchList(generics.ListCreateAPIView):
+    queryset = models.CategorySection.objects.all()
+    serializer_class = serializers.CategorySectionSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
 
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(title__icontains=search)
+                |Q(description__icontains=search)
+                )
+        return qs
 
 
 
@@ -95,12 +113,44 @@ class SectionCourseList(generics.ListCreateAPIView):
     queryset = models.SectionCourse.objects.all()
     serializer_class = serializers.SectionCourseSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
 
 class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.SectionCourse.objects.all()
     serializer_class = serializers.SectionCourseSerializer
+    # permission_classes = [IsAuthenticated]
 
+
+class SectionCourseCategoryList(generics.ListCreateAPIView):
+    # queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.SectionCourseSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        category_id = self.kwargs["pk"]
+        category = models.CategorySection.objects.get(id=category_id)
+        return models.SectionCourse.objects.filter(category=category)
+
+
+class SectionCourseSearchList(generics.ListCreateAPIView):
+    queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.SectionCourseSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(title__icontains=search)
+                |Q(description__icontains=search)
+                |Q(grade__icontains=search)
+                )
+        return qs
 
 
 
@@ -109,18 +159,23 @@ class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
 # ==============================================================================
 # *** Course *** #
 class CourseList(generics.ListCreateAPIView):
-    # queryset = models.Course.objects.all()
+    queryset = models.Course.objects.all()
     serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser:
-            return models.Course.objects.all()
-        else:
-            return models.Course.objects.filter(user=user)
+    # def get_queryset(self):
+    #     if getattr(self, 'swagger_fake_view', False):
+    #         return models.Course.objects.none()
+        
+    #     user = self.request.user
+    #     if user.is_superuser:
+    #         return models.Course.objects.all()
+    #     else:
+    #         return models.Course.objects.filter(user=user)
+        
 
+        
 
 class CoursePK(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.Course.objects.all()
@@ -128,7 +183,7 @@ class CoursePK(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-                # هذه السطر يحل مشكلة إنشاء schema
+        # هذه السطر يحل مشكلة إنشاء schema
         if getattr(self, 'swagger_fake_view', False):
             return models.Course.objects.none()
         
@@ -143,15 +198,16 @@ class CourseListAPI(generics.ListCreateAPIView):
     queryset = models.Course.objects.all()
     serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
         if 'result' in self.request.GET:
             limit = int(self.request.GET['result'])
-            qs = models.Course.objects.all().order_by('-id')[:limit]
+            qs = models.Course.objects.all().order_by('-id')#[:limit]
 
         if 'popular' in self.request.GET:
-            qs = models.Course.objects.all().order_by('-id')[:limit]
+            qs = models.Course.objects.all().order_by('-id')#[:limit]
 
         if 'category' in self.request.GET :
             category = self.request.GET['category']
@@ -162,11 +218,25 @@ class CourseListAPI(generics.ListCreateAPIView):
             skill_name = self.request.GET['skill_name']
             teacher = self.request.GET['teacher']
             teacher = models.User.objects.filter(id=teacher).first()
-            qs = models.Course.objects.filter(techs__icontains=skill_name,teacher=teacher)
+            qs = models.Course.objects.filter(techs__icontains=skill_name, teacher=teacher)
 
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring']
-            qs = models.Course.objects.filter(Q(title__icontains=search)|Q(title__icontains=search))
+            qs = qs.filter(
+                Q(level__icontains=search)
+                |Q(title__icontains=search)
+                |Q(description__icontains=search)
+                |Q(duration__icontains=search)
+                |Q(price__icontains=search)
+                |Q(discount__icontains=search)
+                |Q(rating__icontains=search)
+                |Q(language__icontains=search)
+                |Q(tag__icontains=search)
+                |Q(techs__icontains=search)
+                |Q(features__icontains=search)
+                |Q(requirements__icontains=search)
+                |Q(target_audience__icontains=search)
+                )
         
         return qs
 
@@ -175,7 +245,7 @@ class CourseListAPI(generics.ListCreateAPIView):
 class CourseListCreate(generics.ListCreateAPIView):
     serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -186,7 +256,7 @@ class CourseListCreate(generics.ListCreateAPIView):
 
 class CourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.CourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
                 # هذه السطر يحل مشكلة إنشاء schema
@@ -202,7 +272,8 @@ class CourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 class PublicCourseList(generics.ListAPIView):
     serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
-    
+    # permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         queryset = models.Course.objects.filter(is_visible=True)
         
@@ -245,7 +316,7 @@ class SectionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 class SectionInCourseListCreate(generics.ListCreateAPIView):
     serializer_class = serializers.SectionInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         course_id = self.kwargs.get('course_id')
@@ -259,7 +330,7 @@ class SectionInCourseListCreate(generics.ListCreateAPIView):
 
 class SectionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.SectionInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         course_id = self.kwargs.get('course_id')
@@ -284,7 +355,7 @@ class LessonInCoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 class LessonInCourseListCreate(generics.ListCreateAPIView):
     serializer_class = serializers.LessonInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         section_id = self.kwargs.get('section_id')
@@ -298,14 +369,14 @@ class LessonInCourseListCreate(generics.ListCreateAPIView):
 
 class LessonInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.LessonInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         section_id = self.kwargs.get('section_id')
         return models.LessonInCourse.objects.filter(section__id=section_id)
 
 
-class LessonCreateView(generics.CreateAPIView):
+class LessonInCourseCreateView(generics.CreateAPIView):
     queryset = models.LessonInCourse.objects.all()
     serializer_class = serializers.LessonInCourseSerializer
 
@@ -372,7 +443,7 @@ class FileInCoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 class FileInCourseListCreate(generics.ListCreateAPIView):
     serializer_class = serializers.FileInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         lesson_id = self.kwargs.get('lesson_id')
@@ -386,7 +457,7 @@ class FileInCourseListCreate(generics.ListCreateAPIView):
 
 class FileInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.FileInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         lesson_id = self.kwargs.get('lesson_id')
@@ -438,7 +509,7 @@ class QuestionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 class QuestionInCourseListCreate(generics.ListCreateAPIView):
     serializer_class = serializers.QuestionInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         lesson_id = self.kwargs.get('lesson_id')
@@ -452,7 +523,7 @@ class QuestionInCourseListCreate(generics.ListCreateAPIView):
 
 class QuestionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.QuestionInCourseSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         lesson_id = self.kwargs.get('lesson_id')
@@ -485,6 +556,20 @@ class QuestionCreateView(generics.CreateAPIView):
         
         return Response(created_questions, status=status.HTTP_201_CREATED)
     
+
+
+
+
+class CourseSectionList(generics.ListCreateAPIView):
+    # queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.CourseSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        section_id = self.kwargs["pk"]
+        section = models.SectionCourse.objects.get(id=section_id)
+        return models.Course.objects.filter(section=section)
 
 
 
@@ -523,23 +608,32 @@ class CouponCourseList(generics.ListCreateAPIView):
     queryset = models.CouponCourse.objects.all()
     serializer_class = serializers.CouponCourseSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
 
 class CouponCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CouponCourse.objects.all()
     serializer_class = serializers.CouponCourseSerializer
+    # permission_classes = [IsAuthenticated]
 
 
 class CouponCourseSearch(generics.ListCreateAPIView):
     queryset = models.CouponCourse.objects.all()
     serializer_class = serializers.CouponCourseSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if 'searchcoupon' in self.kwargs:
-            search = self.kwargs['searchcoupon']
-            coupon = models.CouponCourse.objects.get(name=search)
-            return coupon
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring']
+            # coupon = models.CouponCourse.objects.get(name=search)
+            qs = qs.filter(
+                Q(name__icontains=search)
+                |Q(discount__icontains=search)
+                )
+        return qs
 
 
 
@@ -552,7 +646,7 @@ class CouponCourseSearch(generics.ListCreateAPIView):
 # ==============================================================================
 # *** Course Payment Checkout *** #
 class CourseCreateCheckoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request):
         course_id = request.data.get("course_id")
@@ -571,8 +665,9 @@ class CourseCreateCheckoutView(APIView):
         response = requests.post(url, data=data, headers=headers)
         return Response(response.json())
 
+
 class CoursePaymentResultView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request):
         resource_path = request.GET.get('resourcePath')
@@ -611,11 +706,13 @@ class StudentEnrollCourseList(generics.ListCreateAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
     serializer_class = serializers.StudentCourseEnrollSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
 
 class StudentEnrollCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
     serializer_class = serializers.StudentCourseEnrollSerializer
+    # permission_classes = [IsAuthenticated]
 
 
 class EnrolledStuentPK(generics.RetrieveUpdateDestroyAPIView):
@@ -680,11 +777,13 @@ class CourseRatingList(generics.ListCreateAPIView):
     queryset = models.CourseRating.objects.all()
     serializer_class = serializers.CourseRatingSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
 
 class CourseRatingPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CourseRating.objects.all()
     serializer_class = serializers.CourseRatingSerializer
+    # permission_classes = [IsAuthenticated]
 
 
 
@@ -731,12 +830,13 @@ class StudentFavoriteCourseList(generics.ListCreateAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
     serializer_class = serializers.StudentFavoriteCourseSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
 
 class StudentFavoriteCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
     serializer_class = serializers.StudentFavoriteCourseSerializer
-
+    # permission_classes = [IsAuthenticated]
 
 
 
@@ -775,10 +875,13 @@ class TeacherStudentChatList(generics.ListCreateAPIView):
     queryset = models.TeacherStudentChat.objects.all()
     serializer_class = serializers.TeacherStudentChatSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
 
 class TeacherStudentChatPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.TeacherStudentChat.objects.all()
     serializer_class = serializers.TeacherStudentChatSerializer
+    # permission_classes = [IsAuthenticated]
 
 
 
@@ -1022,7 +1125,7 @@ class StudentGenerateCertificateView(APIView):
 
 
 class StudentCertificatesView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     
     def get(self, request):
         certificates = models.StudentCertificate.objects.filter(user=request.user)
@@ -1055,7 +1158,7 @@ class QuestionBankList(generics.ListCreateAPIView):
     # queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankListSerializer
     pagination_class = StandardResultSetPagination
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -1067,7 +1170,7 @@ class QuestionBankList(generics.ListCreateAPIView):
 class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankListSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # هذه السطر يحل مشكلة إنشاء schema
@@ -1308,6 +1411,21 @@ class StudentQuestionBankResultSaveView(APIView):
 
 
 
+class QuestionBankSectionList(generics.ListCreateAPIView):
+    # queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.QuestionBankListSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        section_id = self.kwargs["pk"]
+        section = models.SectionCourse.objects.get(id=section_id)
+        return models.QuestionBank.objects.filter(section=section)
+
+
+
+
+
 
 # ******************************************************************************
 # ==============================================================================
@@ -1327,7 +1445,7 @@ class ContactUsListAPIView(generics.ListCreateAPIView):
     # queryset = models.ContactUsUser.objects.all()
     serializer_class = serializers.ContactUsUserSerializer
     pagination_class = StandardResultSetPagination
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -1341,7 +1459,7 @@ class ContactUsListAPIView(generics.ListCreateAPIView):
 class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.ContactUsUser.objects.all()
     serializer_class = serializers.ContactUsUserSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
@@ -1355,7 +1473,25 @@ class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
             return models.ContactUsUser.objects.all()
 
 
+# 
+class ContactusUserSearchList(generics.ListCreateAPIView):
+    queryset = models.ContactUsUser.objects.all()
+    serializer_class = serializers.ContactUsUserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(full_name__icontains=search)
+                |Q(email__icontains=search)
+                |Q(titleofmessage__icontains=search)
+                |Q(message__icontains=search)
+                )
+        return qs
 
 
 
@@ -1368,7 +1504,7 @@ class ReviewUserListAPIView(generics.ListCreateAPIView):
     # queryset = models.ReviewUser.objects.all()
     serializer_class = serializers.ReviewUserSerializer
     pagination_class = StandardResultSetPagination
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -1382,7 +1518,7 @@ class ReviewUserListAPIView(generics.ListCreateAPIView):
 class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.ReviewUser.objects.all()
     serializer_class = serializers.ReviewUserSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
@@ -1396,7 +1532,25 @@ class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
             return models.ReviewUser.objects.all()
         
 
+# (List of review -> [GET])
+class ReviewUserListAPIView(generics.ListCreateAPIView):
+    queryset = models.ReviewUser.objects.all()
+    serializer_class = serializers.ReviewUserSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = models.ReviewUser.objects.filter(
+                Q(status__icontains=search)
+                |Q(first_name__icontains=search)
+                |Q(message__icontains=search)
+                |Q(rating__icontains=search)
+                )
+        return qs
 
 
 # ******************************************************************************

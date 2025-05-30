@@ -2,13 +2,19 @@ from django.urls import path, include
 from django.urls import path, include
 
 
+
 #
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
 
+
+
 #
-from cores import views
+from . import views
+
+
+
 
 # =================================================================
 # 
@@ -67,6 +73,18 @@ urlpatterns = [
         name="category-section-pk",
     ),
 
+    path(
+        'category-section/search/<str:searchstring>/', 
+        views.CategorySectionSearchList.as_view(),
+        name="category-section-search-list",
+    ),
+
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Section Course *** #
     path(
@@ -79,7 +97,26 @@ urlpatterns = [
         views.SectionCoursePK.as_view(),
         name="section-course-pk",
     ),
+
+    # (Category)
+    path(
+        "section-course/category/<int:pk>/",
+        views.SectionCourseCategoryList.as_view(),
+        name="section-course-category-pk",
+    ),
     
+    path(
+        'section-course/search/<str:searchstring>/', 
+        views.SectionCourseSearchList.as_view(),
+        name="section-course-search-list",
+    ),
+
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Course *** #
     path(
@@ -99,7 +136,7 @@ urlpatterns = [
         name="course-list-api",
     ),
     path(
-        'search-courses/<str:searchstring>/', 
+        'courses/search/<str:searchstring>/', 
         views.CourseListAPI.as_view(),
         name="course-list-search",
     ),
@@ -122,78 +159,168 @@ urlpatterns = [
         name='public-course-list',
     ),
 
-    
-    # Section URLs (nested under courses)
+        
+    # path(
+    #     'courses/search/<str:searchstring>/', 
+    #     views.CoursesSearchList.as_view(),
+    #     name="courses-search-list",
+    # ),
+
+   
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ), 
+    # Section In Course URLs (nested under courses)
+    path(
+        'courses/sections/list/', 
+        views.SectionInCourseList.as_view(), 
+        name='sections-in-course-list',
+    ),
+    path(
+        'courses/sections/<int:pk>/', 
+        views.SectionInCoursePK.as_view(), 
+        name='section-in-course-pk',
+    ),
+
     path(
         'courses/<int:course_id>/sections/', 
         views.SectionInCourseListCreate.as_view(), 
-        name='section-list',
+        name='section-in-course-list',
     ),
     path(
         'courses/<int:course_id>/sections/<int:pk>/', 
         views.SectionInCourseRetrieveUpdateDestroy.as_view(), 
-        name='section-detail',
+        name='section-in-course-detail',
     ),
 
-    
-    # Lesson URLs (nested under sections)
+   
+
+
     path(
-        'sections/<int:section_id>/lessons/', 
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ), 
+    # Lesson In Course URLs (nested under sections)
+    path(
+        'courses/sections/lessons/list/',
+        views.LessonInCourseList.as_view(), 
+        name='lesson-in-course-list',
+    ),
+    path(
+        'courses/sections/lessons/<int:pk>/',
+        views.LessonInCoursePK.as_view(), 
+        name='lesson-in-course-pk',
+    ),
+
+    path(
+        'courses/sections/list/<int:section_id>/lessons/', 
         views.LessonInCourseListCreate.as_view(), 
         name='lesson-list',
     ),
+
     path(
-        'sections/<int:section_id>/lessons/<int:pk>/', 
+        'courses/sections/<int:section_id>/lessons/<int:pk>/', 
         views.LessonInCourseRetrieveUpdateDestroy.as_view(), 
         name='lesson-detail',
     ),
     path(
-        'sections/<int:section_id>/lessons/', 
-        views.LessonCreateView.as_view(), 
+        'courses/sections/<int:section_id>/lessons/', 
+        views.LessonInCourseCreateView.as_view(), 
         name='lesson-create',
     ),
-    
 
-    # File URLs (nested under lessons)
+
     path(
-        'lessons/<int:lesson_id>/files/', 
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # File In Course URLs (nested under lessons)
+    path(
+        'courses/sections/lessons/files/list/', 
+        views.FileInCourseList.as_view(), 
+        name='lesson-file-in-course-list',
+    ),
+    path(
+        'courses/sections/lessons/files/<int:pk>/', 
+        views.FileInCoursePK.as_view(), 
+        name='lesson-file-in-course-pk',
+    ),
+
+    path(
+        'courses/sections/lessons/list/<int:lesson_id>/files/', 
         views.FileInCourseListCreate.as_view(), 
         name='lesson-file-list',
     ),
+
     path(
-        'lessons/<int:lesson_id>/files/<int:pk>/', 
+        'courses/sections/lessons/<int:lesson_id>/files/<int:pk>/', 
         views.FileInCourseRetrieveUpdateDestroy.as_view(), 
         name='lesson-file-detail',
     ),
     path(
-        'lessons/<int:lesson_id>/files/', 
+        'courses/sections/lessons/<int:lesson_id>/files/', 
         views.FileInCourseCreateView.as_view(), 
         name='lesson-file-create',
     ),
 
     
-    # Question URLs (nested under lessons)
     path(
-        'lessons/<int:lesson_id>/questions/', 
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # Question In Course URLs (nested under lessons)
+    path(
+        'courses/sections/lessons/questions/list/', 
+        views.QuestionInCourseList.as_view(), 
+        name='question-in-cours-list',
+    ),
+    path(
+        'courses/sections/lessons/questions/<int:pk>/', 
+        views.QuestionInCoursePK.as_view(), 
+        name='question-in-cours-pk',
+    ),
+
+    path(
+        'courses/sections/lessons/list/<int:lesson_id>/questions/', 
         views.QuestionInCourseListCreate.as_view(), 
         name='question-list',
     ),
+
     path(
-        'lessons/<int:lesson_id>/questions/<int:pk>/', 
+        'courses/sections/lessons/<int:lesson_id>/questions/<int:pk>/', 
         views.QuestionInCourseRetrieveUpdateDestroy.as_view(), 
         name='question-detail',
     ),
     path(
-        'lessons/<int:lesson_id>/questions/', 
+        'courses/sections/lessons/<int:lesson_id>/questions/', 
         views.QuestionCreateView.as_view(), 
         name='question-create',
     ),
 
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # (Section)
+    path(
+        "course/section-course/<int:pk>/",
+        views.CourseSectionList.as_view(),
+        name="course-section-course-pk",
+    ),
     
     # =================================================================
     # ***  *** #
     # path('courses/', include(router.urls)),
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Coupon Course *** #
     path(
@@ -206,13 +333,20 @@ urlpatterns = [
         views.CouponCoursePK.as_view(),
         name="coupon-course-pk",
     ),
+
+
     path(
-        "coupon-course/<str:searchcoupon>/",
+        "coupon-course/<str:searchstring>/",
         views.CouponCourseSearch.as_view(),
         name="coupon-course-search",
     ),
     
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Course Payment Checkout *** #
     path(
@@ -226,6 +360,12 @@ urlpatterns = [
         name='payment-result',
     ),
 
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Student Enroll Course *** #
     path(
@@ -277,6 +417,10 @@ urlpatterns = [
 
 
 
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Course Rating *** #
     path(
@@ -308,8 +452,19 @@ urlpatterns = [
         name="fetch-rating-status-student_id-course_id",
     ),
 
+        
+    # path(
+    #     'course-rating/search/<str:searchstring>/', 
+    #     views.CourseRatingSearchList.as_view(),
+    #     name="courses-rating-search-list",
+    # ),
 
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Student Favorite Course *** #
     path(
@@ -340,6 +495,19 @@ urlpatterns = [
         name="student-remove-favorite-course-course_id-student_id",
     ),
 
+    
+    # path(
+    #     'student-favorite-course/search/<str:searchstring>/', 
+    #     views.StudentFavoriteCourseSearchList.as_view(),
+    #     name="student-favorite-course-search-list",
+    # ),
+
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Teacher Student Chat *** #
     path(
@@ -372,6 +540,11 @@ urlpatterns = [
         name="Group-Chat-Bot",
     ),
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** ) Student Progress Course *** #
     path(
@@ -385,6 +558,11 @@ urlpatterns = [
         name='user-progress',
     ),
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** ) Student Certificate *** #
     path(
@@ -409,6 +587,11 @@ urlpatterns = [
         name='verify-certificate'
     ),
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** ) Questions Banks *** #
     path(
@@ -435,6 +618,31 @@ urlpatterns = [
         name='save-QuestionBank-results'
     ),
 
+    # path(
+    #     'question-bank/search/<str:searchstring>/', 
+    #     views.QuestionBankSearchList.as_view(),
+    #     name="question-bank-search-list",
+    # ),
+
+
+
+    
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # (Section)
+    path(
+        "question-bank/section-course/<int:pk>/",
+        views.QuestionBankSectionList.as_view(),
+        name="question-bank-section-course-pk",
+    ),
+    
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** 1) ContactUs *** #
     path(
@@ -448,6 +656,18 @@ urlpatterns = [
         name="contactus-details-pk",
     ),
 
+    path(
+        'contactus-user/search/<str:searchstring>/', 
+        views.ContactusUserSearchList.as_view(),
+        name="contactus-user-search-list",
+    ),
+
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** 2) Review *** #
     path(
@@ -461,6 +681,18 @@ urlpatterns = [
         name="review-user-details-pk",
     ),
     
+    # path(
+    #     'review-user/search/<str:searchstring>/', 
+    #     views.ReviewUserSearchList.as_view(),
+    #     name="review-user-search-list",
+    # ),
+
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** 2) Review *** #
     # path('category/', views.CategoryListView.as_view(), name='category-list',),

@@ -10,6 +10,10 @@ from accounts import views
 
 
 urlpatterns = [
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** User auths API Endpoints *** #
     # ================================================================
@@ -105,7 +109,17 @@ urlpatterns = [
         name="admin-confirm-reset-password",
     ),
 
+    path(
+        'admins/search/<str:searchstring>/', 
+        views.AdminsSearchList.as_view(),
+        name="admins-search-list",
+    ),
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** 2) Teacher *** #
     # (Registration)
@@ -200,6 +214,17 @@ urlpatterns = [
     ),
 
 
+    path(
+        'teachers/search/<str:searchstring>/', 
+        views.TeachersSearchList.as_view(),
+        name="teachers-search-list",
+    ),
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** 3) Staff *** #
     # (Registration)
@@ -293,7 +318,18 @@ urlpatterns = [
         name="staff-confirm-reset-password",
     ),
 
+    path(
+        'staffs/search/<str:searchstring>/', 
+        views.StaffsSearchList.as_view(),
+        name="staffs-search-list",
+    ),
+
+
     
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # ================================================================
     # *** 4) Student *** #
     # (Registration)
@@ -387,6 +423,18 @@ urlpatterns = [
         name="student-confirm-reset-password",
     ),
     
+    path(
+        'students/search/<str:searchstring>/', 
+        views.StudentsSearchList.as_view(),
+        name="students-search-list",
+    ),
+
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** 5) Public *** #
     # (Users)
@@ -413,13 +461,31 @@ urlpatterns = [
         views.PublicIDView.as_view(),
         name="public-user-id-api",
     ),
+    
+    path(
+        'public/user/search/<str:searchstring>/', 
+        views.PublicUserSearchList.as_view(),
+        name="public-user-search-list",
+    ),
 
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # (Token Refreshing)
     path(
         "token/refresh/",
         TokenRefreshView.as_view(),
         name="token_refresh",
+    ),
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
     ),
     # =================================================================
 ]

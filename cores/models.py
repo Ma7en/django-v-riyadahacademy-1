@@ -57,7 +57,7 @@ class CategorySection(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural="2. Categories Sections"
+        verbose_name_plural="1-1. Categories Sections"
 
     def __str__(self) :
         return f"{self.id}): ({self.title})"
@@ -118,7 +118,7 @@ class SectionCourse(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural="3. Section Course"
+        verbose_name_plural="1-2. Section Course"
 
     def __str__(self):
         return f"{self.id}): ({self.title})"
@@ -152,7 +152,8 @@ class Course(models.Model):
         ('advanced', 'متقدم'),
     ]
     level = models.CharField(
-        max_length=1_000, 
+        max_length=1_000,
+        # choices=LEVEL_CHOICES, # edithere
         null=True, 
         blank=True,
     )
@@ -190,7 +191,7 @@ class Course(models.Model):
 
     is_visible = models.BooleanField(default=True)
 
-    last_updated = models.CharField(max_length=100, null=True, blank=True)
+    last_updated = models.CharField(max_length=100, null=True, blank=True) # remove
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -210,10 +211,6 @@ class Course(models.Model):
         return LessonInCourse.objects.filter(section__course=self).count()
 
 
-    def lessons_count(self):
-        return sum(section.items.count() for section in self.sections.all())
-
-
     def total_enrolled_students(self):
         return StudentCourseEnrollment.objects.filter(course=self).count()
 
@@ -221,10 +218,6 @@ class Course(models.Model):
     def course_rating(self):
         course_rating = CourseRating.objects.filter(course=self).aggregate(avg_rating=models.Avg('rating'))
         return course_rating['avg_rating']
-    
-    @property
-    def sections_count(self):
-        return self.sections.count()
 
     # 
     # old code 
@@ -234,9 +227,9 @@ class Course(models.Model):
     #     for section in self.sections.all():
     #         count += section.items.count()
     #     return count
-    @property
-    def lessons_count(self):
-        return sum(section.items.count() for section in self.sections.all())
+    # @property
+    # def lessons_count(self):
+    #     return sum(section.items.count() for section in self.sections.all())
     
 
     # @property
@@ -252,14 +245,14 @@ class Course(models.Model):
     #         original = self.price - self.discount
     #         return original
     #     return self.price
-    @property
+    # @property
     def price_after_discount(self):
         return self.price - self.discount
     
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural = "4. Courses"
+        verbose_name_plural = "1-3. Courses"
 
     def __str__(self):
         return f"{self.id}): ({self.title})"
@@ -279,7 +272,7 @@ class SectionInCourse(models.Model):
 
     title = models.CharField(max_length=1_000)
 
-    is_visible = models.BooleanField(default=True)
+    is_visible = models.BooleanField(default=True) #
     is_free = models.BooleanField(default=False)
 
     order = models.PositiveIntegerField(default=0)
@@ -289,8 +282,8 @@ class SectionInCourse(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['order']
-        verbose_name_plural = "5. Section"
+        ordering = ['created_at']
+        verbose_name_plural = "1-4. Section In Course"
     
     def total_lesson(self):
         return LessonInCourse.objects.filter(section=self).count()
@@ -311,7 +304,10 @@ class LessonInCourse(models.Model):
         ('assessment', 'Assessment'),
         ('document', 'Document'),
     )
-    type = models.CharField(max_length=1_000, choices=LESSON_TYPES)
+    type = models.CharField(
+        max_length=1_000, 
+        choices=LESSON_TYPES,
+    )
    
     title = models.CharField(max_length=1_000)
     duration = models.CharField(max_length=1_000, null=True, blank=True)
@@ -324,7 +320,7 @@ class LessonInCourse(models.Model):
     # For document lessons
     content = models.TextField(max_length=10_000, null=True, blank=True)
 
-    is_visible = models.BooleanField(default=True)
+    is_visible = models.BooleanField(default=True) #
     is_free = models.BooleanField(default=False)
 
     order = models.PositiveIntegerField(default=0)
@@ -335,6 +331,7 @@ class LessonInCourse(models.Model):
     
     class Meta:
         ordering = ['order']
+        verbose_name_plural = "1-5. Lesson In Course"
 
     def __str__(self):
         return f"{self.id}): ({self.section.course.title}) - ({self.section.title}) - ({self.title})"
@@ -359,6 +356,10 @@ class FileInCourse(models.Model):
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural = "1-6. File In Course"
 
     def __str__(self):
         return f"{self.id}): ({self.name})"
@@ -402,8 +403,8 @@ class QuestionInCourse(models.Model):
         return self.options or []
 
     class Meta:
-        ordering = ['order']
-        verbose_name_plural="6. Question"
+        ordering = ['created_at']
+        verbose_name_plural="1-7. Question In Course"
 
     def __str__(self):
         return f"{self.id}): ({self.lesson.title}) - ({self.text[:50]})"
@@ -436,6 +437,10 @@ class CouponCourse(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        ordering = ['created_at']
+        verbose_name_plural="1-8. Coupon Course"
+
     def __str__(self):
         return f"{self.id}): ({self.name})"
 
@@ -475,7 +480,7 @@ class StudentCourseEnrollment(models.Model):
 
     class Meta:        
         ordering = ['-created_at']
-        verbose_name_plural="6. Enrolled Courses"
+        verbose_name_plural="1-9. Student Enrolled Courses"
 
     def __str__(self) :
         return f"{self.id}): ({self.course.title}) - ({self.student})"
@@ -525,7 +530,7 @@ class CourseRating(models.Model):
 
     class Meta:        
         ordering = ['-created_at']
-        verbose_name_plural="7. Course Ratings"
+        verbose_name_plural="1-10-. Course Ratings"
 
     def __str__(self):
         return f"{self.id}): ({self.course}) - ({self.student}) - ({self.rating})"
@@ -558,7 +563,7 @@ class StudentFavoriteCourse(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural="8. Student Favorite Course"
+        verbose_name_plural="1-11. Student Favorite Course"
 
     def __str__(self):
         return f"{self.id}): ({self.course}) - ({self.student})"
@@ -592,7 +597,7 @@ class TeacherStudentChat(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-         verbose_name_plural="17. ChatBot "
+        verbose_name_plural="1-12. Teacher Student ChatBot"
 
     def __str__(self):
         return f"{self.id}): ({self.teacher}) - ({self.student})"
@@ -650,6 +655,7 @@ class LessonInCourseCompletion(models.Model):
 
     class Meta:
         unique_together = ('user', 'lesson')
+        verbose_name_plural="1-14. Lesson In Course Completion"
         
     def __str__(self):
         return f"{self.user.email} - {self.lesson.title}"
@@ -674,7 +680,8 @@ class CourseProgress(models.Model):
 
     class Meta:
         unique_together = ('user', 'course')
-        
+        verbose_name_plural="1-13. Course Progress"
+         
     def update_progress(self):
         total_lessons = self.course.lessons_count()
         completed_lessons = LessonInCourseCompletion.objects.filter(
@@ -713,6 +720,9 @@ class StudentCertificate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta: 
+        verbose_name_plural="1-15. Student Certificate"
+         
     def generate_verification_code(self):
         return str(uuid.uuid4().hex)[:16].upper()
 
@@ -774,7 +784,7 @@ class QuestionBank(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural="1) Questions Banks"
+        verbose_name_plural="2-1) Questions Banks"
     
     
     def __str__(self):
@@ -813,7 +823,7 @@ class QuestionInBank(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural="2) Question Bank"
+        verbose_name_plural="2-2) Question In Bank"
     
     def __str__(self):
         return f"{self.id}): ({self.text[:50]})"
@@ -841,7 +851,7 @@ class ChoiceQuestionInBank(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural="3) Choice Question Bank"
+        verbose_name_plural="2-3) Choice Question In Bank"
 
     def __str__(self):
         return f"{self.id}): ({self.text[:30]})"
@@ -873,7 +883,9 @@ class StudentQuestionBankResult(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-    
+        verbose_name_plural="2-4) Student Question Bank Result"
+   
+
     def __str__(self):
         return f"{self.id}): ({self.user}) - ({self.question_bank})"
     
@@ -901,7 +913,8 @@ class StudentQuestionBankAnswer(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-    
+        verbose_name_plural="2-5) Student Question Bank Answer"
+   
     def __str__(self):
         return f"{self.id}): ({self.question_text})" 
 
@@ -980,7 +993,7 @@ class ContactUsUser(models.Model):
     
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural = "11. ContactUs"
+        verbose_name_plural = "3-1] ContactUs"
 
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug == None:
@@ -1033,7 +1046,7 @@ class ReviewUser(models.Model):
     
     class Meta:
         ordering = ['-created_at']
-        verbose_name_plural = "Review"
+        verbose_name_plural = "3-2] Review User"
 
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug == None:

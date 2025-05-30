@@ -22,12 +22,35 @@ from . import models
 # ==============================================================================
 # *** Category Section *** #
 class CategorySectionSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    slug = serializers.SlugField(read_only=True)
+
     class Meta:
         model = models.CategorySection
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
 
+            "user", 
+            
+            "title", 
+            "description", 
+            "image", 
+            "image_url", 
+            "is_visible", 
+            
+            "slug", 
+            "created_at",
+            "updated_at",
+            
+            "total_section_course",
+            ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
     # def __init__(self, *args, **kwargs):
     #     super(CategorySectionSerializer, self).__init__(*args, **kwargs)
     #     request = self.context.get('request')
@@ -49,11 +72,40 @@ class CategorySectionSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Section Course *** #
 class SectionCourseSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    category = serializers.PrimaryKeyRelatedField(queryset=models.CategorySection.objects.all()) 
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = models.SectionCourse
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+
+            "user", 
+            "category",
+            
+            "title",
+            "description",
+            "grade",
+            "image",
+            "image_url",
+            "is_visible", 
+            
+            "slug", 
+            "created_at",
+            "updated_at",
+
+            "total_course",
+            "total_question_bank",
+            ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['category'] = CategorySectionSerializer(instance.category).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
     # def __init__(self, *args, **kwargs):
     #     super(SectionCourseSerializer, self).__init__(*args, **kwargs)
@@ -76,12 +128,16 @@ class SectionCourseSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Course *** #
 class QuestionInCourseSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
+
     class Meta:
         model = models.QuestionInCourse
         fields = "__all__"
 
 
 class FileInCourseSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
+
     class Meta:
         model = models.FileInCourse
         fields = "__all__"
@@ -90,6 +146,7 @@ class FileInCourseSerializer(serializers.ModelSerializer):
 class LessonInCourseSerializer(serializers.ModelSerializer):
     files = FileInCourseSerializer(many=True, read_only=True)
     questions = QuestionInCourseSerializer(many=True, read_only=True)
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = models.LessonInCourse
@@ -97,7 +154,8 @@ class LessonInCourseSerializer(serializers.ModelSerializer):
 
 
 class SectionInCourseSerializer(serializers.ModelSerializer):
-    items = LessonInCourseSerializer(many=True, read_only=True)
+    # items = LessonInCourseSerializer(many=True, read_only=True)
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = models.SectionInCourse
@@ -105,19 +163,63 @@ class SectionInCourseSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    section = serializers.PrimaryKeyRelatedField(queryset=models.SectionCourse.objects.all())
+
     # section_course = SectionCourseSerializer(read_only=True)
     # section_course = SectionCourseSerializer(read_only=True, context={'request': None})
     
-    sections = SectionInCourseSerializer(many=True, read_only=True)
+    # sections = SectionInCourseSerializer(many=True, read_only=True)
 
-    sections_count = serializers.IntegerField(read_only=True) 
-    lessons_count = serializers.IntegerField(read_only=True)
+
+    slug = serializers.SlugField(read_only=True)
     
     class Meta:
         model = models.Course
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+            
+            "user",
+            "section",
+
+            "level",
+            "title",
+            "description",
+            "image",
+            "image_url",
+            "duration",
+            "price",
+            "discount",
+            "rating",
+            "reviews_count",
+            "students_count",
+            "language",
+            "tag",
+            "techs",
+            "features",
+            "requirements",
+            "target_audience",
+            "is_visible",
+
+            "slug",
+            "created_at",
+            "updated_at",
+
+            "teach_list",
+            "total_section",
+            "total_lesson",
+            "total_enrolled_students",
+            "course_rating",
+            "price_after_discount",
+        ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['section'] = SectionCourseSerializer(instance.section).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
     # def __init__(self, *args, **kwargs):
     #     super().__init__(*args, **kwargs)
@@ -150,12 +252,18 @@ class CourseSerializer(serializers.ModelSerializer):
 # *** Coupon Course *** #
 class CouponCourseSerializer(serializers.ModelSerializer):
     """Serializer for Coupon model (admin view)"""
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.CouponCourse
         fields = '__all__'
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
 
 
 
@@ -185,11 +293,18 @@ class CouponCourseSerializer(serializers.ModelSerializer):
 class StudentCourseEnrollSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
     course = CourseSerializer(many=True, read_only=True)
-
+  
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.StudentCourseEnrollment
         fields = '__all__'
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['student'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
     # def __init__(self, *args, **kwargs):
     #     super(StudentCourseEnrollSerializer, self).__init__(*args, **kwargs)
     #     request = self.context.get('request')
@@ -213,9 +328,17 @@ class CourseRatingSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
     course = CourseSerializer(many=True, read_only=True)
     
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.CourseRating
         fields = "__all__"
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['student'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
     # def __init__(self, *args, **kwargs):
     #     super(CourseRatingSerializer, self).__init__(*args, **kwargs)
@@ -238,10 +361,18 @@ class StudentFavoriteCourseSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)    
     course = CourseSerializer(many=True, read_only=True)
 
+    slug = serializers.SlugField(read_only=True)
+  
+
     class Meta:
         model = models.StudentFavoriteCourse
         fields = "__all__"
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['student'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
     # def __init__(self, *args, **kwargs):
     #     super(StudentFavoriteCourseSerializer, self).__init__(*args, **kwargs)
     #     request = self.context.get('request')
@@ -265,6 +396,11 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
         model = models.TeacherStudentChat
         fields = "__all__"
 
+    def to_representation(self,instance):
+        representation = super(TeacherStudentChatSerializer, self).to_representation(instance)
+        representation['msg_time'] = instance.msg_time.strftime("%Y-%m-%d %H:%M")
+        return representation
+
     # def __init__(self, *args, **kwargs):
     #     super(TeacherStudentChatSerializer, self).__init__(*args, **kwargs)
     #     request = self.context.get('request')
@@ -275,11 +411,6 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
     #     else:
     #         print(f"Method is - {request.method}")
     #         self.Meta.depth = 3
-
-    def to_representation(self,instance):
-        representation = super(TeacherStudentChatSerializer, self).to_representation(instance)
-        representation['msg_time'] = instance.msg_time.strftime("%Y-%m-%d %H:%M")
-        return representation
 
 
 
@@ -310,21 +441,30 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
 
 # ->
 class LessonInCourseCompletionSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     lesson = LessonInCourseSerializer(many=True, read_only=True)
     
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.LessonInCourseCompletion
         fields = "__all__"
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
 class CourseProgressSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     course = CourseSerializer(many=True, read_only=True)
     
     course_title = serializers.CharField(source='course.title', read_only=True)
     course_image = serializers.SerializerMethodField()
     
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.CourseProgress
         fields = "__all__"
@@ -335,6 +475,10 @@ class CourseProgressSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.course.image.url)
         return None
     
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation    
 
 
 
@@ -349,6 +493,8 @@ class StudentCertificateSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source='enrollment.course.title', read_only=True)
     user_name = serializers.SerializerMethodField()
     
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.StudentCertificate
         fields = "__all__"
@@ -364,17 +510,24 @@ class StudentCertificateSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Questions Banks *** #
 class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     section = SectionCourseSerializer(many=True, read_only=True)
+
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = models.ChoiceQuestionInBank
         # fields = ['id', 'text', 'is_correct']
         fields = "__all__"
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
 class QuestionInBankSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     # question_bank = QuestionBankListSerializer(many=True, read_only=True)
 
     choices = ChoiceQuestionInBankSerializer(many=True, read_only=True)
@@ -383,7 +536,12 @@ class QuestionInBankSerializer(serializers.ModelSerializer):
         model = models.QuestionInBank
         # fields = ['id', 'text', 'image', 'image_url', 'display_image', 'choices']
         fields = "__all__"
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
 class QuestionInBankDetailSerializer(serializers.ModelSerializer):
     choices = ChoiceQuestionInBankSerializer(many=True)
@@ -429,6 +587,8 @@ class QuestionBankListSerializer(serializers.ModelSerializer):
     question_count = serializers.IntegerField(read_only=True)
     section_name = serializers.CharField(source='section.name', read_only=True)
     
+    slug = serializers.SlugField(read_only=True)
+
     class Meta:
         model = models.QuestionBank
         fields = "__all__"
@@ -440,6 +600,8 @@ class QuestionBankDetailSerializer(serializers.ModelSerializer):
     questions = QuestionInCourseSerializer(many=True, read_only=True)
     section_name = serializers.CharField(source='section.name', read_only=True)
     
+    slug = serializers.SlugField(read_only=True)
+
     class Meta:
         model = models.QuestionBank 
         fields = "__all__"
@@ -458,13 +620,18 @@ class QuestionBankResultSerializer(serializers.Serializer): # QuizResult
 
 
 class StudentQuestionBankResultSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     question_bank = QuestionBankListSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.StudentQuestionBankResult
         fields = '__all__'
         # read_only_fields = ('user', 'created_at')
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
 
 
 class StudentQuestionBankAnswerSerializer(serializers.ModelSerializer):
@@ -486,13 +653,17 @@ class StudentQuestionBankAnswerSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** ContactUs *** #
 class ContactUsUserSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = models.ContactUsUser
         fields = "__all__"
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
 
 
 
@@ -502,14 +673,17 @@ class ContactUsUserSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Review *** #
 class ReviewUserSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = models.ReviewUser
         fields = "__all__"
-
-
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
 
 
 

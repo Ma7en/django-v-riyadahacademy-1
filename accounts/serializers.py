@@ -27,6 +27,23 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = "__all__"
+        # fields = [        
+        # "id",
+        # "last_login",
+        # "date_joined",
+        # "email",
+        # "first_name",
+        # "last_name",
+        # "username",
+        # "full_name",
+        # "is_superuser",
+        # "is_admin",
+        # "is_teacher",
+        # "is_staff",
+        # "is_student",
+        # "is_active",
+        # "is_verified",
+        # ]
         extra_kwargs = {
             "password": {
                 "write_only": True,
