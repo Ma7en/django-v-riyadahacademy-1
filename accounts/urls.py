@@ -44,7 +44,13 @@ urlpatterns = [
         views.AdminIDView.as_view(),
         name="admin-user-id",
     ),
-    # (Profile)
+    # (Profiles)
+    path(
+        "admin/profile-list/",
+        views.AdminProfileList.as_view(),
+        name="admin-profile-id",
+    ),
+    # (Profile ID)
     path(
         "admin/profile/<int:pk>/",
         views.AdminProfileView.as_view(),
@@ -132,7 +138,13 @@ urlpatterns = [
         views.TeacherIDView.as_view(),
         name="teacher-user-id",
     ),
-    # (Profile)
+    # (Profiles)
+    path(
+        "teacher/profile-list/",
+        views.TeacherProfileList.as_view(),
+        name="teacher-profile-id",
+    ),
+    # (Profile ID)
     path(
         "teacher/profile/<int:pk>/",
         views.TeacherProfileView.as_view(),
@@ -220,7 +232,13 @@ urlpatterns = [
         views.StaffIDView.as_view(),
         name="staff-user-id",
     ),
-    # (Profile)
+    # (Profiles)
+    path(
+        "staff/profile-list/",
+        views.StaffProfileList.as_view(),
+        name="staff-profile-id",
+    ),
+    # (Profile ID)
     path(
         "staff/profile/<int:pk>/",
         views.StaffProfileView.as_view(),
@@ -308,7 +326,13 @@ urlpatterns = [
         views.StudentIDView.as_view(),
         name="student-user-id",
     ),
-    # (Profile)
+    # (Profiles)
+    path(
+        "student/profile-list/",
+        views.StudentProfileList.as_view(),
+        name="student-profile-id",
+    ),
+    # (Profile ID)
     path(
         "student/profile/<int:pk>/",
         views.StudentProfileView.as_view(),
@@ -365,13 +389,13 @@ urlpatterns = [
     
     # =================================================================
     # *** 5) Public *** #
-    # (Students)
+    # (Users)
     path(
         "public/users-list/",
         views.UsersListView.as_view(),
         name="public-users-list-api",
     ),
-    # (Student ID)
+    # (User ID)
     path(
         "public/user/<int:pk>/",
         views.UserPKAPIView.as_view(),

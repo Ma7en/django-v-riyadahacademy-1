@@ -128,6 +128,10 @@ class CoursePK(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+                # هذه السطر يحل مشكلة إنشاء schema
+        if getattr(self, 'swagger_fake_view', False):
+            return models.Course.objects.none()
+        
         user = self.request.user
         if user.is_superuser:
             return models.Course.objects.all()
@@ -185,6 +189,10 @@ class CourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+                # هذه السطر يحل مشكلة إنشاء schema
+        if getattr(self, 'swagger_fake_view', False):
+            return models.Course.objects.none()
+        
         user = self.request.user
         if user.is_superuser:
             return models.Course.objects.all()
@@ -196,7 +204,7 @@ class PublicCourseList(generics.ListAPIView):
     pagination_class = StandardResultSetPagination
     
     def get_queryset(self):
-        queryset = models.Course.objects.filter(is_hidden=False)
+        queryset = models.Course.objects.filter(is_visible=True)
         
         # # Filter by category
         # category = self.request.query_params.get('category')
@@ -1062,6 +1070,10 @@ class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # هذه السطر يحل مشكلة إنشاء schema
+        if getattr(self, 'swagger_fake_view', False):
+            return models.QuestionBank.objects.none()
+        
         user = self.request.user
         if user.is_superuser:
             return models.QuestionBank.objects.all()
@@ -1332,6 +1344,10 @@ class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
+        if getattr(self, 'swagger_fake_view', False):
+            return models.ReviewUser.objects.none()
+        
         user = self.request.user
         if user.is_student:
             return models.ContactUsUser.objects.filter(user=user)
@@ -1369,6 +1385,10 @@ class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
+        if getattr(self, 'swagger_fake_view', False):
+            return models.ReviewUser.objects.none()
+        
         user = self.request.user
         if user.is_student:
             return models.ReviewUser.objects.filter(user=user)

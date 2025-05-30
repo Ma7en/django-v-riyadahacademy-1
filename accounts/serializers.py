@@ -30,9 +30,16 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "password": {
                 "write_only": True,
+            },
+            "groups": {
+                "write_only": True,
+                
+            },
+            "user_permissions": {
+                "write_only": True,
+                
             }
         }
-
 
 
 
@@ -460,8 +467,8 @@ class PublicLoginSerializer(serializers.Serializer):
             raise AuthenticationFailed(_("Invalid Email or Password."))
 
         # Check if the user is active
-        if not user.is_active:
-            raise AuthenticationFailed(_("user account is deactivated."))
+        # if not user.is_active:
+        #     raise AuthenticationFailed(_("user account is deactivated."))
 
         return user
 

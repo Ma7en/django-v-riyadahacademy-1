@@ -45,7 +45,7 @@ class CategorySection(models.Model):
     )
     image_url = models.URLField(null=True, blank=True)
     
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -104,7 +104,7 @@ class SectionCourse(models.Model):
     )
     image_url = models.URLField(null=True, blank=True)
 
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -188,7 +188,7 @@ class Course(models.Model):
     requirements = models.JSONField(default=list, null=True, blank=True)
     target_audience = models.JSONField(default=list, null=True, blank=True)
 
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     last_updated = models.CharField(max_length=100, null=True, blank=True)
 
@@ -279,7 +279,7 @@ class SectionInCourse(models.Model):
 
     title = models.CharField(max_length=1_000)
 
-    is_hidden = models.BooleanField(default=True)
+    is_visible = models.BooleanField(default=True)
     is_free = models.BooleanField(default=False)
 
     order = models.PositiveIntegerField(default=0)
@@ -324,7 +324,7 @@ class LessonInCourse(models.Model):
     # For document lessons
     content = models.TextField(max_length=10_000, null=True, blank=True)
 
-    is_hidden = models.BooleanField(default=True)
+    is_visible = models.BooleanField(default=True)
     is_free = models.BooleanField(default=False)
 
     order = models.PositiveIntegerField(default=0)
@@ -430,7 +430,7 @@ class CouponCourse(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(100)]
     )
 
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -516,7 +516,7 @@ class CourseRating(models.Model):
     reviews = models.TextField(max_length=10_000, null=True, blank=True)
     review_time = models.DateTimeField(auto_now_add=True)
 
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
     
 
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -549,7 +549,7 @@ class StudentFavoriteCourse(models.Model):
         on_delete=models.CASCADE,
     )
 
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -751,7 +751,7 @@ class QuestionBank(models.Model):
     image = models.ImageField(upload_to='questionsbanks/banks/', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
     
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -799,7 +799,7 @@ class QuestionInBank(models.Model):
     image = models.ImageField(upload_to='questionsbanks/questions/', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
     
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -969,7 +969,7 @@ class ContactUsUser(models.Model):
     )
 
     quick_reply = models.BooleanField(default=False)
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -1022,7 +1022,7 @@ class ReviewUser(models.Model):
     rating=models.PositiveBigIntegerField(default=0)
     # rating = models.IntegerField(choices=[(1, '1'), (2, '2'), (3, '3'), (4, '4'), (5, '5')])
 
-    is_hidden = models.BooleanField(default=False)
+    is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

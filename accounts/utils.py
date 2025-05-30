@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # ******************************************************************************
 # ==============================================================================
 current_year = now().year
-
+logoimage = "/templates/images/logo.png"
 
 
 
@@ -64,6 +64,7 @@ def send_otp_for_user(email, type_user="user"):
             "name": user.first_name,
             "OTP": otp,
             "current_year": current_year,
+            "logoimage": logoimage,
         }
 
         subject = f"{type_user.capitalize() or "User".capitalize()} Confirmation Email"

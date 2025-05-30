@@ -50,6 +50,12 @@ class UserManager(BaseUserManager):
         user.is_superuser = True
         user.is_staff = True
         user.save()
+        
+        # Create Profile
+        if user.is_superuser:
+            models.SuperuserProfile.objects.create(user=user)
+            user.superuser_profile.save()
+
         return user
 
     # =================================================================

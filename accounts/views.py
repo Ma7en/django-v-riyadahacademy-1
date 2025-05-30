@@ -2,6 +2,7 @@
 import jwt
 
 
+
 #
 from django.shortcuts import render
 from smtplib import SMTPRecipientsRefused
@@ -12,23 +13,29 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+
+# 
 SECRET_KEY = settings.SECRET_KEY
 
 
 #
 from rest_framework import status
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.response import Response 
 from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
+
 
 
 #
-from accounts import models
-from accounts import serializers
-from accounts import utils
+from . import models, serializers, utils
+# from . import validations
 
 
 
@@ -38,7 +45,7 @@ from accounts import utils
 # ******************************************************************************
 # ==============================================================================
 # *** 1) Admin *** #
-# *** Admin (Register) *** #
+# *** Admin (Register) -> [POST] *** #
 class AdminRegisterView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.AdminRegisterSerializer
@@ -82,7 +89,8 @@ class AdminRegisterView(generics.CreateAPIView):
             status.HTTP_400_BAD_REQUEST,
         )
 
-# *** Admin (Register Verify) *** #
+
+# *** Admin (Register Verify) -> [POST] *** #
 class AdminRegisterVerifyView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.AdminRegisterSerializer
@@ -118,21 +126,65 @@ class AdminRegisterVerifyView(generics.CreateAPIView):
         )
 
 
-# *** Admin (Admins) *** #
+# *** Admin (Admins) -> [GET, POST] *** #
 class AdminsListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_admin=True)
+    # permission_classes = [IsAuthenticated]
 
 
 # *** Admin (Admin ID) -> [GET, POST, PUT, DELETE] *** #
 class AdminPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_admin=True)
+    # permission_classes = [IsAuthenticated]
 
 
-# *** Admin (Profile) *** #
+# *** Admin (ID) -> [GET] *** #
+class AdminIDView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            admin = models.User.objects.get(pk=pk)
+        except models.User.DoesNotExist:
+            message = "Admin not found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        admin_data = serializers.UserSerializer(admin).data
+
+        if admin_data["is_admin"] == False:
+            message = "Admin whit this id is not Found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        message = "Admin retrieved Successfully."
+        return utils.FunReturn(
+            0,
+            message,
+            status.HTTP_200_OK,
+            admin_data,
+        )
+
+
+# *** Admin (Profiles) -> [GET, POST] *** #
+class AdminProfileList(generics.ListCreateAPIView):
+    serializer_class = serializers.AdminProfileSerializer
+    queryset = models.AdminProfile.objects.all()
+    # permission_classes = [IsAuthenticated]
+
+
+# *** Admin (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class AdminProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.AdminProfileSerializer
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return models.AdminProfile.objects.all()
@@ -192,7 +244,7 @@ class AdminProfileView(generics.RetrieveUpdateDestroyAPIView):
         )
 
 
-# *** Admin (Resend OTP) *** #
+# *** Admin (Resend OTP) -> [POST] *** #
 class AdminResendOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -238,7 +290,7 @@ class AdminResendOTPView(APIView):
         )
 
 
-# *** Admin (Verify Account) *** #
+# *** Admin (Verify Account) -> [POST] *** #
 class AdminVerifyAccountView(APIView):
     permission_classes = [AllowAny]
 
@@ -316,7 +368,7 @@ class AdminVerifyAccountView(APIView):
         )
 
 
-# *** Admin (Login) *** #
+# *** Admin (Login) -> [POST] *** #
 class AdminLoginView(APIView):
     def post(self, request):
         # Deserialize the admin login data
@@ -368,39 +420,7 @@ class AdminLoginView(APIView):
         )
 
 
-# *** Admin (ID) *** #
-class AdminIDView(APIView):
-    def get(self, request, pk):
-        try:
-            admin = models.User.objects.get(pk=pk)
-        except models.User.DoesNotExist:
-            message = "Admin not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        admin_data = serializers.UserSerializer(admin).data
-
-        if admin_data["is_admin"] == False:
-            message = "Admin whit this id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        message = "Admin retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            admin_data,
-        )
-
-
-# *** Admin (Refresh) *** #
+# *** Admin (Refresh) -> [POST] *** #
 class AdminRefreshView(APIView):
     def post(self, request):
         try:
@@ -472,7 +492,7 @@ class AdminRefreshView(APIView):
             )
 
 
-# *** Admin (Change Password) *** #
+# *** Admin (Change Password) -> [POST] *** #
 class AdminChangePasswordView(APIView):
     def post(self, request):
         try:
@@ -498,7 +518,7 @@ class AdminChangePasswordView(APIView):
             new_password = request.data.get("new_password")
             confirm_password = request.data.get("confirm_password")
 
-            # validate_password(new_password, confirm_password)
+            # validations.validate_password(new_password, confirm_password)
 
             # Change password
             admin.set_password(new_password)
@@ -529,7 +549,7 @@ class AdminChangePasswordView(APIView):
             )
 
 
-# *** Admin (Logout) *** #
+# *** Admin (Logout) -> [POST] *** #
 class AdminLogoutView(APIView):
     def post(self, request):
         try:
@@ -583,7 +603,7 @@ class AdminLogoutView(APIView):
             )
 
 
-# *** Admin (Reset Password) *** #
+# *** Admin (Reset Password) -> [POST] *** #
 class AdminPasswordResetView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -704,7 +724,7 @@ class AdminConfirmResetPasswordView(APIView):
 # ******************************************************************************
 # ==============================================================================
 # *** 2) Teacher *** #
-# *** Teacher (Register) *** #
+# *** Teacher (Register) -> [POST] *** #
 class TeacherRegisterView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.TeacherRegisterSerializer
@@ -745,7 +765,7 @@ class TeacherRegisterView(generics.CreateAPIView):
             status.HTTP_400_BAD_REQUEST,
         )
 
-# *** Teacher (Register Verify) *** #
+# *** Teacher (Register Verify) -> [POST] *** #
 class TeacherRegisterVerifyView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.TeacherRegisterSerializer
@@ -780,21 +800,65 @@ class TeacherRegisterVerifyView(generics.CreateAPIView):
         )
 
 
-# *** Teacher (Teachers) *** #
+# *** Teacher (Teachers) -> [GET, POST] *** #
 class TeachersListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_teacher=True)
+    # permission_classes = [IsAuthenticated]
 
 
 # *** Teacher (Teacher ID) -> [GET, POST, PUT, DELETE] *** #
 class TeacherPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_teacher=True)
+    # permission_classes = [IsAuthenticated]
 
 
-# *** Teacher (Profile) *** #
+# *** Teacher (ID) -> [GET] *** #
+class TeacherIDView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            teacher = models.User.objects.get(pk=pk)
+        except models.User.DoesNotExist:
+            message = "Teacher not found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        teacher_data = serializers.UserSerializer(teacher).data
+
+        if teacher_data["is_teacher"] == False:
+            message = "Teacher with this Id is not Found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        message = "Teacher retrieved Successfully."
+        return utils.FunReturn(
+            0,
+            message,
+            status.HTTP_200_OK,
+            teacher_data,
+        )
+
+
+# *** Teacher (Profiles) -> [GET, POST] *** #
+class TeacherProfileList(generics.ListCreateAPIView):
+    serializer_class = serializers.TeacherProfileSerializer
+    queryset = models.TeacherProfile.objects.all()
+    # permission_classes = [IsAuthenticated]
+
+
+# *** Teacher (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class TeacherProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.TeacherProfileSerializer
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return models.TeacherProfile.objects.all()
@@ -854,7 +918,7 @@ class TeacherProfileView(generics.RetrieveUpdateDestroyAPIView):
         )
 
 
-# *** Teacher (Resend OTP) *** #
+# *** Teacher (Resend OTP) -> [POST] *** #
 class TeacherResendOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -900,7 +964,7 @@ class TeacherResendOTPView(APIView):
         )
 
 
-# *** Teacher (Verify Account) *** #
+# *** Teacher (Verify Account) -> [POST] *** #
 class TeacherVerifyAccountView(APIView):
     permission_classes = [AllowAny]
 
@@ -978,7 +1042,7 @@ class TeacherVerifyAccountView(APIView):
         )
 
 
-# *** Teacher (Login) *** #
+# *** Teacher (Login) -> [POST] *** #
 class TeacherLoginView(APIView):
     def post(self, request):
         # Deserialize the teacher login data
@@ -1030,39 +1094,7 @@ class TeacherLoginView(APIView):
         )
 
 
-# *** Teacher (ID) *** #
-class TeacherIDView(APIView):
-    def get(self, request, pk):
-        try:
-            teacher = models.User.objects.get(pk=pk)
-        except models.User.DoesNotExist:
-            message = "Teacher not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        teacher_data = serializers.UserSerializer(teacher).data
-
-        if teacher_data["is_teacher"] == False:
-            message = "Teacher with this Id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        message = "Teacher retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
-
-
-# *** Teacher (Refresh) *** #
+# *** Teacher (Refresh) -> [POST] *** #
 class TeacherRefreshView(APIView):
     def post(self, request):
         try:
@@ -1134,7 +1166,7 @@ class TeacherRefreshView(APIView):
             )
 
 
-# *** Teacher (Change Password) *** #
+# *** Teacher (Change Password) -> [POST] *** #
 class TeacherChangePasswordView(APIView):
     def post(self, request):
         try:
@@ -1191,7 +1223,7 @@ class TeacherChangePasswordView(APIView):
             )
 
 
-# *** Teacher (Logout) *** #
+# *** Teacher (Logout) -> [POST] *** #
 class TeacherLogoutView(APIView):
     def post(self, request):
         try:
@@ -1244,7 +1276,7 @@ class TeacherLogoutView(APIView):
             )
 
 
-# *** Teacher (Reset Password) *** #
+# *** Teacher (Reset Password) -> [POST] *** #
 class TeacherPasswordResetView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -1361,7 +1393,7 @@ class TeacherConfirmResetPasswordView(APIView):
 # ******************************************************************************
 # ==============================================================================
 # *** 3) Staff *** #
-# *** Staff (Register) *** #
+# *** Staff (Register) -> [POST] *** #
 class StaffRegisterView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.StaffRegisterSerializer
@@ -1405,7 +1437,8 @@ class StaffRegisterView(generics.CreateAPIView):
             status.HTTP_400_BAD_REQUEST,
         )
 
-# *** Staff (Register Verify) *** #
+
+# *** Staff (Register Verify) -> [POST] *** #
 class StaffRegisterVerifyView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.StaffRegisterSerializer
@@ -1439,20 +1472,65 @@ class StaffRegisterVerifyView(generics.CreateAPIView):
         )
 
 
-# *** Staff (Staffs) *** #
+# *** Staff (Staffs) -> [GET, POST] *** #
 class StaffsListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_staff=True)
+    # permission_classes = [IsAuthenticated]
+
 
 # *** Staff (Staff ID) -> [GET, POST, PUT, DELETE] *** #
 class StaffPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_staff=True)
+    # permission_classes = [IsAuthenticated]
 
 
-# *** Staff (Profile) *** #
+# *** Staff (ID) -> [GET] *** #
+class StaffIDView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            staff = models.User.objects.get(pk=pk)
+        except models.User.DoesNotExist:
+            message = "Staff not found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        staff_data = serializers.UserSerializer(staff).data
+
+        if staff_data["is_staff"] == False:
+            message = "Staff with this Id is not Found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        message = "Staff retrieved Successfully."
+        return utils.FunReturn(
+            0,
+            message,
+            status.HTTP_200_OK,
+            staff_data,
+        )
+
+
+# *** Staff (Profiles) -> [GET, PUT] *** #
+class StaffProfileList(generics.ListCreateAPIView):
+    serializer_class = serializers.StaffProfileSerializer
+    queryset = models.StaffProfile.objects.all()
+    # permission_classes = [IsAuthenticated]
+
+
+# *** Staff (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class StaffProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.StaffProfileSerializer
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return models.StaffProfile.objects.all()
@@ -1512,7 +1590,7 @@ class StaffProfileView(generics.RetrieveUpdateDestroyAPIView):
         )
 
 
-# *** Staff (Resend OTP) *** #
+# *** Staff (Resend OTP) -> [POST] *** #
 class StaffResendOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -1558,7 +1636,7 @@ class StaffResendOTPView(APIView):
         )
 
 
-# *** Staff (Verify Account) *** #
+# *** Staff (Verify Account) -> [POST] *** #
 class StaffVerifyAccountView(APIView):
     permission_classes = [AllowAny]
 
@@ -1637,7 +1715,7 @@ class StaffVerifyAccountView(APIView):
         )
 
 
-# *** Staff (Login) *** #
+# *** Staff (Login) -> [POST] *** #
 class StaffLoginView(APIView):
     def post(self, request):
         # Deserialize the staff login data
@@ -1689,39 +1767,7 @@ class StaffLoginView(APIView):
         )
 
 
-# *** Staff (ID) *** #
-class StaffIDView(APIView):
-    def get(self, request, pk):
-        try:
-            staff = models.User.objects.get(pk=pk)
-        except models.User.DoesNotExist:
-            message = "Staff not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        staff_data = serializers.UserSerializer(staff).data
-
-        if staff_data["is_staff"] == False:
-            message = "Staff with this Id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        message = "Staff retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            staff_data,
-        )
-
-
-# *** Staff (Refresh) *** #
+# *** Staff (Refresh) -> [POST] *** #
 class StaffRefreshView(APIView):
     def post(self, request):
         try:
@@ -1793,7 +1839,7 @@ class StaffRefreshView(APIView):
             )
 
 
-# *** Staff (Change Password) *** #
+# *** Staff (Change Password) -> [POST] *** #
 class StaffChangePasswordView(APIView):
     def post(self, request):
         try:
@@ -1850,7 +1896,7 @@ class StaffChangePasswordView(APIView):
             )
 
 
-# *** Staff (Logout) *** #
+# *** Staff (Logout) -> [POST] *** #
 class StaffLogoutView(APIView):
     def post(self, request):
         try:
@@ -1904,7 +1950,7 @@ class StaffLogoutView(APIView):
             )
 
 
-# *** Staff (Reset Password) *** #
+# *** Staff (Reset Password) -> [POST] *** #
 class StaffPasswordResetView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -2020,7 +2066,7 @@ class StaffConfirmResetPasswordView(APIView):
 # ******************************************************************************
 # ==============================================================================
 # *** 4) Student *** #
-# *** Student (Register) *** #
+# *** Student (Register) -> [POST] *** #
 class StudentRegisterView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.StudentRegisterSerializer
@@ -2064,7 +2110,8 @@ class StudentRegisterView(generics.CreateAPIView):
             status.HTTP_400_BAD_REQUEST,
         )
 
-# *** Student (Register Verify) *** #
+
+# *** Student (Register Verify) -> [POST] *** #
 class StudentRegisterVerifyView(generics.CreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.StudentRegisterSerializer
@@ -2099,20 +2146,66 @@ class StudentRegisterVerifyView(generics.CreateAPIView):
         )
 
 
-# *** Student (Students) *** #
+# *** Student (Students) -> [GET, POST] *** #
 class StudentsListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_student=True)
+    # permission_classes = [IsAuthenticated]
+
 
 # *** Student (Student ID) -> [GET, POST, PUT, DELETE] *** #
 class StudentPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_student=True)
+    # permission_classes = [IsAuthenticated]
 
 
-# *** Student (Profile) *** #
+# *** Student (ID) -> [GET] *** #
+class StudentIDView(APIView):
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            student = models.User.objects.get(pk=pk)
+        except models.User.DoesNotExist:
+            message = "Student not found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        # تحويل الكائن إلى JSON باستخدام Serializer
+        student_data = serializers.UserSerializer(student).data
+
+        if student_data["is_student"] == False:
+            message = "Student with this Id is not Found."
+            return utils.FunReturn(
+                1,
+                message,
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        message = "Student retrieved Successfully."
+        return utils.FunReturn(
+            0,
+            message,
+            status.HTTP_200_OK,
+            student_data,
+        )
+
+
+# *** Student (Profiles) -> [GET, POST] *** #
+class StudentProfileList(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = serializers.StudentProfileSerializer
+    queryset = models.StudentProfile.objects.all()
+    # permission_classes = [IsAuthenticated]
+
+
+# *** Student (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class StudentProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.StudentProfileSerializer
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return models.StudentProfile.objects.all()
@@ -2172,7 +2265,7 @@ class StudentProfileView(generics.RetrieveUpdateDestroyAPIView):
         )
 
 
-# *** Student (Resend OTP) *** #
+# *** Student (Resend OTP) -> [POST] *** #
 class StudentResendOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -2218,7 +2311,7 @@ class StudentResendOTPView(APIView):
         )
 
 
-# *** Student (Verify Account) *** #
+# *** Student (Verify Account) -> [POST] *** #
 class StudentVerifyAccountView(APIView):
     permission_classes = [AllowAny]
 
@@ -2297,7 +2390,7 @@ class StudentVerifyAccountView(APIView):
         )
 
 
-# *** Student (Login) *** #
+# *** Student (Login) -> [POST] *** #
 class StudentLoginView(APIView):
     def post(self, request):
         # Deserialize the student login data
@@ -2348,40 +2441,7 @@ class StudentLoginView(APIView):
         )
 
 
-# *** Student (ID) *** #
-class StudentIDView(APIView):
-    def get(self, request, pk):
-        try:
-            student = models.User.objects.get(pk=pk)
-        except models.User.DoesNotExist:
-            message = "Student not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        # تحويل الكائن إلى JSON باستخدام Serializer
-        student_data = serializers.UserSerializer(student).data
-
-        if student_data["is_student"] == False:
-            message = "Student with this Id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
-
-        message = "Student retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            student_data,
-        )
-
-
-# *** Student (Refresh) *** #
+# *** Student (Refresh) -> [POST] *** #
 class StudentRefreshView(APIView):
     def post(self, request):
         try:
@@ -2455,7 +2515,7 @@ class StudentRefreshView(APIView):
             )
 
 
-# *** Student (Change Password) *** #
+# *** Student (Change Password) -> [POST] *** #
 class StudentChangePasswordView(APIView):
     def post(self, request):
         try:
@@ -2511,7 +2571,7 @@ class StudentChangePasswordView(APIView):
             )
 
 
-# *** Student (Logout) *** #
+# *** Student (Logout) -> [POST] *** #
 class StudentLogoutView(APIView):
     def post(self, request):
         try:
@@ -2565,7 +2625,7 @@ class StudentLogoutView(APIView):
             )
 
 
-# *** Student (Reset Password) *** #
+# *** Student (Reset Password) -> [POST] *** #
 class StudentPasswordResetView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -2681,19 +2741,24 @@ class StudentConfirmResetPasswordView(APIView):
 # ******************************************************************************
 # ==============================================================================
 # *** 5) Public *** #
-# *** User (Users) *** #
+# *** User (Users) -> [GET, POST] *** #
 class UsersListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
+    # permission_classes = [IsAuthenticated]
+
 
 # *** User (User ID) -> [GET, POST, PUT, DELETE] *** #
 class UserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
+    # permission_classes = [IsAuthenticated]
 
 
-# *** Public (Login) *** #
+# *** Public (Login) -> [POST] *** #
 class PublicLoginView(APIView):
+    # permission_classes = [IsAuthenticated]
+
     def post(self, request):
         # Deserialize the user login data
         serializer = serializers.PublicLoginSerializer(data=request.data)
@@ -2759,8 +2824,10 @@ class PublicLoginView(APIView):
         )
 
 
-# *** Public (ID) *** #
+# *** Public (ID) -> [GET] *** #
 class PublicIDView(APIView):
+    # permission_classes = [IsAuthenticated]
+
     def get(self, request, pk):
         # Step 1:
         try:

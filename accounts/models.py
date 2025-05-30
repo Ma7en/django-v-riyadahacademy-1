@@ -9,7 +9,7 @@ from datetime import timedelta
 #
 from django.utils import timezone
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from django.db.models.signals import post_save
@@ -26,7 +26,7 @@ from .managers import UserManager
 # ******************************************************************************
 # ==============================================================================
 # *** User *** #
-class User(AbstractBaseUser):
+class User(AbstractUser, PermissionsMixin):
     email = models.EmailField(
         # verbose_name="email address",
         max_length=1_000,
@@ -76,6 +76,90 @@ class User(AbstractBaseUser):
 
 
 
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Superuser Profile  *** #
+class SuperuserProfile(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="superuser_profile",
+        unique=False,
+    )
+
+    GENDER_CHOICES = (
+        ("Male", "Male"),
+        ("Female", "Female"),
+    )
+    gender = models.CharField(
+        max_length=30,
+        choices=GENDER_CHOICES,
+        null=True,
+        blank=True,
+    )
+
+    POWERS_CHOICES = (
+        ("Complete", "كاملة"),
+        ("Medium", "متوسطة"),
+        ("Limited", "محدودة"),
+    )
+    powers = models.CharField(
+        max_length=30,
+        choices=POWERS_CHOICES,
+        default="Complete",
+        null=True,
+        blank=True,
+    )
+
+    image = models.ImageField(
+        upload_to="user/superuser",
+        default="user/default-user.png",
+        null=True,
+        blank=True,
+    )
+
+    bio = models.TextField(
+        max_length=10_00, 
+        null=True, 
+        blank=True,
+    )
+
+    # phone_number = models.CharField(
+    #     max_length=11,
+    #     validators=[
+    #         RegexValidator(
+    #             regex="^01[0|1|2|5][0-9]{8}$",
+    #             message="Phone must be start 010, 011, 012, 015 and all number contains 11 digits",
+    #         )
+    #     ],
+    #     null=True,
+    #     blank=True,
+    # )
+    phone_number = models.CharField(
+        max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
+                message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
+            )
+        ],
+        verbose_name="رقم الجوال السعودي",
+        null=True, 
+        blank=True,
+    )
+    age = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    def __str__(self):
+        return f"{self.id}): ({self.user.email})"
 
 
 # ******************************************************************************
@@ -245,9 +329,7 @@ class TeacherProfile(models.Model):
     #     db_table = "teacher_profile"
 
     def __str__(self):
-        return (
-            f"{self.id}): (Profile: {self.user.email}) - (Phone: {self.phone_number})"
-        )
+        return f"{self.id}): ({self.user.email})"
 
 
 
