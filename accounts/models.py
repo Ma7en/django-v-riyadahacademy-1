@@ -2,8 +2,10 @@
 import uuid
 
 
+
 #
 from datetime import timedelta
+
 
 
 #
@@ -14,6 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 
 
 #
@@ -146,7 +149,7 @@ class SuperuserProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي",
+        # verbose_name="رقم الجوال السعودي",
         null=True, 
         blank=True,
     )
@@ -230,7 +233,7 @@ class AdminProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي",
+        # verbose_name="رقم الجوال السعودي",
         null=True, 
         blank=True,
     )
@@ -311,7 +314,7 @@ class TeacherProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي",
+        # verbose_name="رقم الجوال السعودي",
         null=True, 
         blank=True,
     )
@@ -390,7 +393,7 @@ class StaffProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي",
+        # verbose_name="رقم الجوال السعودي",
         null=True, 
         blank=True,
     )
@@ -469,7 +472,7 @@ class StudentProfile(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي",
+        # verbose_name="رقم الجوال السعودي",
         null=True, 
         blank=True,
     )
@@ -496,7 +499,7 @@ class StudentProfile(models.Model):
 
 # ******************************************************************************
 # ==============================================================================
-# *** (Verify Account) *** #
+# *** (One Time OTP) *** #
 class OneTimeOTP(models.Model):
     user = models.ForeignKey(
         User,

@@ -1,3 +1,4 @@
+# 
 from django.urls import path, include
 from django.urls import path, include
 
@@ -387,7 +388,8 @@ urlpatterns = [
     
     path(
         'fetch-enroll-status/<int:student_id>/<int:course_id>/', 
-        views.fetch_enroll_status,
+        # views.fetch_enroll_status,
+        views.FetchEnrollStatusView.as_view(),
         name="fetch-enroll-status-student_id-course_id",
     ),
 
@@ -441,14 +443,15 @@ urlpatterns = [
         name="course-rating",
     ),
     path(
-        'popular-courses/', 
+        'popular-courses-rating/', 
         views.CourseRatingListAPI.as_view(),
         name="popular-courses",
     ),
 
     path(
-        'fetch-rating-status/<int:student_id>/<int:course_id>/', 
-        views.fetch_rating_status,
+        'fetch-rating-status/<int:student_id>/<int:course_id>/',
+        # views.fetch_rating_status, 
+        views.FetchRatingStatusView.as_view(),
         name="fetch-rating-status-student_id-course_id",
     ),
 
@@ -491,7 +494,8 @@ urlpatterns = [
 
     path(
         'student-remove-favorite-course/<int:course_id>/<int:student_id>/', 
-        views.remove_favorite_course,
+        # views.remove_favorite_course,
+        views.RemoveFavoriteCourseView.as_view(),
         name="student-remove-favorite-course-course_id-student_id",
     ),
 

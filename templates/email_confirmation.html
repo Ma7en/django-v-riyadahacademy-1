@@ -9,10 +9,14 @@
 
         <!-- style -->
         <style>
-            body {
-                font-family: Arial, sans-serif;
+            * {
                 margin: 0;
                 padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: Arial, sans-serif;
                 background-color: #f9fafb;
             }
 
@@ -31,6 +35,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                margin-bottom: 10px;
             }
 
             .sec_img img {
@@ -44,13 +49,14 @@
 
             .header h2 {
                 font-size: 24px;
+                margin-bottom: 10px;
             }
 
             .header p {
                 font-weight: 500;
                 color: #4a5568;
                 font-size: 16px;
-                margin-bottom: 10px;
+                margin-bottom: 5px;
             }
 
             .footer {
@@ -83,9 +89,9 @@
 
             <div class="header">
                 <h2>Thank You, {{ name }}!</h2>
-                
+
                 <p>Your email has been successfully verified.</p>
-                
+
                 <p>Welcome aboard! You can now access all our features.</p>
             </div>
 

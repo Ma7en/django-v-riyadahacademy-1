@@ -9,10 +9,14 @@
 
         <!-- style -->
         <style>
-            body {
-                font-family: Arial, sans-serif;
+            * {
                 margin: 0;
                 padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: Arial, sans-serif;
                 background-color: #f9fafb;
             }
 
@@ -27,10 +31,11 @@
 
             .sec_img {
                 width: 100%;
-                text-align: "center";
+                text-align: center;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                margin-bottom: 10px;
             }
 
             .sec_img img {
@@ -44,23 +49,25 @@
 
             .header h2 {
                 font-size: 24px;
+                margin-bottom: 10px;
             }
 
             .header p {
                 font-size: 16px;
-                margin-bottom: 10px;
                 font-weight: 500;
                 color: #4a5568;
+                margin-bottom: 5px;
             }
 
             .header .otp {
+                font-size: 24px;
+                font-weight: bold;
                 display: inline-block;
+                margin-top: 15px;
                 padding: 10px 20px;
                 border: 2px solid #4ade80;
                 border-radius: 5px;
                 background-color: #f0fdf4;
-                font-size: 24px;
-                font-weight: bold;
                 color: rgb(45, 110, 184);
             }
 
@@ -78,10 +85,6 @@
             @media (max-width: 480px) {
                 .container {
                     margin: 10px;
-                }
-
-                .sec_img {
-                    margin-left: -50px;
                 }
             }
         </style>

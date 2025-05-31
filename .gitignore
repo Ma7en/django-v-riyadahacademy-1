@@ -3,6 +3,9 @@
 1-notess
 1-notess/
 
+.vscode
+.vscode/
+
 venv
 __pycache__
 .idea/

@@ -3,6 +3,11 @@ import random
 import logging
 
 
+# 
+from datetime import timedelta
+
+
+
 #
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -10,6 +15,8 @@ from django.utils.html import strip_tags
 from django.utils.timezone import now
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+
 
 
 #
@@ -19,8 +26,13 @@ from rest_framework import status
 
 
 #
-from accounts import models
+from . import models
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
 logger = logging.getLogger(__name__)
 
 
@@ -50,9 +62,14 @@ def generate_otp():
 
 # ******************************************************************************
 # ==============================================================================
-# *** Send OTP For Teacher *** #
+# *** Send OTP For User *** #
 def send_otp_for_user(email, type_user="user"):
+    # حذف الـ OTP المنتهي الصلاحية
+    expiry_time = timezone.now() - timedelta(minutes=10)
+    models.OneTimeOTP.objects.filter(created_at__lt=expiry_time).delete()
+
     try:
+
         user = models.User.objects.get(email=email)
         otp = generate_otp()
 
@@ -137,6 +154,10 @@ def send_verification_email(user, otp):
 # ==============================================================================
 # *** Send OTP For Password Reset *** #
 def send_otp_for_password_reset(email, user_type="user"):
+    # حذف الـ OTP المنتهي الصلاحية
+    expiry_time = timezone.now() - timedelta(minutes=10)
+    models.OneTimeOTP.objects.filter(created_at__lt=expiry_time).delete()
+
     otp = generate_otp()
 
     try:

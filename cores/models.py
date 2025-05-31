@@ -191,7 +191,7 @@ class Course(models.Model):
 
     is_visible = models.BooleanField(default=True)
 
-    last_updated = models.CharField(max_length=100, null=True, blank=True) # remove
+    # last_updated = models.CharField(max_length=100, null=True, blank=True) # remove
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -471,7 +471,7 @@ class StudentCourseEnrollment(models.Model):
     payment_id = models.CharField(max_length=1_000, null=True, blank=True)
     
     completed = models.BooleanField(default=False)  # إضافة حقل للإكمال
-    completion_date = models.DateTimeField(null=True, blank=True)  # تاريخ الإكمال
+    completion_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)  # تاريخ الإكمال
     certificate_id = models.UUIDField(default=uuid.uuid4, editable=False, null=True, blank=True) # unique=True
 
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -711,7 +711,7 @@ class StudentCertificate(models.Model):
     pdf_file = models.FileField(upload_to='course/certificates/', null=True, blank=True)
     
     issue_date = models.DateTimeField(auto_now_add=True)
-    completion_date = models.DateTimeField()
+    completion_date = models.DateTimeField(auto_now_add=True)
     certificate_pdf = models.FileField(upload_to='course/certificates/', null=True, blank=True)
     certificate_url = models.URLField(null=True, blank=True)
     verification_code = models.CharField(max_length=16, unique=True)
@@ -969,7 +969,7 @@ class ContactUsUser(models.Model):
                 message='يجب أن يبدأ رقم الهاتف بـ 05 ويحتوي على 10 أرقام صحيحة'
             )
         ],
-        verbose_name="رقم الجوال السعودي",
+        # verbose_name="رقم الجوال السعودي",
         null=True, 
         blank=True,
     )

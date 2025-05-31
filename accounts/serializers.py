@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse
 
 
+
 #
 from rest_framework import status
 from rest_framework import serializers
@@ -12,9 +13,10 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.exceptions import ValidationError
 
 
+
 #
-from accounts import models
-from accounts import utils
+from . import models
+from . import utils
 
 
 
@@ -66,7 +68,18 @@ class UserSerializer(serializers.ModelSerializer):
 class OneTimeOTPSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.OneTimeOTP
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            
+            "otp",
+            "token",
+            
+            "created_at",
+
+            "is_expired",
+        ]
 
 
 

@@ -20,6 +20,7 @@ from django.db.models import Q
 SECRET_KEY = settings.SECRET_KEY
 
 
+
 #
 from rest_framework import status
 from rest_framework import generics
@@ -148,6 +149,7 @@ class AdminRegisterVerifyView(generics.CreateAPIView):
 class AdminsListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_admin=True)
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -196,6 +198,7 @@ class AdminIDView(APIView):
 class AdminProfileList(generics.ListCreateAPIView):
     serializer_class = serializers.AdminProfileSerializer
     queryset = models.AdminProfile.objects.all()
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -512,6 +515,8 @@ class AdminRefreshView(APIView):
 
 # *** Admin (Change Password) -> [POST] *** #
 class AdminChangePasswordView(APIView):
+    # permission_classes = [IsAuthenticated]
+
     def post(self, request):
         try:
             # Retrieve and decode the refresh token
@@ -622,7 +627,7 @@ class AdminLogoutView(APIView):
 
 
 # *** Admin (Reset Password) -> [POST] *** #
-class AdminPasswordResetView(APIView):
+class AdminPasswordResetView(APIView): 
     def post(self, request):
         email = request.data.get("email")
 
@@ -673,7 +678,7 @@ class AdminPasswordResetView(APIView):
             )
 
 
-# *** Admin (Confirm Reset Password) *** #
+# *** Admin (Confirm Reset Password) -> [POST] *** #
 class AdminConfirmResetPasswordView(APIView):
     """
     This view allows a Admin to reset their password after OTP verification.
@@ -731,9 +736,9 @@ class AdminConfirmResetPasswordView(APIView):
         )
 
 
+# *** Admin (Search) -> [GET] *** #
 class AdminsSearchList(generics.ListCreateAPIView):
     queryset = models.User.objects.filter(is_admin=True)
-    # queryset = models.User.objects.all()
     serializer_class = serializers.UserSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
@@ -799,6 +804,7 @@ class TeacherRegisterView(generics.CreateAPIView):
             status.HTTP_400_BAD_REQUEST,
         )
 
+
 # *** Teacher (Register Verify) -> [POST] *** #
 class TeacherRegisterVerifyView(generics.CreateAPIView):
     queryset = models.User.objects.all()
@@ -838,6 +844,7 @@ class TeacherRegisterVerifyView(generics.CreateAPIView):
 class TeachersListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_teacher=True)
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -886,6 +893,7 @@ class TeacherIDView(APIView):
 class TeacherProfileList(generics.ListCreateAPIView):
     serializer_class = serializers.TeacherProfileSerializer
     queryset = models.TeacherProfile.objects.all()
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -1202,6 +1210,8 @@ class TeacherRefreshView(APIView):
 
 # *** Teacher (Change Password) -> [POST] *** #
 class TeacherChangePasswordView(APIView):
+    # permission_classes = [IsAuthenticated]
+
     def post(self, request):
         try:
             # Retrieve and decode the refresh token
@@ -1362,7 +1372,7 @@ class TeacherPasswordResetView(APIView):
             )
 
 
-# *** Teacher (Confirm Reset Password) *** #
+# *** Teacher (Confirm Reset Password) -> [POST] *** #
 class TeacherConfirmResetPasswordView(APIView):
     """
     This view allows a teacher to reset their password after OTP verification.
@@ -1420,6 +1430,7 @@ class TeacherConfirmResetPasswordView(APIView):
         )
 
 
+# *** Teacher (Search) -> [GET] *** #
 class TeachersSearchList(generics.ListCreateAPIView):
     queryset = models.User.objects.filter(is_teacher=True)
     serializer_class = serializers.UserSerializer
@@ -1529,6 +1540,7 @@ class StaffRegisterVerifyView(generics.CreateAPIView):
 class StaffsListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_staff=True)
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -1577,6 +1589,7 @@ class StaffIDView(APIView):
 class StaffProfileList(generics.ListCreateAPIView):
     serializer_class = serializers.StaffProfileSerializer
     queryset = models.StaffProfile.objects.all()
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -1894,6 +1907,8 @@ class StaffRefreshView(APIView):
 
 # *** Staff (Change Password) -> [POST] *** #
 class StaffChangePasswordView(APIView):
+    # permission_classes = [IsAuthenticated]
+
     def post(self, request):
         try:
             # Retrieve and decode the refresh token
@@ -2054,7 +2069,7 @@ class StaffPasswordResetView(APIView):
             )
 
 
-# *** Staff (Confirm Reset Password) *** #
+# *** Staff (Confirm Reset Password) -> [POST] *** #
 class StaffConfirmResetPasswordView(APIView):
     """
     This view allows a staff to reset their password after OTP verification.
@@ -2112,6 +2127,7 @@ class StaffConfirmResetPasswordView(APIView):
         )
 
 
+# *** Staff (Search) -> [GET] *** #
 class StaffsSearchList(generics.ListCreateAPIView):
     queryset = models.User.objects.filter(is_staff=True)
     serializer_class = serializers.UserSerializer
@@ -2222,6 +2238,7 @@ class StudentRegisterVerifyView(generics.CreateAPIView):
 class StudentsListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.filter(is_student=True)
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -2271,6 +2288,7 @@ class StudentIDView(APIView):
 class StudentProfileList(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.StudentProfileSerializer
     queryset = models.StudentProfile.objects.all()
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -2589,6 +2607,8 @@ class StudentRefreshView(APIView):
 
 # *** Student (Change Password) -> [POST] *** #
 class StudentChangePasswordView(APIView):
+    # permission_classes = [IsAuthenticated]
+
     def post(self, request):
         try:
             # Retrieve and decode the refresh token
@@ -2748,7 +2768,7 @@ class StudentPasswordResetView(APIView):
             )
 
 
-# *** Student (Confirm Reset Password) *** #
+# *** Student (Confirm Reset Password) -> [POST] *** #
 class StudentConfirmResetPasswordView(APIView):
     """
     This view allows a Student to reset their password after OTP verification.
@@ -2806,6 +2826,7 @@ class StudentConfirmResetPasswordView(APIView):
         )
 
 
+# *** Student (Search) -> [GET] *** #
 class StudentsSearchList(generics.ListCreateAPIView):
     queryset = models.User.objects.filter(is_student=True)
     serializer_class = serializers.UserSerializer
@@ -2836,6 +2857,7 @@ class StudentsSearchList(generics.ListCreateAPIView):
 class UsersListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
+    pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
 
@@ -2945,6 +2967,7 @@ class PublicIDView(APIView):
         )
 
 
+# *** Public (Search) -> [GET] *** #
 class PublicUserSearchList(generics.ListCreateAPIView):
     queryset = models.User.objects.all()
     serializer_class = serializers.UserSerializer

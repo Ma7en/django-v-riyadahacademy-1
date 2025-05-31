@@ -45,10 +45,14 @@ from rest_framework.permissions import (
 )
 
 
+# 
+from accounts.serializers import *
+
 
 # 
 from . import models
 from . import serializers
+
 
 
 
@@ -730,13 +734,25 @@ def fetch_enroll_status(request,student_id,course_id):
     else:
         return JsonResponse({'bool':False})
 
+class FetchEnrollStatusView(generics.RetrieveAPIView):
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get(self, request, student_id, course_id):
+        student = models.User.objects.filter(id=student_id).first()
+        course = models.Course.objects.filter(id=course_id).first()
+        enroll_status = models.StudentCourseEnrollment.objects.filter(course=course, student=student).exists()
+        return Response({'bool': enroll_status})
 
 
 class EnrolledStuentList(generics.ListCreateAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
     serializer_class = serializers.StudentCourseEnrollSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        qs = ""
         if 'course_id' in self.kwargs:
             course_id = self.kwargs['course_id']
             course = models.Course.objects.get(pk=course_id)
@@ -792,6 +808,7 @@ class CourseRatingListAPI(generics.ListCreateAPIView):
     queryset = models.CourseRating.objects.all()
     serializer_class = serializers.CourseRatingSerializer
     pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         if 'popular' in self.request.GET:
@@ -805,6 +822,8 @@ class CourseRatingListAPI(generics.ListCreateAPIView):
         return models.CourseRating.objects.filter(course__isnull=False).order_by('-rating')
 
 
+
+
 def fetch_rating_status(request,student_id,course_id):
     student = models.User.objects.filter(id=student_id).first()
     course = models.Course.objects.filter(id=course_id).first()
@@ -815,9 +834,14 @@ def fetch_rating_status(request,student_id,course_id):
     else:
         return JsonResponse({'bool':False})
 
+class FetchRatingStatusView(generics.RetrieveAPIView):
+    pagination_class = StandardResultSetPagination
 
-
-
+    def get(self, request, student_id, course_id):
+        student = models.User.objects.filter(id=student_id).first()
+        course = models.Course.objects.filter(id=course_id).first()
+        rating_status = models.CourseRating.objects.filter(course=course, student=student).exists()
+        return Response({'bool': rating_status})
 
 
 
@@ -844,7 +868,8 @@ class StudentFavoriteCourseListAPI(generics.ListCreateAPIView):
     queryset = models.StudentFavoriteCourse.objects.all()
     serializer_class = serializers.StudentFavoriteCourseSerializer
     pagination_class = StandardResultSetPagination
-
+    # permission_classes = [IsAuthenticated]
+    
     def get_queryset(self):
         if 'student_id' in self.kwargs:
             student_id = self.kwargs['student_id']
@@ -861,7 +886,16 @@ def remove_favorite_course(request,course_id,student_id):
         return JsonResponse({'bool':True})
     else:
         return JsonResponse({'bool':False})
-
+ 
+class RemoveFavoriteCourseView(generics.DestroyAPIView):    
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, course_id, student_id):
+        student = models.User.objects.filter(id=student_id).first()
+        course = models.Course.objects.filter(id=course_id).first()
+        favorite_status = models.StudentFavoriteCourse.objects.filter(course=course, student=student).delete()
+        return Response({'bool': favorite_status[0] > 0})
 
 
 
@@ -1009,25 +1043,29 @@ def student_generate_certificate(request, enrollment_id):
     
     # إضافة محتوى الشهادة
     p.setFont("Helvetica-Bold", 24)
-    p.drawCentredString(width/2, height-150, "شهادة إنجاز")
+    # p.drawCentredString(width/2, height-150, "شهادة إنجاز")
+    p.drawCentredString(width/2, height-150, "Certificate of Achievement")
     
     p.setFont("Helvetica", 18)
-    p.drawCentredString(width/2, height-200, "تعلن منصة الريادة بأن")
+    # p.drawCentredString(width/2, height-200, "تعلن منصة الريادة بأن")
+    p.drawCentredString(width/2, height-200, "The Entrepreneurship Platform announces that")
     
     p.setFont("Helvetica-Bold", 20)
     p.drawCentredString(width/2, height-250, f"{enrollment.student.get_full_name()}")
     
     p.setFont("Helvetica", 16)
-    p.drawCentredString(width/2, height-300, "قد أكمل بنجاح دورة")
+    # p.drawCentredString(width/2, height-300, "قد أكمل بنجاح دورة")
+    p.drawCentredString(width/2, height-300, "I have successfully completed the course")
     
     p.setFont("Helvetica-Bold", 18)
     p.drawCentredString(width/2, height-350, f"{enrollment.course.title}")
     
     p.setFont("Helvetica", 14)
-    p.drawCentredString(width/2, height-400, f"بتاريخ: {enrollment.completion_date.strftime('%Y-%m-%d')}")
+    # p.drawCentredString(width/2, height-400, f"بتاريخ: {enrollment.completion_date.strftime('%Y-%m-%d')}")
+    p.drawCentredString(width/2, height-400, f"On The Date: {enrollment.completion_date.strftime('%Y-%m-%d')}")
     
     p.setFont("Helvetica", 12)
-    p.drawCentredString(width/2, 100, f"رقم الشهادة: {enrollment.certificate_id}")
+    p.drawCentredString(width/2, 100, f"Certificate Number: {enrollment.certificate_id}")
     
     # حفظ PDF
     p.showPage()
