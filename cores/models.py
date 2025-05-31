@@ -191,8 +191,7 @@ class Course(models.Model):
 
     is_visible = models.BooleanField(default=True)
 
-    # last_updated = models.CharField(max_length=100, null=True, blank=True) # remove
-
+ 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)

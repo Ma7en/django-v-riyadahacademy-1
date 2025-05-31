@@ -685,12 +685,26 @@ urlpatterns = [
         name="review-user-details-pk",
     ),
     
-    # path(
-    #     'review-user/search/<str:searchstring>/', 
-    #     views.ReviewUserSearchList.as_view(),
-    #     name="review-user-search-list",
-    # ),
+    path(
+        'review-user/search/<str:searchstring>/', 
+        views.ReviewUserSearchList.as_view(),
+        name="review-user-search-list",
+    ),
 
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # =================================================================
+    # *** ) Admin Dashboard Stats *** #
+    path(
+        'admin-dashboard-stats/', 
+        views.AdminDashboardStatsView.as_view(), 
+        name='AdminDashboardStatsView',
+    ),
+ 
 
 
     path(

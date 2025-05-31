@@ -562,7 +562,7 @@ class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
 
 class QuestionInBankSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
-    # question_bank = QuestionBankListSerializer(many=True, read_only=True)
+    # question_bank = QuestionBankSerializer(many=True, read_only=True)
 
     choices = ChoiceQuestionInBankSerializer(many=True, read_only=True)
     
@@ -617,7 +617,7 @@ class QuestionInBankDetailSerializer(serializers.ModelSerializer):
         return instance
 
 
-class QuestionBankListSerializer(serializers.ModelSerializer):
+class QuestionBankSerializer(serializers.ModelSerializer):
     question_count = serializers.IntegerField(read_only=True)
     section_name = serializers.CharField(source='section.name', read_only=True)
     
@@ -655,7 +655,7 @@ class QuestionBankResultSerializer(serializers.Serializer): # QuizResult
 
 class StudentQuestionBankResultSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
-    question_bank = QuestionBankListSerializer(many=True, read_only=True)
+    question_bank = QuestionBankSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.StudentQuestionBankResult

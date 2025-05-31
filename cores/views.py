@@ -25,9 +25,12 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 
 
+
 # 
 from io import BytesIO
 from datetime import datetime
+
+
 
 
 # 
@@ -45,13 +48,18 @@ from rest_framework.permissions import (
 )
 
 
+
+
 # 
 from accounts.serializers import *
+
+
 
 
 # 
 from . import models
 from . import serializers
+
 
 
 
@@ -734,8 +742,9 @@ def fetch_enroll_status(request,student_id,course_id):
     else:
         return JsonResponse({'bool':False})
 
-class FetchEnrollStatusView(generics.RetrieveAPIView):
-    pagination_class = StandardResultSetPagination
+# class FetchEnrollStatusView(generics.RetrieveAPIView):
+class FetchEnrollStatusView(APIView):
+    # pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
     def get(self, request, student_id, course_id):
@@ -834,8 +843,9 @@ def fetch_rating_status(request,student_id,course_id):
     else:
         return JsonResponse({'bool':False})
 
-class FetchRatingStatusView(generics.RetrieveAPIView):
-    pagination_class = StandardResultSetPagination
+# class FetchRatingStatusView(generics.RetrieveAPIView):
+class FetchRatingStatusView(APIView):
+    # pagination_class = StandardResultSetPagination
 
     def get(self, request, student_id, course_id):
         student = models.User.objects.filter(id=student_id).first()
@@ -1194,7 +1204,7 @@ class StudentVerifyCertificateView(APIView):
 # *** Question Bank ***
 class QuestionBankList(generics.ListCreateAPIView):
     # queryset = models.QuestionBank.objects.all()
-    serializer_class = serializers.QuestionBankListSerializer
+    serializer_class = serializers.QuestionBankSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -1207,7 +1217,7 @@ class QuestionBankList(generics.ListCreateAPIView):
 
 class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
     # queryset = models.QuestionBank.objects.all()
-    serializer_class = serializers.QuestionBankListSerializer
+    serializer_class = serializers.QuestionBankSerializer
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -1229,14 +1239,14 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return serializers.QuestionBankDetailSerializer
-        return serializers.QuestionBankListSerializer
+        return serializers.QuestionBankSerializer
     
     @action(detail=True, methods=['get'])
     def questions(self, request, pk=None):
         """Get all questions for a question bank"""
         question_bank = self.get_object()
         questions = question_bank.questions.all()
-        serializer = serializers.QuestionBankListSerializer(questions, many=True)
+        serializer = serializers.QuestionBankSerializer(questions, many=True)
         return Response(serializer.data)
     
     @action(detail=True, methods=['get'])
@@ -1251,7 +1261,7 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
         # Serialize questions but exclude is_correct from choices
         serialized_questions = []
         for question in questions:
-            question_data = serializers.QuestionBankListSerializer(question).data
+            question_data = serializers.QuestionBankSerializer(question).data
             
             # Remove is_correct field from choices
             for choice in question_data['choices']:
@@ -1451,7 +1461,7 @@ class StudentQuestionBankResultSaveView(APIView):
 
 class QuestionBankSectionList(generics.ListCreateAPIView):
     # queryset = models.SectionCourse.objects.all()
-    serializer_class = serializers.QuestionBankListSerializer
+    serializer_class = serializers.QuestionBankSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -1468,6 +1478,10 @@ class QuestionBankSectionList(generics.ListCreateAPIView):
 # ******************************************************************************
 # ==============================================================================
 # ***  ***
+
+
+
+
 
 
 
@@ -1571,7 +1585,7 @@ class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
         
 
 # (List of review -> [GET])
-class ReviewUserListAPIView(generics.ListCreateAPIView):
+class ReviewUserSearchList(generics.ListCreateAPIView):
     queryset = models.ReviewUser.objects.all()
     serializer_class = serializers.ReviewUserSerializer
     pagination_class = StandardResultSetPagination
@@ -1589,6 +1603,65 @@ class ReviewUserListAPIView(generics.ListCreateAPIView):
                 |Q(rating__icontains=search)
                 )
         return qs
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Admin Dashboard Stats ***
+class AdminDashboardStatsView(generics.GenericAPIView):
+    def get(self, request):
+        users_count = models.User.objects.count()
+        admins_count = models.User.objects.filter(is_admin=True).count()
+        teachers_count = models.User.objects.filter(is_teacher=True).count()
+        staffs_count = models.User.objects.filter(is_staff=True).count()
+        students_count = models.User.objects.filter(is_student=True).count()
+
+        categories_count = models.CategorySection.objects.count()
+        sections_course_count = models.SectionCourse.objects.count()
+
+        courses_count = models.Course.objects.count()
+        sections_in_course_count = models.SectionInCourse.objects.count()
+        lessons_count = models.LessonInCourse.objects.count()
+
+        couponscourse_count = models.CouponCourse.objects.count()
+        
+        total_enrolled_students = models.StudentCourseEnrollment.objects.count()
+
+        questionbanks_count = models.QuestionBank.objects.count()
+
+        contacts_count = models.ContactUsUser.objects.count()
+        reviews_count = models.ReviewUser.objects.count()
+
+        return Response({
+            'users_count': users_count,
+            'admins_count': admins_count,
+            'teachers_count': teachers_count,
+            'staffs_count': staffs_count,
+            'students_count': students_count,
+
+            'categories_count': categories_count,
+            'sections_course_count': sections_course_count,
+
+            'courses_count': courses_count,
+            'sections_in_course_count': sections_in_course_count,
+            'lessons_count': lessons_count,
+            
+            'couponscourse_count': couponscourse_count,
+
+            'total_enrolled_students': total_enrolled_students,
+
+            'questionbanks_count': questionbanks_count,
+
+            'contacts_count': contacts_count,
+            'reviews_count': reviews_count,
+        })
+
+
+
 
 
 # ******************************************************************************
