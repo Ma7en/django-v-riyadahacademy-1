@@ -145,6 +145,19 @@ class Course(models.Model):
         on_delete=models.CASCADE, 
         related_name='section_course',
     )
+
+    STATUS_CHOICES = (
+        ("in_progress", "جاري العمل"),
+        ("updated", "يتم التحديث"),
+        ("complete", "مكتمل"), 
+    )
+    status = models.CharField(
+        max_length=1_000, 
+        choices=STATUS_CHOICES, 
+        default="in_progress",
+        null=True,
+        blank=True,
+    )
     
     LEVEL_CHOICES = [
         ('beginner', 'مبتدئ'),
@@ -153,7 +166,8 @@ class Course(models.Model):
     ]
     level = models.CharField(
         max_length=1_000,
-        # choices=LEVEL_CHOICES, # edithere
+        choices=LEVEL_CHOICES, # edithere
+        default="beginner",
         null=True, 
         blank=True,
     )
@@ -298,14 +312,15 @@ class LessonInCourse(models.Model):
         related_name='section_lesson',
     )
 
-    LESSON_TYPES = (
+    LESSON_TYPES_CHOICES = (
         ('video', 'Video'),
         ('assessment', 'Assessment'),
         ('document', 'Document'),
     )
     type = models.CharField(
         max_length=1_000, 
-        choices=LESSON_TYPES,
+        choices=LESSON_TYPES_CHOICES,
+        default="video",
     )
    
     title = models.CharField(max_length=1_000)
@@ -371,14 +386,15 @@ class QuestionInCourse(models.Model):
         related_name='lesson_question',
     )
 
-    QUESTION_TYPES = (
+    QUESTION_TYPES_CHOICES = (
         ('text', 'نص'),
         ('image-url', 'صورة من رابط'),
         ('image-upload', 'صورة مرفوعة'),
     )
     question_type = models.CharField(
         max_length=100, 
-        choices=QUESTION_TYPES,
+        choices=QUESTION_TYPES_CHOICES,
+        default="text",
     )
     
     text = models.TextField(max_length=10_000, null=True, blank=True)
@@ -505,14 +521,14 @@ class CourseRating(models.Model):
         null=True,
     )
 
-    STATUS = (
+    STATUS_CHOICES = (
         ("unacceptable", "مرفوض"), 
         ("under-processing", "قيد المعالجة"),
         ("publication", "منشور"),
     )
     status = models.CharField(
         max_length=1_000, 
-        choices=STATUS, 
+        choices=STATUS_CHOICES, 
         default="unacceptable",
     )
 
@@ -934,14 +950,14 @@ class ContactUsUser(models.Model):
         related_name='contactus_user',
     )
 
-    STATUS = (
+    STATUS_CHOICES = (
         ("new", "جديد"),
         ("under-processing", "قيد المعالجة"),
         ("reply", "تم الرد"),
     )
     status = models.CharField(
         max_length=1_000, 
-        choices=STATUS, 
+        choices=STATUS_CHOICES, 
         default="new",
     )
 
@@ -1012,17 +1028,20 @@ class ReviewUser(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='reviewuser_user',
     )
 
-    STATUS = (
+    STATUS_CHOICES = (
         ("unacceptable", "مرفوض"), 
         ("under-processing", "قيد المعالجة"),
         ("publication", "منشور"),
     )
     status = models.CharField(
         max_length=1_000, 
-        choices=STATUS, 
+        choices=STATUS_CHOICES, 
         default="unacceptable",
+        null=True,
+        blank=True,
     )
 
     first_name = models.CharField(max_length=1_000)

@@ -97,7 +97,7 @@ class SuperuserProfile(models.Model):
         ("Female", "Female"),
     )
     gender = models.CharField(
-        max_length=30,
+        max_length=1_000,
         choices=GENDER_CHOICES,
         null=True,
         blank=True,
@@ -109,7 +109,7 @@ class SuperuserProfile(models.Model):
         ("Limited", "محدودة"),
     )
     powers = models.CharField(
-        max_length=30,
+        max_length=1_000,
         choices=POWERS_CHOICES,
         default="Complete",
         null=True,
@@ -181,21 +181,50 @@ class AdminProfile(models.Model):
         ("Female", "Female"),
     )
     gender = models.CharField(
-        max_length=30,
+        max_length=1_000,
         choices=GENDER_CHOICES,
         null=True,
         blank=True,
     )
 
     POWERS_CHOICES = (
-        ("Complete", "كاملة"),
-        ("Medium", "متوسطة"),
-        ("Limited", "محدودة"),
+        ("complete", "كاملة"),
+        ("medium", "متوسطة"),
+        ("limited", "محدودة"),
     )
     powers = models.CharField(
-        max_length=30,
+        max_length=1_000,
         choices=POWERS_CHOICES,
-        default="Complete",
+        default="complete",
+        null=True,
+        blank=True,
+    )
+
+    WORK_CHOICES = (
+        ("system_manager", "مدير النظام"),
+        ("technical_manager", "مدير التقنية"),
+        ("programming_manager", "مدير قسم البرمجة"),
+        ("content_manager", "مدير المحتوى"),
+        ("sales_manager", "مدير المبيعات"),
+        ("resources_manager", "مدير الموارد"),
+        ("projects_manager", "مدير المشاريع"),
+        ("academic_affairs_manager", "مدير الشؤون الأكاديمية"),
+        ("supervisor", "مشرف"),
+        ("users_supervisor", "مشرف المستخدمين"),
+        ("courses_supervisor", "مشرف الدورات"),
+        ("marketing_supervisor", "مشرف التسويق"),
+        ("support_supervisor", "مشرف الدعم"),
+        ("financial_supervisor", "مشرف المالية"),
+        ("quality_supervisor", "مشرف الجودة"),
+        ("public_relations_supervisor", "مشرف العلاقات العامة"),
+        ("recruitment_supervisor", "مشرف التوظيف"),
+        ("customer_service_supervisor", "مشرف خدمة العملاء"),
+        ("training_supervisor", "مشرف التدريب"),
+    )
+    work = models.CharField(
+        max_length=1_000,
+        choices=WORK_CHOICES,
+        default="system_manager",
         null=True,
         blank=True,
     )
@@ -275,8 +304,37 @@ class TeacherProfile(models.Model):
         ("Female", "Female"),
     )
     gender = models.CharField(
-        max_length=30,
+        max_length=1_000,
         choices=GENDER_CHOICES,
+        null=True,
+        blank=True,
+    )
+
+    SUBJECT_CHOICES = (
+        ("mathematics", "رياضيات"),
+        ("advanced_mathematics", "رياضيات متقدمة"),
+        ("applied_mathematics", "رياضيات تطبيقية"),
+        ("chemistry", "كيمياء"),
+        ("organic_chemistry", "كيمياء عضوية"),
+        ("physics", "فيزياء"),
+        ("advanced_physics", "فيزياء متقدمة"),
+        ("biology", "أحياء"),
+        ("molecular_biology", "أحياء جزيئية"),
+        ("computer_science", "علوم الحاسب"),
+        ("advanced_computer_science", "علوم حاسب متقدمة"),
+        ("information_technology", "تقنية معلومات"),
+        ("arabic_language", "لغة عربية"),
+        ("english_language", "لغة إنجليزية"),
+        ("advanced_english_language", "لغة انجليزية متقدمة"),
+        ("history", "تاريخ"),
+        ("geography", "جغرافيا"),
+        ("psychology", "علم النفس"),
+        ("environmental_science", "علوم بيئية"),
+    )
+    subject = models.CharField(
+        max_length=1_000,
+        choices=SUBJECT_CHOICES,
+        default="mathematics",
         null=True,
         blank=True,
     )
@@ -354,8 +412,59 @@ class StaffProfile(models.Model):
         ("Female", "Female"),
     )
     gender = models.CharField(
-        max_length=30,
+        max_length=1_000,
         choices=GENDER_CHOICES,
+        null=True,
+        blank=True,
+    )
+
+    POSITION_CHOICES = (
+        ("finance", "المالية"),
+        ("hr_manager", "مدير الموارد البشرية"),
+        ("accounting", "محاسبة"),
+        ("it_manager", "مدير تقنية المعلومات"),
+        ("customer_service_supervisor", "مشرفة خدمة العملاء"),
+        ("facilities_manager", "مدير المرافق"),
+        ("administrative_assistant", "مساعدة إدارية"),
+        ("security_supervisor", "مشرف الأمن"),
+        ("public_relations_coordinator", "منسقة علاقات عامة"),
+        ("procurement_manager", "مدير المشتريات"),
+        ("recruitment_specialist", "أخصائية توظيف"),
+        ("maintenance_supervisor", "مشرف صيانة"),
+        ("librarian", "أمينة مكتبة"),
+        ("transportation_supervisor", "مشرف النقل"),
+        ("marketing_specialist", "أخصائية تسويق"),
+        ("quality_manager", "مدير الجودة"),
+    )
+    position = models.CharField(
+        max_length=1_000,
+        choices=POSITION_CHOICES,
+        default="finance",
+        null=True,
+        blank=True,
+    )
+
+    DEPARTMENT_CHOICES = (
+        ("employee_affairs", "شؤون الموظفين"),
+        ("finance", "المالية"),
+        ("information_technology", "تقنية المعلومات"),
+        ("customer_service", "خدمة العملاء"),
+        ("facilities", "المرافق"),
+        ("student_affairs", "شؤون الطلاب"),
+        ("security", "الأمن"),
+        ("public_relations", "العلاقات العامة"),
+        ("procurement", "المشتريات"),
+        ("human_resources", "الموارد البشرية"),
+        ("maintenance", "الصيانة"),
+        ("library", "المكتبة"),
+        ("transportation", "النقل"),
+        ("marketing", "التسويق"),
+        ("quality", "الجودة"),
+    )
+    department = models.CharField(
+        max_length=1_000,
+        choices=DEPARTMENT_CHOICES,
+        default="employee_affairs",
         null=True,
         blank=True,
     )
