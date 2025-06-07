@@ -142,7 +142,6 @@ class SuperuserProfile(models.Model):
     # )
     phone_number = models.CharField(
         max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
-        unique=True,
         validators=[
             RegexValidator(
                 regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
@@ -160,6 +159,10 @@ class SuperuserProfile(models.Model):
 
     
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="1-1) Superuser Profile"
 
     def __str__(self):
         return f"{self.id}): ({self.user.email})"
@@ -255,7 +258,6 @@ class AdminProfile(models.Model):
     # )
     phone_number = models.CharField(
         max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
-        unique=True,
         validators=[
             RegexValidator(
                 regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
@@ -280,6 +282,10 @@ class AdminProfile(models.Model):
     #     to set table name in database
     #     """
     #     db_table = "admin_profile"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="1-2) Admin Profile"
 
     def __str__(self):
         return f"{self.id}): ({self.user.email})"
@@ -365,7 +371,6 @@ class TeacherProfile(models.Model):
 
     phone_number = models.CharField(
         max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
-        unique=True,
         validators=[
             RegexValidator(
                 regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
@@ -388,6 +393,10 @@ class TeacherProfile(models.Model):
     #     to set table name in database
     #     """
     #     db_table = "teacher_profile"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="1-3) Teacher Profile"
 
     def __str__(self):
         return f"{self.id}): ({self.user.email})"
@@ -495,7 +504,6 @@ class StaffProfile(models.Model):
     # )
     phone_number = models.CharField(
         max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
-        unique=True,
         validators=[
             RegexValidator(
                 regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
@@ -518,6 +526,10 @@ class StaffProfile(models.Model):
     #     to set table name in database
     #     """
     #     db_table = "staff_profile"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="1-4) Staff Profile"
 
     def __str__(self):
         return f"{self.id}): ({self.phone_number})"
@@ -574,7 +586,6 @@ class StudentProfile(models.Model):
     # )
     phone_number = models.CharField(
         max_length=10,  # الأرقام السعودية تتكون من 10 أرقام (بدون +966)
-        unique=True,
         validators=[
             RegexValidator(
                 regex=r'^(05)(5|0|3|6|4|9|1|8|7|2)([0-9]{7})$',
@@ -598,6 +609,10 @@ class StudentProfile(models.Model):
     #     to set table name in database
     #     """
     #     db_table = "student_profile"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="1-5) Student Profile"
 
     def __str__(self):
         return f"{self.id}): ({self.phone_number})"

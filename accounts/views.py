@@ -161,37 +161,37 @@ class AdminPKAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # *** Admin (ID) -> [GET] *** #
-class AdminIDView(APIView):
+class AdminIDView(generics.GenericAPIView):
     # permission_classes = [IsAuthenticated]
+    serializer_class = serializers.UserSerializer
 
     def get(self, request, pk):
         try:
             admin = models.User.objects.get(pk=pk)
         except models.User.DoesNotExist:
             message = "Admin not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
-        admin_data = serializers.UserSerializer(admin).data
-
+        admin_data = self.get_serializer(admin).data
         if admin_data["is_admin"] == False:
-            message = "Admin whit this id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            message = "Admin with this id is not Found."
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+
+        try:
+            admin_profile = models.AdminProfile.objects.get(user=admin)
+            admin_profile_data = serializers.AdminProfileSerializer(admin_profile).data
+        except models.AdminProfile.DoesNotExist:
+            admin_profile_data = None
 
         message = "Admin retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            admin_data,
-        )
+        return Response({
+            "success": "True",
+            "code": 0,
+            "message": message,
+            "status_code": status.HTTP_200_OK,
+            "data": admin_data,
+            "profile": admin_profile_data,
+        }, status.HTTP_200_OK)
 
 
 # *** Admin (Profiles) -> [GET, POST] *** #
@@ -205,541 +205,392 @@ class AdminProfileList(generics.ListCreateAPIView):
 # *** Admin (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class AdminProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.AdminProfileSerializer
+    queryset = models.AdminProfile.objects.all()
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return models.AdminProfile.objects.all()
 
-    def get_object(self):
-        try:
-            admin_pk = self.kwargs["pk"]  # 1
-            admin_profile = models.AdminProfile.objects.get(user=admin_pk)
-            return admin_profile
-        except models.AdminProfile.DoesNotExist:
-            status_code = status.HTTP_404_NOT_FOUND
-            raise NotFound(
-                {
-                    "success": "False",
-                    "code": 1,
-                    "message": "Admin Profile not found.",
-                    "status_code": status_code,
-                    "data": "",
-                }
-            )
+# *** Admin (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
+# class AdminProfileView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = serializers.AdminProfileSerializer
+#     queryset = models.AdminProfile.objects.all()
+#     # permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        admin_data = serializer.data
+#     def get_queryset(self):
+#         return models.AdminProfile.objects.all()
 
-        if admin_data["admin"]["is_admin"] == False:
-            message = "Admin Profile whit this id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+#     def get_object(self):
+#         try:
+#             admin_pk = self.kwargs["pk"]  # 1
+#             admin_profile = models.AdminProfile.objects.get(user=admin_pk)
+#             return admin_profile
+#         except models.AdminProfile.DoesNotExist:
+#             status_code = status.HTTP_404_NOT_FOUND
+#             raise NotFound(
+#                 {
+#                     "success": "False",
+#                     "code": 1,
+#                     "message": "Admin Profile not found.",
+#                     "status_code": status_code,
+#                     "data": "",
+#                 }
+#             )
 
-        message = "Admin Profile retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            admin_data,
-        )
+#     def retrieve(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance)
+#         admin_data = serializer.data
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+#         if admin_data["user"]["is_admin"] == False:
+#             message = "Admin Profile whit this id is not Found."
+#             return utils.FunReturn(
+#                 1,
+#                 message,
+#                 status.HTTP_404_NOT_FOUND,
+#             )
 
-        admin_data = serializer.data
-        message = "Admin Profile updated Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            admin_data,
-        )
+#         message = "Admin Profile retrieved Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             admin_data,
+#         )
+
+#     def update(self, request, *args, **kwargs):
+#         partial = kwargs.pop("partial", False)
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_update(serializer)
+
+#         admin_data = serializer.data
+#         message = "Admin Profile updated Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             admin_data,
+#         )
 
 
 # *** Admin (Resend OTP) -> [POST] *** #
-class AdminResendOTPView(APIView):
+class AdminResendOTPView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.AdminResendOTPSerializer
 
     def post(self, request):
-        serializer = serializers.AdminResendOTPSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
             message = serializer.errors
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
         try:
             user = models.User.objects.get(email=email)
-
-            # Check if the teacher is already verified
             if user.is_verified:
                 message = "Your account has already been verified. Please go to the login page."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Resend OTP if not verified
             utils.send_otp_for_user(user.email, "admin")
         except models.User.DoesNotExist:
             message = "No user found with this email."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
         message = "OTP has been resent to your email."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK)
 
 
 # *** Admin (Verify Account) -> [POST] *** #
-class AdminVerifyAccountView(APIView):
+class AdminVerifyAccountView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.AdminVerifyAccountSerializer
 
     def post(self, request):
-        otp_code = request.data.get("otp_code")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Ensure OTP code is provided
-        if not otp_code:
-            message = "OTP code is required"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
+        otp_code = serializer.validated_data["otp_code"]
         try:
-            # Retrieve the OTP record from OneTimeOTP model
             otp = models.OneTimeOTP.objects.get(otp=otp_code)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP Code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check OTP expiration
         if otp.is_expired():
             message = "OTP has expired"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Determine if the OTP belongs to a User
         if otp.user:
             user = otp.user
         else:
             message = "No associated user for this OTP code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check if the user is already verified
         if user.is_verified:
             message = "Email already verified"
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            admin_data = serializers.UserSerializer(user).data
+            return utils.FunReturn(0, message, status.HTTP_200_OK, admin_data)
 
-        # Mark user as verified
         user.is_verified = True
         user.save()
-
-        # Send verification success email
-        utils.send_verification_email(
-            user, otp_code
-        )  # Assuming this sends the confirmation email
-
-        # Optionally delete OTP record after successful verification
+        utils.send_verification_email(user, otp_code)
         otp.delete()
-
-        teacher_data = serializers.UserSerializer(user).data
+        admin_data = serializers.UserSerializer(user).data
         message = "Email verified Successfully"
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, admin_data)
 
 
-# *** Admin (Login) -> [POST] *** #
-class AdminLoginView(APIView):
+# *** Admin (Login) -> [POST] *** # 
+class AdminLoginView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = serializers.AdminLoginSerializer
+
     def post(self, request):
-        # Deserialize the admin login data
-        serializer = serializers.AdminLoginSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            admin = serializer.validated_data  # Extract the validated admin
-            admin_data = serializers.UserSerializer(admin).data
+            admin = serializer.validated_data
 
             if not admin.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
                 return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    admin_data,
+                    1, 
+                    message, 
+                    status.HTTP_403_FORBIDDEN, 
+                    serializer.validated_data,
                 )
 
-            # Generate refresh token and include admin_id in the token payload
             refresh = RefreshToken.for_user(admin)
-            refresh["admin_id"] = (
-                admin.id
-            )  # Explicitly add admin_id to the token payload
-
-            # Generate access token
+            refresh["admin_id"] = admin.id
             access_token = refresh.access_token
 
+            try:
+                admin_profile = models.AdminProfile.objects.get(user=admin)
+                admin_profile_data = serializers.AdminProfileSerializer(admin_profile).data
+            except models.AdminProfile.DoesNotExist:
+                admin_profile_data = None
+
             admin_data = serializers.UserSerializer(admin).data
-            status_code = status.HTTP_200_OK
             response = {
                 "success": "True",
                 "code": 0,
                 "message": "Admin Login Successfully.",
-                "status_code": status_code,
+                "status_code": status.HTTP_200_OK,
                 "data": admin_data,
+                "profile": admin_profile_data,
                 "access_token": str(access_token),
                 "refresh_token": str(refresh),
             }
-            return Response(
-                response,
-                status=status_code,
+            return Response(response, status=status.HTTP_200_OK)
+        return utils.FunReturn(
+            1, 
+            serializer.errors, 
+            status.HTTP_400_BAD_REQUEST,
             )
 
-        message = serializer.errors
-        return utils.FunReturn(
-            1,
-            message,
-            status.HTTP_400_BAD_REQUEST,
-        )
 
+# *** Admin (Refresh) -> [POST] *** # 
+class AdminRefreshView(generics.GenericAPIView):
+    serializer_class = serializers.AdminRefreshSerializer
 
-# *** Admin (Refresh) -> [POST] *** #
-class AdminRefreshView(APIView):
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = {
-                    "refresh_token": "This field is required.",
-                }
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Decode the JWT token
-            payload = jwt.decode(
-                refresh_token, SECRET_KEY, algorithms=["HS256"]
-            )  # {'token_type': 'refresh', 'exp': 1737402322, 'iat': 1737315922, 'jti': '626f3935d64e4ebcbfcb53d54041f2ab', 'user_id': 1, 'teacher_id': 1}
-
-            # Retrieve user_id from the token payload
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("user_id")
             if not user_id:
-                raise ValidationError(
-                    {
-                        "refresh_token": "Invalid token payload.",
-                    }
-                )
+                message = {"refresh_token": "Invalid token payload."}
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Fetch the Admin object
             admin = models.User.objects.get(id=user_id)
-
-            # Serialize the Admin object
             admin_data = serializers.UserSerializer(admin).data
             message = "Admin retrieved successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                admin_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, admin_data)
         except models.User.DoesNotExist:
-            raise ValidationError(
-                {
-                    "message": "Admin not found.",
-                }
-            )
-
+            message = {"message": "Admin not found."}
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
         except jwt.ExpiredSignatureError:
-            raise ValidationError(
-                {
-                    "message": "Refresh token has expired.",
-                }
-            )
-
+            message = {"message": "Refresh token has expired."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError(
-                {
-                    "message": "Invalid refresh token.",
-                }
-            )
-
+            message = {"message": "Invalid refresh token."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            raise ValidationError(
-                {
-                    "message": str(e),
-                }
-            )
+            message = {"message": str(e)}
+            return utils.FunReturn(1, message, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# *** Admin (Change Password) -> [POST] *** #
-class AdminChangePasswordView(APIView):
+# *** Admin (Change Password) -> [POST] *** # 
+class AdminChangePasswordView(generics.GenericAPIView):
+    serializer_class = serializers.AdminChangePasswordSerializer
     # permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
+        confirm_password = serializer.validated_data["confirm_password"]
+
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-
-            if not refresh_token:
-                raise ValidationError({"refresh_token": "This field is required."})
-
             payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
             admin_id = payload.get("admin_id")
-
-            # Fetch the admin
             admin = models.User.objects.get(id=admin_id)
 
-            # Validate old password
-            old_password = request.data.get("old_password")
+            if not check_password(old_password, admin.password):
+                message = "Old password is incorrect."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            if not old_password or not check_password(old_password, admin.password):
-                raise ValidationError({"message": "Old password is incorrect."})
+            if new_password != confirm_password:
+                message = "New passwords do not match."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Validate new passwords
-            new_password = request.data.get("new_password")
-            confirm_password = request.data.get("confirm_password")
-
-            # validations.validate_password(new_password, confirm_password)
-
-            # Change password
             admin.set_password(new_password)
             admin.save()
             utils.send_change_password_confirm(admin)
-
             admin_data = serializers.UserSerializer(admin).data
             message = "Password changed successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                admin_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, admin_data)
         except jwt.ExpiredSignatureError:
-            raise ValidationError("Token has expired")
+            message = "Token has expired"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError("Invalid token")
+            message = "Invalid token"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except models.User.DoesNotExist:
-            raise ValidationError("Admin not found")
-        except ValidationError as e:
-            message = e.detail
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            message = "Admin not found"
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+        
 
+# *** Admin (Logout) -> [POST] *** # 
+class AdminLogoutView(generics.GenericAPIView):
+    serializer_class = serializers.AdminLogoutSerializer
 
-# *** Admin (Logout) -> [POST] *** #
-class AdminLogoutView(APIView):
     def post(self, request):
-        try:
-            # Get the refresh token from the request
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = "Refresh token not provided."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_400_BAD_REQUEST,
-                )
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Decode the refresh token
+        refresh_token = serializer.validated_data["refresh_token"]
+        try:
             token = RefreshToken(refresh_token)
             admin_id_in_token = token.payload.get("user_id")
-
             if not admin_id_in_token:
                 message = "Invalid token: user id missing."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Validate that the admin exists and matches the current authenticated admin
             admin = models.User.objects.filter(id=admin_id_in_token).first()
             if not admin:
                 message = "Invalid token: admin not found."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Expire the token (logout the admin)
+            # token.blacklist()  # بدلاً من token.set_exp()
             token.set_exp()
-
             message = "Logout successful."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK)
         except Exception as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
 
-# *** Admin (Reset Password) -> [POST] *** #
-class AdminPasswordResetView(APIView): 
+# *** Admin (Reset Password) -> [POST] *** # 
+class AdminPasswordResetView(generics.GenericAPIView):
+    serializer_class = serializers.AdminPasswordResetSerializer
+
     def post(self, request):
-        email = request.data.get("email")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if not email:
-            message = "Email is required."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
+        email = serializer.validated_data["email"]
         try:
             admin = models.User.objects.get(email=email)
             admin_data = serializers.UserSerializer(admin).data
-
             if not admin.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    admin_data,
-                )
-
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, admin_data)
         except models.User.DoesNotExist:
             message = "Admin with this email does not exist."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Send OTP for password reset
         try:
             utils.send_otp_for_password_reset(email, user_type="admin")
             message = "OTP has been sent to your email."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK, admin_data)
         except ValueError as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
 
-# *** Admin (Confirm Reset Password) -> [POST] *** #
-class AdminConfirmResetPasswordView(APIView):
-    """
-    This view allows a Admin to reset their password after OTP verification.
-    """
+# *** Admin (Confirm Reset Password) -> [POST] *** # 
+class AdminConfirmResetPasswordView(generics.GenericAPIView):
+    serializer_class = serializers.AdminConfirmResetPasswordSerializer
 
     def post(self, request):
-        otp = request.data.get("otp")
-        password = request.data.get("password")
-        password2 = request.data.get("password2")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if password != password2:
-            message = "Passwords do not match."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+        otp = serializer.validated_data["otp"]
+        password = serializer.validated_data["password"]
 
-        # Validate OTP
         try:
             otp_instance = models.OneTimeOTP.objects.get(otp=otp, user__isnull=False)
+            if otp_instance.is_expired():
+                message = "OTP has expired."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        if otp_instance.is_expired():
-            message = "OTP has expired."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         admin = otp_instance.user
-        password = password
-
         admin.set_password(password)
         admin.save()
         utils.send_reset_password_confirm(admin)
-
-        # Delete the used OTP
         models.OneTimeOTP.objects.filter(user=admin).delete()
-
         admin_data = serializers.UserSerializer(admin).data
         message = "Confirm Reset Password Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            admin_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, admin_data)
+    
 
+# *** Admin (Search) -> [GET] *** #
+# class AdminsSearchList(generics.ListCreateAPIView):
+#     queryset = models.User.objects.filter(is_admin=True)
+#     serializer_class = serializers.UserSerializer
+#     pagination_class = StandardResultSetPagination
+#     # permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+
+#         if 'searchstring' in self.kwargs:
+#             search = self.kwargs['searchstring'] 
+#             qs = qs.filter(
+#                 Q(full_name__icontains=search)
+#                 |Q(username__icontains=search)
+#                 |Q(email__icontains=search)
+#                 )
+#         return qs
 
 # *** Admin (Search) -> [GET] *** #
 class AdminsSearchList(generics.ListCreateAPIView):
-    queryset = models.User.objects.filter(is_admin=True)
-    serializer_class = serializers.UserSerializer
+    queryset = models.AdminProfile.objects.filter()
+    serializer_class = serializers.AdminProfileSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -749,9 +600,9 @@ class AdminsSearchList(generics.ListCreateAPIView):
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring'] 
             qs = qs.filter(
-                Q(full_name__icontains=search)
-                |Q(username__icontains=search)
-                |Q(email__icontains=search)
+                Q(user__full_name__icontains=search)
+                |Q(user__username__icontains=search)
+                |Q(user__email__icontains=search)
                 )
         return qs
 
@@ -856,37 +707,37 @@ class TeacherPKAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # *** Teacher (ID) -> [GET] *** #
-class TeacherIDView(APIView):
+class TeacherIDView(generics.GenericAPIView):
     # permission_classes = [IsAuthenticated]
+    serializer_class = serializers.UserSerializer
 
     def get(self, request, pk):
         try:
             teacher = models.User.objects.get(pk=pk)
         except models.User.DoesNotExist:
             message = "Teacher not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
-        teacher_data = serializers.UserSerializer(teacher).data
-
+        teacher_data = self.get_serializer(teacher).data
         if teacher_data["is_teacher"] == False:
             message = "Teacher with this Id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+
+        try:
+            teacher_profile = models.TeacherProfile.objects.get(user=teacher)
+            teacher_profile_data = serializers.TeacherProfileSerializer(teacher_profile).data
+        except models.TeacherProfile.DoesNotExist:
+            teacher_profile_data = None
 
         message = "Teacher retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
+        return Response({
+            "success": "True",
+            "code": 0,
+            "message": message,
+            "status_code": status.HTTP_200_OK,
+            "data": teacher_data,
+            "profile": teacher_profile_data,
+        }, status.HTTP_200_OK)
 
 
 # *** Teacher (Profiles) -> [GET, POST] *** #
@@ -900,540 +751,394 @@ class TeacherProfileList(generics.ListCreateAPIView):
 # *** Teacher (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class TeacherProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.TeacherProfileSerializer
+    queryset = models.TeacherProfile.objects.all()
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return models.TeacherProfile.objects.all()
 
-    def get_object(self):
-        try:
-            teacher_pk = self.kwargs["pk"]  # 1
-            teacher_profile = models.TeacherProfile.objects.get(user=teacher_pk)
-            return teacher_profile
-        except models.TeacherProfile.DoesNotExist:
-            status_code = status.HTTP_404_NOT_FOUND
-            raise NotFound(
-                {
-                    "success": "False",
-                    "code": 1,
-                    "message": "Teacher Profile not found",
-                    "status_code": status_code,
-                    "data": "",
-                }
-            )
+# *** Teacher (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
+# class TeacherProfileView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = serializers.TeacherProfileSerializer
+#     # permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        teacher_data = serializer.data
+#     def get_queryset(self):
+#         return models.TeacherProfile.objects.all()
 
-        if teacher_data["teacher"]["is_teacher"] == False:
-            message = "Teacher Profile whit this id is not Found"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+#     def get_object(self):
+#         try:
+#             teacher_pk = self.kwargs["pk"]  # 1
+#             teacher_profile = models.TeacherProfile.objects.get(user=teacher_pk)
+#             return teacher_profile
+#         except models.TeacherProfile.DoesNotExist:
+#             status_code = status.HTTP_404_NOT_FOUND
+#             raise NotFound(
+#                 {
+#                     "success": "False",
+#                     "code": 1,
+#                     "message": "Teacher Profile not found",
+#                     "status_code": status_code,
+#                     "data": "",
+#                 }
+#             )
 
-        message = "Teacher Profile retrieved successfully"
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
+#     def retrieve(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance)
+#         teacher_data = serializer.data
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+#         if teacher_data["user"]["is_teacher"] == False:
+#             message = "Teacher Profile whit this id is not Found"
+#             return utils.FunReturn(
+#                 1,
+#                 message,
+#                 status.HTTP_404_NOT_FOUND,
+#             )
 
-        teacher_data = serializer.data
-        message = "Teacher Profile updated Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
+#         message = "Teacher Profile retrieved successfully"
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             teacher_data,
+#         )
+
+#     def update(self, request, *args, **kwargs):
+#         partial = kwargs.pop("partial", False)
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_update(serializer)
+
+#         teacher_data = serializer.data
+#         message = "Teacher Profile updated Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             teacher_data,
+#         )
 
 
 # *** Teacher (Resend OTP) -> [POST] *** #
-class TeacherResendOTPView(APIView):
+class TeacherResendOTPView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.TeacherResendOTPSerializer
 
     def post(self, request):
-        serializer = serializers.TeacherResendOTPSerializer(data=request.data)
-
+        serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             message = serializer.errors
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
         try:
             user = models.User.objects.get(email=email)
-
-            # Check if the teacher is already verified
             if user.is_verified:
                 message = "Your account has already been verified. Please go to the login page."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Resend OTP if not verified
             utils.send_otp_for_user(user.email, "teacher")
         except models.User.DoesNotExist:
             message = "No user found with this email."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
         message = "OTP has been resent to your email."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK)
 
 
-# *** Teacher (Verify Account) -> [POST] *** #
-class TeacherVerifyAccountView(APIView):
+# *** Teacher (Verify Account) -> [POST] *** # 
+class TeacherVerifyAccountView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.TeacherVerifyAccountSerializer
 
     def post(self, request):
-        otp_code = request.data.get("otp_code")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Ensure OTP code is provided
-        if not otp_code:
-            message = "OTP code is required"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
+        otp_code = serializer.validated_data["otp_code"]
         try:
-            # Retrieve the OTP record from OneTimeOTP model
             otp = models.OneTimeOTP.objects.get(otp=otp_code)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP Code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check OTP expiration
         if otp.is_expired():
             message = "OTP has expired"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Determine if the OTP belongs to a User
         if otp.user:
             user = otp.user
         else:
             message = "No associated user for this OTP code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check if the user is already verified
         if user.is_verified:
             message = "Email already verified"
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            teacher_data = serializers.UserSerializer(user).data
+            return utils.FunReturn(0, message, status.HTTP_200_OK, teacher_data)
 
-        # Mark user as verified
         user.is_verified = True
         user.save()
-
-        # Send verification success email
-        utils.send_verification_email(
-            user, otp_code
-        )  # Assuming this sends the confirmation email
-
-        # Optionally delete OTP record after successful verification
+        utils.send_verification_email(user, otp_code)
         otp.delete()
-
         teacher_data = serializers.UserSerializer(user).data
         message = "Email verified Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, teacher_data)
 
 
 # *** Teacher (Login) -> [POST] *** #
-class TeacherLoginView(APIView):
+class TeacherLoginView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = serializers.TeacherLoginSerializer
+
     def post(self, request):
-        # Deserialize the teacher login data
-        serializer = serializers.TeacherLoginSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            teacher = serializer.validated_data  # Extract the validated teacher
-            teacher_data = serializers.UserSerializer(teacher).data
-
+            teacher = serializer.validated_data
+        
             if not teacher.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
                 return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    teacher_data,
+                    1, 
+                    message, 
+                    status.HTTP_403_FORBIDDEN, 
+                    serializer.validated_data,
                 )
 
-            # Generate refresh token and include teacher_id in the token payload
             refresh = RefreshToken.for_user(teacher)
-            refresh["teacher_id"] = (
-                teacher.id
-            )  # Explicitly add teacher_id to the token payload
-
-            # Generate access token
+            refresh["teacher_id"] = teacher.id
             access_token = refresh.access_token
 
+            try:
+                teacher_profile = models.TeacherProfile.objects.get(user=teacher)
+                teacher_profile_data = serializers.TeacherProfileSerializer(teacher_profile).data
+            except models.TeacherProfile.DoesNotExist:
+                teacher_profile_data = None
+
             teacher_data = serializers.UserSerializer(teacher).data
-            status_code = status.HTTP_200_OK
             response = {
                 "success": "True",
                 "code": 0,
                 "message": "Teacher Login Successfully.",
-                "status_code": status_code,
+                "status_code": status.HTTP_200_OK,
                 "data": teacher_data,
+                "profile": teacher_profile_data,
                 "access_token": str(access_token),
                 "refresh_token": str(refresh),
             }
-            return Response(
-                response,
-                status=status_code,
+            return Response(response, status=status.HTTP_200_OK)
+        return utils.FunReturn(
+            1, 
+            serializer.errors, 
+            status.HTTP_400_BAD_REQUEST,
             )
 
-        message = serializer.errors
-        return utils.FunReturn(
-            1,
-            message,
-            status.HTTP_400_BAD_REQUEST,
-        )
 
+# *** Teacher (Refresh) -> [POST] *** # 
+class TeacherRefreshView(generics.GenericAPIView):
+    serializer_class = serializers.TeacherRefreshSerializer
 
-# *** Teacher (Refresh) -> [POST] *** #
-class TeacherRefreshView(APIView):
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = {
-                    "refresh_token": "This field is required.",
-                }
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Decode the JWT token
-            payload = jwt.decode(
-                refresh_token, SECRET_KEY, algorithms=["HS256"]
-            )  # {'token_type': 'refresh', 'exp': 1737402322, 'iat': 1737315922, 'jti': '626f3935d64e4ebcbfcb53d54041f2ab', 'user_id': 1, 'teacher_id': 1}
-
-            # Retrieve user_id from the token payload
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("user_id")
             if not user_id:
-                raise ValidationError(
-                    {
-                        "refresh_token": "Invalid token payload.",
-                    }
-                )
+                message = {"refresh_token": "Invalid token payload."}
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Fetch the Teacher object
             teacher = models.User.objects.get(id=user_id)
-
-            # Serialize the Teacher object
             teacher_data = serializers.UserSerializer(teacher).data
             message = "Teacher retrieved Successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                teacher_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, teacher_data)
         except models.User.DoesNotExist:
-            raise ValidationError(
-                {
-                    "message": "Teacher not found.",
-                }
-            )
-
+            message = {"message": "Teacher not found."}
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
         except jwt.ExpiredSignatureError:
-            raise ValidationError(
-                {
-                    "message": "Refresh token has expired.",
-                }
-            )
-
+            message = {"message": "Refresh token has expired."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError(
-                {
-                    "message": "Invalid refresh token.",
-                }
-            )
-
+            message = {"message": "Invalid refresh token."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            raise ValidationError(
-                {
-                    "message": str(e),
-                }
-            )
+            message = {"message": str(e)}
+            return utils.FunReturn(1, message, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# *** Teacher (Change Password) -> [POST] *** #
-class TeacherChangePasswordView(APIView):
+# *** Teacher (Change Password) -> [POST] *** # 
+class TeacherChangePasswordView(generics.GenericAPIView):
+    serializer_class = serializers.TeacherChangePasswordSerializer
     # permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
+        confirm_password = serializer.validated_data["confirm_password"]
+
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-
-            if not refresh_token:
-                raise ValidationError({"refresh_token": "This field is required."})
-
-            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["256"])
             teacher_id = payload.get("teacher_id")
+            if not teacher_id:
+                teacher_id = payload.get("user_id")
 
-            # Fetch the teacher
             teacher = models.User.objects.get(id=teacher_id)
 
-            # Validate old password
-            old_password = request.data.get("old_password")
+            if not check_password(old_password, teacher.password):
+                message = "Old password is incorrect."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            if not old_password or not check_password(old_password, teacher.password):
-                raise ValidationError({"message": "Old password is incorrect."})
+            if new_password != confirm_password:
+                message = "New passwords do not match."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Validate new passwords
-            new_password = request.data.get("new_password")
-            confirm_password = request.data.get("confirm_password")
-
-            # validate_password(new_password, confirm_password)
-
-            # Change password
             teacher.set_password(new_password)
             teacher.save()
             utils.send_change_password_confirm(teacher)
-
             teacher_data = serializers.UserSerializer(teacher).data
             message = "Password changed successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                teacher_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, teacher_data)
         except jwt.ExpiredSignatureError:
-            raise ValidationError("Token has expired")
+            message = "Token has expired"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError("Invalid token")
+            message = "Invalid token"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except models.User.DoesNotExist:
-            raise ValidationError("Teacher not found")
-        except ValidationError as e:
-            message = e.detail
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            message = "Teacher not found"
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
 
-# *** Teacher (Logout) -> [POST] *** #
-class TeacherLogoutView(APIView):
+# *** Teacher (Logout) -> [POST] *** # 
+class TeacherLogoutView(generics.GenericAPIView):
+    serializer_class = serializers.TeacherLogoutSerializer
+
     def post(self, request):
-        try:
-            # Get the refresh token from the request
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = "Refresh token not provided."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_400_BAD_REQUEST,
-                )
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Decode the refresh token
+        refresh_token = serializer.validated_data["refresh_token"]
+        try:
             token = RefreshToken(refresh_token)
             teacher_id_in_token = token.payload.get("user_id")
-
             if not teacher_id_in_token:
                 message = "Invalid token: user_id missing."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Validate that the teacher exists and matches the current authenticated teacher
             teacher = models.User.objects.filter(id=teacher_id_in_token).first()
             if not teacher:
                 message = "Invalid token: Teacher not found."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Expire the token (logout the teacher)
+            # token.blacklist()  # بدلاً من token.set_exp()
             token.set_exp()
             message = "Logout Successful."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK)
         except Exception as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+        
 
+# *** Teacher (Reset Password) -> [POST] *** # 
+class TeacherPasswordResetView(generics.GenericAPIView):
+    serializer_class = serializers.TeacherPasswordResetSerializer
 
-# *** Teacher (Reset Password) -> [POST] *** #
-class TeacherPasswordResetView(APIView):
     def post(self, request):
-        email = request.data.get("email")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if not email:
-            message = "Email is required."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
+        email = serializer.validated_data["email"]
         try:
             teacher = models.User.objects.get(email=email)
             teacher_data = serializers.UserSerializer(teacher).data
-
             if not teacher.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    teacher_data,
-                )
-
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, teacher_data)
         except models.User.DoesNotExist:
             message = "Teacher with this email does not exist."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Send OTP for password reset
         try:
             utils.send_otp_for_password_reset(email, user_type="teacher")
             message = "OTP has been sent to your email."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK, teacher_data)
         except ValueError as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
 
-# *** Teacher (Confirm Reset Password) -> [POST] *** #
-class TeacherConfirmResetPasswordView(APIView):
-    """
-    This view allows a teacher to reset their password after OTP verification.
-    """
+# *** Teacher (Confirm Reset Password) -> [POST] *** # 
+class TeacherConfirmResetPasswordView(generics.GenericAPIView):
+    serializer_class = serializers.TeacherConfirmResetPasswordSerializer
 
     def post(self, request):
-        otp = request.data.get("otp")
-        password = request.data.get("password")
-        password2 = request.data.get("password2")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if password != password2:
-            message = "Passwords do not match."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+        otp = serializer.validated_data["otp"]
+        password = serializer.validated_data["password"]
 
-        # Validate OTP
         try:
             otp_instance = models.OneTimeOTP.objects.get(otp=otp, user__isnull=False)
+            if otp_instance.is_expired():
+                message = "OTP has expired."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        if otp_instance.is_expired():
-            message = "OTP has expired."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         teacher = otp_instance.user
-        password = password
-
         teacher.set_password(password)
         teacher.save()
         utils.send_reset_password_confirm(teacher)
-
-        # Delete the used OTP
         models.OneTimeOTP.objects.filter(user=teacher).delete()
-
         teacher_data = serializers.UserSerializer(teacher).data
         message = "Confirm Reset Password Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, teacher_data)
+
+
+# # *** Teacher (Search) -> [GET] *** #
+# class TeachersSearchList(generics.ListCreateAPIView):
+#     queryset = models.User.objects.filter(is_teacher=True)
+#     serializer_class = serializers.UserSerializer
+#     pagination_class = StandardResultSetPagination
+#     # permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+
+#         if 'searchstring' in self.kwargs:
+#             search = self.kwargs['searchstring'] 
+#             qs = qs.filter(
+#                 Q(full_name__icontains=search)
+#                 |Q(username__icontains=search)
+#                 |Q(email__icontains=search)
+#                 )
+#         return qs
 
 
 # *** Teacher (Search) -> [GET] *** #
 class TeachersSearchList(generics.ListCreateAPIView):
-    queryset = models.User.objects.filter(is_teacher=True)
-    serializer_class = serializers.UserSerializer
+    queryset = models.TeacherProfile.objects.filter()
+    serializer_class = serializers.TeacherProfileSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -1443,9 +1148,9 @@ class TeachersSearchList(generics.ListCreateAPIView):
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring'] 
             qs = qs.filter(
-                Q(full_name__icontains=search)
-                |Q(username__icontains=search)
-                |Q(email__icontains=search)
+                Q(user__full_name__icontains=search)
+                |Q(user__username__icontains=search)
+                |Q(user__email__icontains=search)
                 )
         return qs
 
@@ -1552,37 +1257,37 @@ class StaffPKAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # *** Staff (ID) -> [GET] *** #
-class StaffIDView(APIView):
+class StaffIDView(generics.GenericAPIView):
     # permission_classes = [IsAuthenticated]
+    serializer_class = serializers.UserSerializer
 
     def get(self, request, pk):
         try:
             staff = models.User.objects.get(pk=pk)
         except models.User.DoesNotExist:
             message = "Staff not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
-        staff_data = serializers.UserSerializer(staff).data
-
+        staff_data = self.get_serializer(staff).data
         if staff_data["is_staff"] == False:
             message = "Staff with this Id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+
+        try:
+            staff_profile = models.StaffProfile.objects.get(user=staff)
+            staff_profile_data = serializers.StaffProfileSerializer(staff_profile).data
+        except models.StaffProfile.DoesNotExist:
+            staff_profile_data = None
 
         message = "Staff retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            staff_data,
-        )
+        return Response({
+            "success": "True",
+            "code": 0,
+            "message": message,
+            "status_code": status.HTTP_200_OK,
+            "data": staff_data,
+            "profile": staff_profile_data,
+        }, status.HTTP_200_OK)
 
 
 # *** Staff (Profiles) -> [GET, PUT] *** #
@@ -1596,541 +1301,391 @@ class StaffProfileList(generics.ListCreateAPIView):
 # *** Staff (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class StaffProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.StaffProfileSerializer
+    queryset = models.StaffProfile.objects.all()
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return models.StaffProfile.objects.all()
 
-    def get_object(self):
-        try:
-            staff_pk = self.kwargs["pk"]  # 1
-            staff_profile = models.StaffProfile.objects.get(user=staff_pk)
-            return staff_profile
-        except models.StaffProfile.DoesNotExist:
-            status_code = status.HTTP_404_NOT_FOUND
-            raise NotFound(
-                {
-                    "success": "False",
-                    "code": 1,
-                    "message": "Staff Profile not found",
-                    "status_code": status_code,
-                    "data": "",
-                }
-            )
+# *** Staff (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
+# class StaffProfileView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = serializers.StaffProfileSerializer
+#     # permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        staff_data = serializer.data
+#     def get_queryset(self):
+#         return models.StaffProfile.objects.all()
 
-        if staff_data["staff"]["is_staff"] == False:
-            message = "Staff Profile whit this id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+#     def get_object(self):
+#         try:
+#             staff_pk = self.kwargs["pk"]  # 1
+#             staff_profile = models.StaffProfile.objects.get(user=staff_pk)
+#             return staff_profile
+#         except models.StaffProfile.DoesNotExist:
+#             status_code = status.HTTP_404_NOT_FOUND
+#             raise NotFound(
+#                 {
+#                     "success": "False",
+#                     "code": 1,
+#                     "message": "Staff Profile not found",
+#                     "status_code": status_code,
+#                     "data": "",
+#                 }
+#             )
 
-        message = "Staff Profile retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            staff_data,
-        )
+#     def retrieve(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance)
+#         staff_data = serializer.data
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+#         if staff_data["user"]["is_staff"] == False:
+#             message = "Staff Profile whit this id is not Found."
+#             return utils.FunReturn(
+#                 1,
+#                 message,
+#                 status.HTTP_404_NOT_FOUND,
+#             )
 
-        staff_data = serializer.data
-        message = "Staff Profile updated Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            staff_data,
-        )
+#         message = "Staff Profile retrieved Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             staff_data,
+#         )
+
+#     def update(self, request, *args, **kwargs):
+#         partial = kwargs.pop("partial", False)
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_update(serializer)
+
+#         staff_data = serializer.data
+#         message = "Staff Profile updated Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             staff_data,
+#         )
 
 
-# *** Staff (Resend OTP) -> [POST] *** #
-class StaffResendOTPView(APIView):
+# *** Staff (Resend OTP) -> [POST] *** # 
+class StaffResendOTPView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.StaffResendOTPSerializer
 
     def post(self, request):
-        serializer = serializers.StaffResendOTPSerializer(data=request.data)
-
+        serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             message = serializer.errors
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
         try:
             user = models.User.objects.get(email=email)
-
-            # Check if the teacher is already verified
             if user.is_verified:
                 message = "Your account has already been verified. Please go to the login page."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Resend OTP if not verified
             utils.send_otp_for_user(user.email, "staff")
         except models.User.DoesNotExist:
             message = "No user found with this email."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
         message = "OTP has been resent to your email."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK)
 
 
-# *** Staff (Verify Account) -> [POST] *** #
-class StaffVerifyAccountView(APIView):
+# *** Staff (Verify Account) -> [POST] *** # 
+class StaffVerifyAccountView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.StaffVerifyAccountSerializer
 
     def post(self, request):
-        otp_code = request.data.get("otp_code")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Ensure OTP code is provided
-        if not otp_code:
-            message = "OTP code is required"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
+        otp_code = serializer.validated_data["otp_code"]
         try:
-            # Retrieve the OTP record from OneTimeOTP model
             otp = models.OneTimeOTP.objects.get(otp=otp_code)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP Code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check OTP expiration
         if otp.is_expired():
             message = "OTP has expired"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Determine if the OTP belongs to a User
         if otp.user:
             user = otp.user
         else:
             message = "No associated user for this OTP code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check if the user is already verified
         if user.is_verified:
             message = "Email already verified"
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                user,
-            )
+            staff_data = serializers.UserSerializer(user).data
+            return utils.FunReturn(0, message, status.HTTP_200_OK, staff_data)
 
-        # Mark user as verified
         user.is_verified = True
         user.save()
-
-        # Send verification success email
-        utils.send_verification_email(
-            user, otp_code
-        )  # Assuming this sends the confirmation email
-
-        # Optionally delete OTP record after successful verification
+        utils.send_verification_email(user, otp_code)
         otp.delete()
-
         staff_data = serializers.UserSerializer(user).data
         message = "Email verified Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            staff_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, staff_data)
 
 
-# *** Staff (Login) -> [POST] *** #
-class StaffLoginView(APIView):
+# *** Staff (Login) -> [POST] *** # 
+class StaffLoginView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = serializers.StaffLoginSerializer
+
     def post(self, request):
-        # Deserialize the staff login data
-        serializer = serializers.StaffLoginSerializer(data=request.data)
-
+        serializer = self.get_serializer(data=request.data)
+        
         if serializer.is_valid():
-            staff = serializer.validated_data  # Extract the validated staff
-            staff_data = serializers.UserSerializer(staff).data
+            staff = serializer.validated_data
 
             if not staff.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
                 return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    staff_data,
+                    1, 
+                    message, 
+                    status.HTTP_403_FORBIDDEN, 
+                    serializer.validated_data,
                 )
 
-            # Generate refresh token and include staff_id in the token payload
             refresh = RefreshToken.for_user(staff)
-            refresh["staff_id"] = (
-                staff.id
-            )  # Explicitly add staff_id to the token payload
-
-            # Generate access token
+            refresh["staff_id"] = staff.id
             access_token = refresh.access_token
 
+            try:
+                staff_profile = models.StaffProfile.objects.get(user=staff)
+                staff_profile_data = serializers.StaffProfileSerializer(staff_profile).data
+            except models.StaffProfile.DoesNotExist:
+                staff_profile_data = None
+
             staff_data = serializers.UserSerializer(staff).data
-            status_code = status.HTTP_200_OK
             response = {
                 "success": "True",
                 "code": 0,
                 "message": "Staff Login Successfully.",
-                "status_code": status_code,
+                "status_code": status.HTTP_200_OK,
                 "data": staff_data,
+                "profile": staff_profile_data,
                 "access_token": str(access_token),
                 "refresh_token": str(refresh),
             }
-            return Response(
-                response,
-                status=status_code,
-            )
-
-        message = serializer.errors
+            return Response(response, status=status.HTTP_200_OK)
         return utils.FunReturn(
-            1,
-            message,
+            1, 
+            serializer.errors, 
             status.HTTP_400_BAD_REQUEST,
         )
 
 
-# *** Staff (Refresh) -> [POST] *** #
-class StaffRefreshView(APIView):
+# *** Staff (Refresh) -> [POST] *** # 
+class StaffRefreshView(generics.GenericAPIView):
+    serializer_class = serializers.StaffRefreshSerializer
+
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = {
-                    "refresh_token": "This field is required.",
-                }
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_404_NOT_FOUND,
-                )
-
-            # Decode the JWT token
-            payload = jwt.decode(
-                refresh_token, SECRET_KEY, algorithms=["HS256"]
-            )  # {'token_type': 'refresh', 'exp': 1737402322, 'iat': 1737315922, 'jti': '626f3935d64e4ebcbfcb53d54041f2ab', 'user_id': 1, 'teacher_id': 1}
-
-            # Retrieve user_id from the token payload
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("user_id")
             if not user_id:
-                raise ValidationError(
-                    {
-                        "refresh_token": "Invalid token payload.",
-                    }
-                )
+                message = {"refresh_token": "Invalid token payload."}
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Fetch the Staff object
             staff = models.User.objects.get(id=user_id)
-
-            # Serialize the Staff object
             staff_data = serializers.UserSerializer(staff).data
             message = "Staff retrieved Successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                staff_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, staff_data)
         except models.User.DoesNotExist:
-            raise ValidationError(
-                {
-                    "message": "Staff not found.",
-                }
-            )
-
+            message = {"message": "Staff not found."}
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
         except jwt.ExpiredSignatureError:
-            raise ValidationError(
-                {
-                    "message": "Refresh token has expired.",
-                }
-            )
-
+            message = {"message": "Refresh token has expired."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError(
-                {
-                    "message": "Invalid refresh token.",
-                }
-            )
-
+            message = {"message": "Invalid refresh token."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            raise ValidationError(
-                {
-                    "message": str(e),
-                }
-            )
+            message = {"message": str(e)}
+            return utils.FunReturn(1, message, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# *** Staff (Change Password) -> [POST] *** #
-class StaffChangePasswordView(APIView):
+# *** Staff (Change Password) -> [POST] *** # 
+class StaffChangePasswordView(generics.GenericAPIView):
+    serializer_class = serializers.StaffChangePasswordSerializer
     # permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
+        confirm_password = serializer.validated_data["confirm_password"]
+
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-
-            if not refresh_token:
-                raise ValidationError({"refresh_token": "This field is required."})
-
             payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
             staff_id = payload.get("staff_id")
-
-            # Fetch the staff
             staff = models.User.objects.get(id=staff_id)
 
-            # Validate old password
-            old_password = request.data.get("old_password")
+            if not check_password(old_password, staff.password):
+                message = "Old password is incorrect."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            if not old_password or not check_password(old_password, staff.password):
-                raise ValidationError({"message": "Old password is incorrect."})
+            if new_password != confirm_password:
+                message = "New passwords do not match."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Validate new passwords
-            new_password = request.data.get("new_password")
-            confirm_password = request.data.get("confirm_password")
-
-            # validate_password(new_password, confirm_password)
-
-            # Change password
             staff.set_password(new_password)
             staff.save()
             utils.send_change_password_confirm(staff)
-
             staff_data = serializers.UserSerializer(staff).data
             message = "Password changed Successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                staff_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, staff_data)
         except jwt.ExpiredSignatureError:
-            raise ValidationError("Token has expired")
+            message = "Token has expired"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError("Invalid token")
+            message = "Invalid token"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except models.User.DoesNotExist:
-            raise ValidationError("Staff not found")
-        except ValidationError as e:
-            message = e.detail
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            message = "Staff not found"
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+        
 
+# *** Staff (Logout) -> [POST] *** # 
+class StaffLogoutView(generics.GenericAPIView):
+    serializer_class = serializers.StaffLogoutSerializer
 
-# *** Staff (Logout) -> [POST] *** #
-class StaffLogoutView(APIView):
     def post(self, request):
-        try:
-            # Get the refresh token from the request
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = "Refresh token not provided."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_400_BAD_REQUEST,
-                )
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Decode the refresh token
+        refresh_token = serializer.validated_data["refresh_token"]
+        try:
             token = RefreshToken(refresh_token)
             staff_id_in_token = token.payload.get("user_id")
-
             if not staff_id_in_token:
                 message = "Invalid token: user id missing."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Validate that the staff exists and matches the current authenticated staff
             staff = models.User.objects.filter(id=staff_id_in_token).first()
             if not staff:
                 message = "Invalid token: staff not found."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Expire the token (logout the staff)
+            # token.blacklist()  # بدلاً من token.set_exp()
             token.set_exp()
-
             message = "Logout Successful."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK)
         except Exception as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+        
 
+# *** Staff (Reset Password) -> [POST] *** # 
+class StaffPasswordResetView(generics.GenericAPIView):
+    serializer_class = serializers.StaffPasswordResetSerializer
 
-# *** Staff (Reset Password) -> [POST] *** #
-class StaffPasswordResetView(APIView):
     def post(self, request):
-        email = request.data.get("email")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if not email:
-            message = "Email is required."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+        email = serializer.validated_data["email"]
         try:
             staff = models.User.objects.get(email=email)
             staff_data = serializers.UserSerializer(staff).data
-
             if not staff.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    staff_data,
-                )
-
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, staff_data)
         except models.User.DoesNotExist:
-            message = "Admin with this email does not exist."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            message = "Staff with this email does not exist."
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Send OTP for password reset
         try:
             utils.send_otp_for_password_reset(email, user_type="staff")
             message = "OTP has been sent to your email."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK, staff_data)
         except ValueError as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
 
-# *** Staff (Confirm Reset Password) -> [POST] *** #
-class StaffConfirmResetPasswordView(APIView):
-    """
-    This view allows a staff to reset their password after OTP verification.
-    """
+# *** Staff (Confirm Reset Password) -> [POST] *** # 
+class StaffConfirmResetPasswordView(generics.GenericAPIView):
+    serializer_class = serializers.StaffConfirmResetPasswordSerializer
 
     def post(self, request):
-        otp = request.data.get("otp")
-        password = request.data.get("password")
-        password2 = request.data.get("password2")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if password != password2:
-            message = "Passwords do not match."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+        otp = serializer.validated_data["otp"]
+        password = serializer.validated_data["password"]
 
-        # Validate OTP
         try:
             otp_instance = models.OneTimeOTP.objects.get(otp=otp, user__isnull=False)
+            if otp_instance.is_expired():
+                message = "OTP has expired."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        if otp_instance.is_expired():
-            message = "OTP has expired."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         staff = otp_instance.user
-        password = password
-
         staff.set_password(password)
         staff.save()
         utils.send_reset_password_confirm(staff)
-
-        # Delete the used OTP
         models.OneTimeOTP.objects.filter(user=staff).delete()
-
         staff_data = serializers.UserSerializer(staff).data
         message = "Confirm Reset Password Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            staff_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, staff_data)
+
+
+# *** Staff (Search) -> [GET] *** #
+# class StaffsSearchList(generics.ListCreateAPIView):
+#     queryset = models.User.objects.filter(is_staff=True)
+#     serializer_class = serializers.UserSerializer
+#     pagination_class = StandardResultSetPagination
+#     # permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+
+#         if 'searchstring' in self.kwargs:
+#             search = self.kwargs['searchstring'] 
+#             qs = qs.filter(
+#                 Q(full_name__icontains=search)
+#                 |Q(username__icontains=search)
+#                 |Q(email__icontains=search)
+#                 )
+#         return qs
 
 
 # *** Staff (Search) -> [GET] *** #
 class StaffsSearchList(generics.ListCreateAPIView):
-    queryset = models.User.objects.filter(is_staff=True)
-    serializer_class = serializers.UserSerializer
+    queryset = models.StaffProfile.objects.filter()
+    serializer_class = serializers.StaffProfileSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -2140,9 +1695,9 @@ class StaffsSearchList(generics.ListCreateAPIView):
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring'] 
             qs = qs.filter(
-                Q(full_name__icontains=search)
-                |Q(username__icontains=search)
-                |Q(email__icontains=search)
+                Q(user__full_name__icontains=search)
+                |Q(user__username__icontains=search)
+                |Q(user__email__icontains=search)
                 )
         return qs
 
@@ -2249,43 +1804,42 @@ class StudentPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     # permission_classes = [IsAuthenticated]
 
 
-# *** Student (ID) -> [GET] *** #
-class StudentIDView(APIView):
+# *** Student (ID) -> [GET] *** # 
+class StudentIDView(generics.GenericAPIView):
     # permission_classes = [IsAuthenticated]
+    serializer_class = serializers.UserSerializer
 
     def get(self, request, pk):
         try:
             student = models.User.objects.get(pk=pk)
         except models.User.DoesNotExist:
             message = "Student not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
-        # تحويل الكائن إلى JSON باستخدام Serializer
-        student_data = serializers.UserSerializer(student).data
-
+        student_data = self.get_serializer(student).data
         if student_data["is_student"] == False:
             message = "Student with this Id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+
+        try:
+            student_profile = models.StudentProfile.objects.get(user=student)
+            student_profile_data = serializers.StudentProfileSerializer(student_profile).data
+        except models.StudentProfile.DoesNotExist:
+            student_profile_data = None
 
         message = "Student retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            student_data,
-        )
-
+        return Response({
+            "success": "True",
+            "code": 0,
+            "message": message,
+            "status_code": status.HTTP_200_OK,
+            "data": student_data,
+            "profile": student_profile_data,
+        }, status.HTTP_200_OK)
+    
 
 # *** Student (Profiles) -> [GET, POST] *** #
-class StudentProfileList(generics.RetrieveUpdateDestroyAPIView):
+class StudentProfileList(generics.ListCreateAPIView):
     serializer_class = serializers.StudentProfileSerializer
     queryset = models.StudentProfile.objects.all()
     pagination_class = StandardResultSetPagination
@@ -2295,541 +1849,392 @@ class StudentProfileList(generics.RetrieveUpdateDestroyAPIView):
 # *** Student (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
 class StudentProfileView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.StudentProfileSerializer
+    queryset = models.StudentProfile.objects.all()
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return models.StudentProfile.objects.all()
 
-    def get_object(self):
-        try:
-            student_pk = self.kwargs["pk"]  # 1
-            student_profile = models.StudentProfile.objects.get(user=student_pk)
-            return student_profile
-        except models.StudentProfile.DoesNotExist:
-            status_code = status.HTTP_404_NOT_FOUND
-            raise NotFound(
-                {
-                    "success": "False",
-                    "code": 1,
-                    "message": "Student Profile not found",
-                    "status_code": status_code,
-                    "data": "",
-                }
-            )
+# *** Student (Profile ID) -> [GET, PUT, PATCH, DELETE] *** #
+# class StudentProfileView(generics.RetrieveUpdateDestroyAPIView):
+#     serializer_class = serializers.StudentProfileSerializer
+#     # permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        student_data = serializer.data
+#     def get_queryset(self):
+#         return models.StudentProfile.objects.all()
 
-        if student_data["student"]["is_student"] == False:
-            message = "Student Profile whit this id is not Found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+#     def get_object(self):
+#         try:
+#             student_pk = self.kwargs["pk"]  # 1
+#             student_profile = models.StudentProfile.objects.get(user=student_pk)
+#             return student_profile
+#         except models.StudentProfile.DoesNotExist:
+#             status_code = status.HTTP_404_NOT_FOUND
+#             raise NotFound(
+#                 {
+#                     "success": "False",
+#                     "code": 1,
+#                     "message": "Student Profile not found",
+#                     "status_code": status_code,
+#                     "data": "",
+#                 }
+#             )
 
-        message = "Student Profile retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            student_data,
-        )
+#     def retrieve(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance)
+#         student_data = serializer.data
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+#         if student_data["user"]["is_student"] == False:
+#             message = "Student Profile whit this id is not Found."
+#             return utils.FunReturn(
+#                 1,
+#                 message,
+#                 status.HTTP_404_NOT_FOUND,
+#             )
 
-        student_data = serializer.data
-        message = "Student Profile updated Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            student_data,
-        )
+#         message = "Student Profile retrieved Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             student_data,
+#         )
+
+#     def update(self, request, *args, **kwargs):
+#         partial = kwargs.pop("partial", False)
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+#         serializer.is_valid(raise_exception=True)
+#         self.perform_update(serializer)
+
+#         student_data = serializer.data
+#         message = "Student Profile updated Successfully."
+#         return utils.FunReturn(
+#             0,
+#             message,
+#             status.HTTP_200_OK,
+#             student_data,
+#         )
 
 
-# *** Student (Resend OTP) -> [POST] *** #
-class StudentResendOTPView(APIView):
+# *** Student (Resend OTP) -> [POST] *** # 
+class StudentResendOTPView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.StudentResendOTPSerializer
 
     def post(self, request):
-        serializer = serializers.StudentResendOTPSerializer(data=request.data)
-
+        serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             message = serializer.errors
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         email = serializer.validated_data["email"]
         try:
             user = models.User.objects.get(email=email)
-
-            # Check if the teacher is already verified
             if user.is_verified:
                 message = "Your account has already been verified. Please go to the login page."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Resend OTP if not verified
             utils.send_otp_for_user(user.email, "student")
         except models.User.DoesNotExist:
             message = "No user found with this email."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
         message = "OTP has been resent to your email."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK)
 
 
-# *** Student (Verify Account) -> [POST] *** #
-class StudentVerifyAccountView(APIView):
+# *** Student (Verify Account) -> [POST] *** # 
+class StudentVerifyAccountView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = serializers.StudentVerifyAccountSerializer
 
     def post(self, request):
-        otp_code = request.data.get("otp_code")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Ensure OTP code is provided
-        if not otp_code:
-            message = "OTP code is required"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
+        otp_code = serializer.validated_data["otp_code"]
         try:
-            # Retrieve the OTP record from OneTimeOTP model
             otp = models.OneTimeOTP.objects.get(otp=otp_code)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP Code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check OTP expiration
         if otp.is_expired():
             message = "OTP has expired"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Determine if the OTP belongs to a User
         if otp.user:
             user = otp.user
         else:
             message = "No associated user for this OTP code"
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Check if the user is already verified
         if user.is_verified:
             message = "Email already verified"
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                user,
-            )
+            student_data = serializers.UserSerializer(user).data
+            return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
 
-        # Mark user as verified
         user.is_verified = True
         user.save()
-
-        # Send verification success email
-        utils.send_verification_email(
-            user, otp_code
-        )  # Assuming this sends the confirmation email
-
-        # Optionally delete OTP record after successful verification
+        utils.send_verification_email(user, otp_code)
         otp.delete()
-
-        teacher_data = serializers.UserSerializer(user).data
+        student_data = serializers.UserSerializer(user).data
         message = "Email verified Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            teacher_data,
-        )
-
+        return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
+    
 
 # *** Student (Login) -> [POST] *** #
-class StudentLoginView(APIView):
+class StudentLoginView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = serializers.StudentLoginSerializer
+
     def post(self, request):
-        # Deserialize the student login data
-        serializer = serializers.StudentLoginSerializer(data=request.data)
-
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            student = serializer.validated_data  # Extract the validated student
-            student_data = serializers.UserSerializer(student).data
-
+            student = serializer.validated_data
             if not student.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
                 return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    student_data,
+                    1, 
+                    message, 
+                    status.HTTP_403_FORBIDDEN, 
+                    serializer.validated_data,
                 )
 
-            # Generate refresh token and include student_id in the token payload
             refresh = RefreshToken.for_user(student)
-            refresh["student_id"] = (
-                student.id
-            )  # Explicitly add student_id to the token payload
-
-            # Generate access token
+            refresh["student_id"] = student.id
             access_token = refresh.access_token
 
-            status_code = status.HTTP_200_OK
+            try:
+                student_profile = models.StudentProfile.objects.get(user=student)
+                student_profile_data = serializers.StudentProfileSerializer(student_profile).data
+            except models.StudentProfile.DoesNotExist:
+                student_profile_data = None
+
+            student_data = serializers.UserSerializer(student).data
             response = {
                 "success": "True",
                 "code": 0,
                 "message": "Student Login Successfully.",
-                "status_code": status_code,
+                "status_code": status.HTTP_200_OK,
                 "data": student_data,
+                "profile": student_profile_data,
                 "access_token": str(access_token),
                 "refresh_token": str(refresh),
             }
-            return Response(
-                response,
-                status=status_code,
+            return Response(response, status=status.HTTP_200_OK)
+        return utils.FunReturn(
+            1, 
+            serializer.errors, 
+            status.HTTP_400_BAD_REQUEST,
             )
 
-        message = serializer.errors
-        return utils.FunReturn(
-            1,
-            message,
-            status.HTTP_400_BAD_REQUEST,
-        )
 
+# *** Student (Refresh) -> [POST] *** # 
+class StudentRefreshView(generics.GenericAPIView):
+    serializer_class = serializers.StudentRefreshSerializer
 
-# *** Student (Refresh) -> [POST] *** #
-class StudentRefreshView(APIView):
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = (
-                    {
-                        "refresh_token": "This field is required.",
-                    },
-                )
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_404_NOT_FOUND,
-                )
-
-            # Decode the JWT token
-            payload = jwt.decode(
-                refresh_token, SECRET_KEY, algorithms=["HS256"]
-            )  # {'token_type': 'refresh', 'exp': 1737402322, 'iat': 1737315922, 'jti': '626f3935d64e4ebcbfcb53d54041f2ab', 'user_id': 1, 'teacher_id': 1}
-
-            # Retrieve user_id from the token payload
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("user_id")
             if not user_id:
-                raise ValidationError(
-                    {
-                        "refresh_token": "Invalid token payload.",
-                    }
-                )
+                message = {"refresh_token": "Invalid token payload."}
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Fetch the Student object
             student = models.User.objects.get(id=user_id)
-
-            # Serialize the Student object
             student_data = serializers.UserSerializer(student).data
             message = "Student retrieved Successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                student_data,
-            )
-
+            return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
         except models.User.DoesNotExist:
-            raise ValidationError(
-                {
-                    "message": "Student not found.",
-                }
-            )
-
+            message = {"message": "Student not found."}
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
         except jwt.ExpiredSignatureError:
-            raise ValidationError(
-                {
-                    "message": "Refresh token has expired.",
-                }
-            )
-
+            message = {"message": "Refresh token has expired."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError(
-                {
-                    "message": "Invalid refresh token.",
-                }
-            )
-
+            message = {"message": "Invalid refresh token."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            raise ValidationError(
-                {
-                    "message": str(e),
-                }
-            )
+            message = {"message": str(e)}
+            return utils.FunReturn(1, message, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# *** Student (Change Password) -> [POST] *** #
-class StudentChangePasswordView(APIView):
+# *** Student (Change Password) -> [POST] *** # 
+class StudentChangePasswordView(generics.GenericAPIView):
+    serializer_class = serializers.StudentChangePasswordSerializer
     # permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
+        confirm_password = serializer.validated_data["confirm_password"]
+
         try:
-            # Retrieve and decode the refresh token
-            refresh_token = request.data.get("refresh_token")
-
-            if not refresh_token:
-                raise ValidationError({"refresh_token": "This field is required."})
-
             payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
-            student_id = payload.get("student_id")
-
-            # Fetch the student
+            student_id = payload.get("user_id")
             student = models.User.objects.get(id=student_id)
 
-            # Validate old password
-            old_password = request.data.get("old_password")
+            if not check_password(old_password, student.password):
+                message = "Old password is incorrect."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            if not old_password or not check_password(old_password, student.password):
-                raise ValidationError({"message": "Old password is incorrect."})
+            if new_password != confirm_password:
+                message = "New passwords do not match."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Validate new passwords
-            new_password = request.data.get("new_password")
-            confirm_password = request.data.get("confirm_password")
-
-            # validate_password(new_password, confirm_password)
-
-            # Change password
             student.set_password(new_password)
             student.save()
             utils.send_change_password_confirm(student)
-
             student_data = serializers.UserSerializer(student).data
             message = "Password changed successfully."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-                student_data,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
         except jwt.ExpiredSignatureError:
-            raise ValidationError("Token has expired")
+            message = "Token has expired"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            raise ValidationError("Invalid token")
+            message = "Invalid token"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
         except models.User.DoesNotExist:
-            raise ValidationError("Student not found")
-        except ValidationError as e:
-            message = e.detail
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            message = "Student not found"
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
 
-# *** Student (Logout) -> [POST] *** #
-class StudentLogoutView(APIView):
+# *** Student (Logout) -> [POST] *** # 
+class StudentLogoutView(generics.GenericAPIView):
+    serializer_class = serializers.StudentLogoutSerializer
+
     def post(self, request):
-        try:
-            # Get the refresh token from the request
-            refresh_token = request.data.get("refresh_token")
-            if not refresh_token:
-                message = "Refresh token not provided."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_400_BAD_REQUEST,
-                )
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-            # Decode the refresh token
+        refresh_token = serializer.validated_data["refresh_token"]
+        try:
             token = RefreshToken(refresh_token)
             student_id_in_token = token.payload.get("user_id")
-
             if not student_id_in_token:
                 message = "Invalid token: user id missing."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Validate that the student exists and matches the current authenticated student
             student = models.User.objects.filter(id=student_id_in_token).first()
             if not student:
                 message = "Invalid token: student not found."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                )
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
 
-            # Expire the token (logout the student)
+            # token.blacklist()  # بدلاً من token.set_exp()
             token.set_exp()
-
             message = "Logout Successful."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK)
         except Exception as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
 
 # *** Student (Reset Password) -> [POST] *** #
-class StudentPasswordResetView(APIView):
-    def post(self, request):
-        email = request.data.get("email")
+class StudentPasswordResetView(generics.GenericAPIView):
+    serializer_class = serializers.StudentPasswordResetSerializer
 
-        if not email:
-            message = "Email is required."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
         try:
             student = models.User.objects.get(email=email)
             student_data = serializers.UserSerializer(student).data
-
             if not student.is_verified:
                 message = "Your account is not verified. Please verify your account to proceed."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    student_data,
-                )
-
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, student_data)
         except models.User.DoesNotExist:
             message = "Student with this email does not exist."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        # Send OTP for password reset
         try:
             utils.send_otp_for_password_reset(email, user_type="student")
             message = "OTP has been sent to your email."
-            return utils.FunReturn(
-                0,
-                message,
-                status.HTTP_200_OK,
-            )
+            return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
         except ValueError as e:
             message = str(e)
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
 
-# *** Student (Confirm Reset Password) -> [POST] *** #
-class StudentConfirmResetPasswordView(APIView):
-    """
-    This view allows a Student to reset their password after OTP verification.
-    """
+# *** Student (Confirm Reset Password) -> [POST] *** # 
+class StudentConfirmResetPasswordView(generics.GenericAPIView):
+    serializer_class = serializers.StudentConfirmResetPasswordSerializer
 
     def post(self, request):
-        otp = request.data.get("otp")
-        password = request.data.get("password")
-        password2 = request.data.get("password2")
+        serializer = self.get_serializer(data=request.data)
+        
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if password != password2:
-            message = "Passwords do not match."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+        otp = serializer.validated_data["otp"]
+        password = serializer.validated_data["password"]
 
-        # Validate OTP
         try:
             otp_instance = models.OneTimeOTP.objects.get(otp=otp, user__isnull=False)
+            if otp_instance.is_expired():
+                message = "OTP has expired."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
         except models.OneTimeOTP.DoesNotExist:
             message = "Invalid OTP."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        if otp_instance.is_expired():
-            message = "OTP has expired."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_400_BAD_REQUEST,
-            )
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
         student = otp_instance.user
-        password = password
-
         student.set_password(password)
         student.save()
         utils.send_reset_password_confirm(student)
-
-        # Delete the used OTP
         models.OneTimeOTP.objects.filter(user=student).delete()
-
         student_data = serializers.UserSerializer(student).data
         message = "Confirm Reset Password Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            student_data,
-        )
+        return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
+
+
+# *** Student (Search) -> [GET] *** #
+# class StudentsSearchList(generics.ListCreateAPIView):
+#     queryset = models.User.objects.filter(is_student=True)
+#     serializer_class = serializers.UserSerializer
+#     pagination_class = StandardResultSetPagination
+#     # permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         qs = super().get_queryset()
+
+#         if 'searchstring' in self.kwargs:
+#             search = self.kwargs['searchstring'] 
+#             qs = qs.filter(
+#                 Q(full_name__icontains=search)
+#                 |Q(username__icontains=search)
+#                 |Q(email__icontains=search)
+#                 )
+#         return qs
+
 
 
 # *** Student (Search) -> [GET] *** #
 class StudentsSearchList(generics.ListCreateAPIView):
-    queryset = models.User.objects.filter(is_student=True)
-    serializer_class = serializers.UserSerializer
+    queryset = models.StudentProfile.objects.filter()
+    serializer_class = serializers.StudentProfileSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
@@ -2839,9 +2244,9 @@ class StudentsSearchList(generics.ListCreateAPIView):
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring'] 
             qs = qs.filter(
-                Q(full_name__icontains=search)
-                |Q(username__icontains=search)
-                |Q(email__icontains=search)
+                Q(user__full_name__icontains=search)
+                |Q(user__username__icontains=search)
+                |Q(user__email__icontains=search)
                 )
         return qs
 
@@ -2854,7 +2259,7 @@ class StudentsSearchList(generics.ListCreateAPIView):
 # ==============================================================================
 # *** 5) Public *** #
 # *** User (Users) -> [GET, POST] *** #
-class UsersListView(generics.ListCreateAPIView):
+class PublicUsersListView(generics.ListCreateAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
     pagination_class = StandardResultSetPagination
@@ -2862,109 +2267,356 @@ class UsersListView(generics.ListCreateAPIView):
 
 
 # *** User (User ID) -> [GET, POST, PUT, DELETE] *** #
-class UserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
+class PublicUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
     # permission_classes = [IsAuthenticated]
 
 
 # *** Public (Login) -> [POST] *** #
-class PublicLoginView(APIView):
-    # permission_classes = [IsAuthenticated]
+class PublicLoginView(generics.GenericAPIView):
+    serializer_class = serializers.PublicLoginSerializer
 
     def post(self, request):
-        # Deserialize the user login data
-        serializer = serializers.PublicLoginSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            user = serializer.validated_data  # Extract the validated user
-            user_data = serializers.UserSerializer(user).data
-            user_profile = ""
+        user = serializer.validated_data
+        user_data = serializers.UserSerializer(user).data
 
-            # Step 2: 
-            if not user.is_verified:
-                message = "Your account is not verified. Please verify your account to proceed."
-                return utils.FunReturn(
-                    1,
-                    message,
-                    status.HTTP_403_FORBIDDEN,
-                    user_data,
-                )
-            
-            # Step 3:
-            if user_data["is_admin"] == True:
-                profile = models.AdminProfile.objects.get(user=user_data["id"])
-                user_profile = serializers.AdminProfileSerializer(profile).data
-            if user_data["is_teacher"] == True:
-                profile = models.TeacherProfile.objects.get(user=user_data["id"])    
-                user_profile = serializers.TeacherProfileSerializer(profile).data
-            if user_data["is_staff"] == True:
-                profile = models.StaffProfile.objects.get(user=user_data["id"])    
-                user_profile = serializers.StaffProfileSerializer(profile).data
-            if user_data["is_student"] == True:
-                profile = models.StudentProfile.objects.get(user=user_data["id"])    
-                user_profile = serializers.StudentProfileSerializer(profile).data
+        if not user.is_verified:
+            message = "Your account is not verified. Please verify your account to proceed."
+            return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, user_data)
 
-            # Generate refresh token and include user_id in the token payload
-            refresh = RefreshToken.for_user(user)
-            refresh["user_id"] = (
-                user.id
-            )  # Explicitly add user_id to the token payload
-            # Generate access token
-            access_token = refresh.access_token
+        profile = None
+        if user_data["is_admin"]:
+            profile = models.AdminProfile.objects.get(user=user_data["id"])
+            user_profile = serializers.AdminProfileSerializer(profile).data
+        elif user_data["is_teacher"]:
+            profile = models.TeacherProfile.objects.get(user=user_data["id"])
+            user_profile = serializers.TeacherProfileSerializer(profile).data
+        elif user_data["is_staff"]:
+            profile = models.StaffProfile.objects.get(user=user_data["id"])
+            user_profile = serializers.StaffProfileSerializer(profile).data
+        elif user_data["is_student"]:
+            profile = models.StudentProfile.objects.get(user=user_data["id"])
+            user_profile = serializers.StudentProfileSerializer(profile).data
 
-            status_code = status.HTTP_200_OK
-            response = {
-                "success": "True",
-                "code": 0,
-                "message": "User Login Successfully.",
-                "status_code": status_code,
-                "data": user_data,
-                "profile": user_profile,
-                "access_token": str(access_token),
-                "refresh_token": str(refresh),
-            }
-            return Response(
-                response,
-                status=status_code,
-            )
+        refresh = RefreshToken.for_user(user)
+        refresh["user_id"] = user.id
+        access_token = refresh.access_token
 
-        message = serializer.errors
-        return utils.FunReturn(
-            1,
-            message,
-            status.HTTP_400_BAD_REQUEST,
-        )
+        response = {
+            "success": True,
+            "code": 0,
+            "message": "User Login Successfully.",
+            "status_code": status.HTTP_200_OK,
+            "data": user_data,
+            "profile": user_profile,
+            "access_token": str(access_token),
+            "refresh_token": str(refresh),
+        }
+        return Response(response, status=status.HTTP_200_OK)
 
 
 # *** Public (ID) -> [GET] *** #
-class PublicIDView(APIView):
-    # permission_classes = [IsAuthenticated]
+class PublicIDView(generics.GenericAPIView):
+    serializer_class = serializers.UserSerializer
 
     def get(self, request, pk):
-        # Step 1:
         try:
             user = models.User.objects.get(pk=pk)
         except models.User.DoesNotExist:
             message = "User not found."
-            return utils.FunReturn(
-                1,
-                message,
-                status.HTTP_404_NOT_FOUND,
-            )
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
 
-        # Step 2:
-        # تحويل الكائن إلى JSON باستخدام Serializer
+        user_data = self.get_serializer(user).data
+        user_profile = ""
+
+        # إذا كنت ترغب في جلب بيانات الملف الشخصي للمستخدم
+        if user.is_admin:
+            profile = models.AdminProfile.objects.get(user=user)
+            user_profile = serializers.AdminProfileSerializer(profile).data
+        elif user.is_superuser:
+            profile = models.SuperuserProfile.objects.get(user=user)
+            user_profile = serializers.SuperuserProfileSerializer(profile).data
+        elif user.is_teacher:
+            profile = models.TeacherProfile.objects.get(user=user)
+            user_profile = serializers.TeacherProfileSerializer(profile).data
+        elif user.is_staff:
+            profile = models.StaffProfile.objects.get(user=user)
+            user_profile = serializers.StaffProfileSerializer(profile).data
+        elif user.is_student:
+            profile = models.StudentProfile.objects.get(user=user)
+            user_profile = serializers.StudentProfileSerializer(profile).data
+        else:
+            user_profile = ""
+
+        response = {
+            "success": True,
+            "code": 0,
+            "message": "User Retrieved Successfully.",
+            "status_code": status.HTTP_200_OK,
+            "data": user_data,
+            "profile": user_profile,
+        }
+        return Response(response, status.HTTP_200_OK)
+
+
+# *** Public (ID) -> [GET] *** #
+class PublicVerifyAccountView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = serializers.PublicVerifyAccountSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        otp_code = serializer.validated_data["otp_code"]
+        try:
+            otp = models.OneTimeOTP.objects.get(otp=otp_code)
+        except models.OneTimeOTP.DoesNotExist:
+            message = "Invalid OTP Code"
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        if otp.is_expired():
+            message = "OTP has expired"
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        if otp.user:
+            user = otp.user
+        else:
+            message = "No associated user for this OTP code"
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        if user.is_verified:
+            message = "Email already verified"
+            student_data = serializers.UserSerializer(user).data
+            return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
+
+        user.is_verified = True
+        user.save()
+        utils.send_verification_email(user, otp_code)
+        otp.delete()
+        student_data = serializers.UserSerializer(user).data
+        message = "Email verified Successfully."
+        return utils.FunReturn(0, message, status.HTTP_200_OK, student_data)
+
+
+# *** Public (Resend OTP) -> [POST] *** # 
+class PublicResendOTPView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = serializers.PublicResendOTPSerializer
+        
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
+        try:
+            user = models.User.objects.get(email=email)
+            if user.is_verified:
+                message = "Your account has already been verified. Please go to the login page."
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
+
+            utils.send_otp_for_user(user.email, "user")
+        except models.User.DoesNotExist:
+            message = "No user found with this email."
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+
+        message = "OTP has been resent to your email."
+        return utils.FunReturn(0, message, status.HTTP_200_OK)
+
+
+# *** Public (Refresh) -> [POST] *** # 
+class PublicRefreshView(generics.GenericAPIView):
+    serializer_class = serializers.PublicRefreshSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        try:
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
+            user_id = payload.get("user_id")
+
+            if not user_id:
+                message = {"refresh_token": "Invalid token payload."}
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+            user = models.User.objects.get(id=user_id)
+            user_data = serializers.UserSerializer(user).data
+            message = "User retrieved Successfully."
+            return utils.FunReturn(0, message, status.HTTP_200_OK, user_data)
+        except models.User.DoesNotExist:
+            message = {"message": "User not found."}
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+        except jwt.ExpiredSignatureError:
+            message = {"message": "Refresh token has expired."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            message = {"message": "Invalid refresh token."}
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            message = {"message": str(e)}
+            return utils.FunReturn(1, message, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+# *** Public (Change Password) -> [POST] *** # 
+class PublicChangePasswordView(generics.GenericAPIView):
+    serializer_class = serializers.PublicChangePasswordSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        old_password = serializer.validated_data["old_password"]
+        new_password = serializer.validated_data["new_password"]
+        confirm_password = serializer.validated_data["confirm_password"]
+
+        try:
+            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
+            user_id = payload.get("user_id")
+            user = models.User.objects.get(id=user_id)
+
+            if not check_password(old_password, user.password):
+                message = "Old password is incorrect."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+            if new_password != confirm_password:
+                message = "New passwords do not match."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+            user.set_password(new_password)
+            user.save()
+            utils.send_change_password_confirm(user)
+            user_data = serializers.UserSerializer(user).data
+            message = "Password changed successfully."
+            return utils.FunReturn(0, message, status.HTTP_200_OK, user_data)
+        except jwt.ExpiredSignatureError:
+            message = "Token has expired"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
+        except jwt.InvalidTokenError:
+            message = "Invalid token"
+            return utils.FunReturn(1, message, status.HTTP_401_UNAUTHORIZED)
+        except models.User.DoesNotExist:
+            message = "User not found"
+            return utils.FunReturn(1, message, status.HTTP_404_NOT_FOUND)
+
+# *** Public (Logout) -> [POST] *** # 
+class PublicLogoutView(generics.GenericAPIView):
+    serializer_class = serializers.PublicLogoutSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        refresh_token = serializer.validated_data["refresh_token"]
+        try:
+            token = RefreshToken(refresh_token)
+            user_id_in_token = token.payload.get("user_id")
+
+            if not user_id_in_token:
+                message = "Invalid token: user id missing."
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
+
+            user = models.User.objects.filter(id=user_id_in_token).first()
+            if not user:
+                message = "Invalid token: User not found."
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN)
+
+            # token.blacklist()  # بدلاً من token.set_exp()
+            token.set_exp()
+            message = "Logout Successful."
+            return utils.FunReturn(0, message, status.HTTP_200_OK)
+        except Exception as e:
+            message = str(e)
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+
+# *** Public (Reset Password) -> [POST] *** #
+class PublicPasswordResetView(generics.GenericAPIView):
+    serializer_class = serializers.PublicPasswordResetSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]
+        try:
+            user = models.User.objects.get(email=email)
+            user_data = serializers.UserSerializer(user).data
+
+            if not user.is_verified:
+                message = "Your account is not verified. Please verify your account to proceed."
+                return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, user_data)
+        except models.User.DoesNotExist:
+            message = "User with this email does not exist."
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        try:
+            utils.send_otp_for_password_reset(email, user_type="user")
+            message = "OTP has been sent to your email."
+            return utils.FunReturn(0, message, status.HTTP_200_OK, user_data)
+        except ValueError as e:
+            message = str(e)
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+
+# *** Public (Confirm Reset Password) -> [POST] *** # 
+class PublicConfirmResetPasswordView(generics.GenericAPIView):
+    serializer_class = serializers.PublicConfirmResetPasswordSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            message = serializer.errors
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        otp = serializer.validated_data["otp"]
+        password = serializer.validated_data["password"]
+
+        try:
+            otp_instance = models.OneTimeOTP.objects.get(otp=otp, user__isnull=False)
+            if otp_instance.is_expired():
+                message = "OTP has expired."
+                return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+        except models.OneTimeOTP.DoesNotExist:
+            message = "Invalid OTP."
+            return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+        user = otp_instance.user
+        user.set_password(password)
+        user.save()
+        utils.send_reset_password_confirm(user)
+        models.OneTimeOTP.objects.filter(user=user).delete()
         user_data = serializers.UserSerializer(user).data
-
-        # Step 3:
-        message = "User Retrieved Successfully."
-        return utils.FunReturn(
-            0,
-            message,
-            status.HTTP_200_OK,
-            user_data,
-        )
+        message = "Confirm Reset Password Successfully."
+        return utils.FunReturn(0, message, status.HTTP_200_OK, user_data)
 
 
 # *** Public (Search) -> [GET] *** #

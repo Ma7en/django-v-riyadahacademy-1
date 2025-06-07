@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.conf import settings
 from django.core.files.base import ContentFile
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 # 
@@ -34,7 +34,7 @@ from datetime import datetime
 
 
 # 
-from rest_framework import generics
+from rest_framework import generics, filters
 from rest_framework import permissions
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
@@ -90,12 +90,14 @@ class CategorySectionList(generics.ListCreateAPIView):
     queryset = models.CategorySection.objects.all()
     serializer_class = serializers.CategorySectionSerializer
     pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
 
 
 class CategorySectionPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CategorySection.objects.all()
     serializer_class = serializers.CategorySectionSerializer
+    permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
 
 
@@ -118,6 +120,8 @@ class CategorySectionSearchList(generics.ListCreateAPIView):
 
 
 
+
+
 # ******************************************************************************
 # ==============================================================================
 # *** Section Course *** #
@@ -131,19 +135,8 @@ class SectionCourseList(generics.ListCreateAPIView):
 class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.SectionCourse.objects.all()
     serializer_class = serializers.SectionCourseSerializer
+    permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
-
-
-class SectionCourseCategoryList(generics.ListCreateAPIView):
-    # queryset = models.SectionCourse.objects.all()
-    serializer_class = serializers.SectionCourseSerializer
-    pagination_class = StandardResultSetPagination
-    # permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        category_id = self.kwargs["pk"]
-        category = models.CategorySection.objects.get(id=category_id)
-        return models.SectionCourse.objects.filter(category=category)
 
 
 class SectionCourseSearchList(generics.ListCreateAPIView):
@@ -163,6 +156,36 @@ class SectionCourseSearchList(generics.ListCreateAPIView):
                 |Q(grade__icontains=search)
                 )
         return qs
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Section Course *** #
+
+class SectionCourseCategoriesList(generics.ListCreateAPIView):
+    queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.SectionCourseSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['category', 'is_visible']
+    search_fields = ['title', 'description', 'grade']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+
+
+class SectionCourseCategoryList(generics.ListCreateAPIView):
+    queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.SectionCourseSerializer
+    pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        category_id = self.kwargs["pk"]
+        category = models.CategorySection.objects.get(id=category_id)
+        return models.SectionCourse.objects.filter(category=category)
 
 
 
@@ -315,6 +338,50 @@ class PublicCourseList(generics.ListAPIView):
 
 
 
+class CoursesSearchList(generics.ListCreateAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(title__icontains=search)
+                |Q(description__icontains=search)
+                |Q(level__icontains=search)
+                |Q(duration__icontains=search)
+                |Q(price__icontains=search)
+                |Q(duration__icontains=search)
+                |Q(language__icontains=search)
+                )
+        return qs
+    
+
+
+
+
+
+
+class CourseSectionList(generics.ListCreateAPIView):
+    # queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.CourseSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        section_id = self.kwargs["pk"]
+        section = models.SectionCourse.objects.get(id=section_id)
+        return models.Course.objects.filter(section=section)
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Section In Course *** #
 class SectionInCourseList(generics.ListCreateAPIView):
     queryset = models.SectionInCourse.objects.all()
@@ -353,6 +420,11 @@ class SectionInCourseRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView
 
 
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Lesson In Course *** #
 class LessonInCourseList(generics.ListCreateAPIView):
     queryset = models.LessonInCourse.objects.all()
@@ -442,6 +514,11 @@ class LessonInCourseCreateView(generics.CreateAPIView):
 
 
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** File In Course *** #
 class FileInCourseList(generics.ListCreateAPIView):
     queryset = models.FileInCourse.objects.all()
@@ -508,6 +585,11 @@ class FileInCourseCreateView(generics.CreateAPIView):
 
 
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Question In Course *** #
 class QuestionInCourseList(generics.ListCreateAPIView):
     queryset = models.QuestionInCourse.objects.all()
@@ -568,20 +650,6 @@ class QuestionCreateView(generics.CreateAPIView):
         
         return Response(created_questions, status=status.HTTP_201_CREATED)
     
-
-
-
-
-class CourseSectionList(generics.ListCreateAPIView):
-    # queryset = models.SectionCourse.objects.all()
-    serializer_class = serializers.CourseSerializer
-    pagination_class = StandardResultSetPagination
-    # permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        section_id = self.kwargs["pk"]
-        section = models.SectionCourse.objects.get(id=section_id)
-        return models.Course.objects.filter(section=section)
 
 
 
@@ -896,7 +964,8 @@ def remove_favorite_course(request,course_id,student_id):
         return JsonResponse({'bool':True})
     else:
         return JsonResponse({'bool':False})
- 
+
+
 class RemoveFavoriteCourseView(generics.DestroyAPIView):    
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
@@ -1203,33 +1272,39 @@ class StudentVerifyCertificateView(APIView):
 # ==============================================================================
 # *** Question Bank ***
 class QuestionBankList(generics.ListCreateAPIView):
-    # queryset = models.QuestionBank.objects.all()
+    queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankSerializer
     pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser:
-            return models.QuestionBank.objects.all()
-        else:
-            return models.QuestionBank.objects.filter(user=user)
+    # def get_queryset(self):
+    #     if self.request.user.is_student:
+    #         return models.QuestionBank.objects.filter(user=self.request.user)
+    #     return models.QuestionBank.objects.all()
+
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     if user.is_student:
+    #         return models.QuestionBank.objects.filter(user=user)
+    #     return models.QuestionBank.objects.all()
+
 
 class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
-    # queryset = models.QuestionBank.objects.all()
+    queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankSerializer
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        # هذه السطر يحل مشكلة إنشاء schema
-        if getattr(self, 'swagger_fake_view', False):
-            return models.QuestionBank.objects.none()
+    # def get_queryset(self):
+    #     # هذه السطر يحل مشكلة إنشاء schema
+    #     if getattr(self, 'swagger_fake_view', False):
+    #         return models.QuestionBank.objects.none()
         
-        user = self.request.user
-        if user.is_superuser:
-            return models.QuestionBank.objects.all()
-        else:
-            return models.QuestionBank.objects.filter(user=user)
+    #     user = self.request.user
+    #     if user.is_superuser:
+    #         return models.QuestionBank.objects.all()
+    #     else:
+    #         return models.QuestionBank.objects.filter(user=user)
 
 
 
@@ -1459,6 +1534,34 @@ class StudentQuestionBankResultSaveView(APIView):
 
 
 
+
+# 
+class QuestionBankSearchList(generics.ListCreateAPIView):
+    queryset = models.QuestionBank.objects.all()
+    serializer_class = serializers.QuestionBankSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(title__icontains=search)
+                |Q(description__icontains=search)
+                )
+        return qs
+    
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***  ***
 class QuestionBankSectionList(generics.ListCreateAPIView):
     # queryset = models.SectionCourse.objects.all()
     serializer_class = serializers.QuestionBankSerializer
@@ -1494,35 +1597,62 @@ class QuestionBankSectionList(generics.ListCreateAPIView):
 # *** ContactUs ***
 # (List of contact us -> [GET, POST])
 class ContactUsListAPIView(generics.ListCreateAPIView):
-    # queryset = models.ContactUsUser.objects.all()
+    queryset = models.ContactUsUser.objects.all()
     serializer_class = serializers.ContactUsUserSerializer
     pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_student:
-            return models.ContactUsUser.objects.filter(user=user)
-        else:
-            return models.ContactUsUser.objects.all()
+        if self.request.user.is_student:
+            return models.ContactUsUser.objects.filter(user=self.request.user)
+        return models.ContactUsUser.objects.all()
+
+    # def get_queryset(self):
+    #     if self.request.user:
+    #         user = self.request.user
+    #         if user.is_student:
+    #             return models.ContactUsUser.objects.filter(user=user)
+    #         else:
+    #             return models.ContactUsUser.objects.all()
+    
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     if user.is_authenticated:
+    #         if user.is_student:
+    #             return models.ContactUsUser.objects.filter(user=user)
+    #         else:
+    #             return models.ContactUsUser.objects.all()
+    #     else:
+    #         return models.ContactUsUser.objects.none
 
 
 # (List of contact us -> [GET, POST, PUT, DELETE])
 class ContactUsPKAPIView(generics.RetrieveUpdateDestroyAPIView):
-    # queryset = models.ContactUsUser.objects.all()
+    queryset = models.ContactUsUser.objects.all()
     serializer_class = serializers.ContactUsUserSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
+    
     def get_queryset(self):
-        # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
+        #     # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
         if getattr(self, 'swagger_fake_view', False):
-            return models.ReviewUser.objects.none()
+            return models.ContactUsUser.objects.none()
         
-        user = self.request.user
-        if user.is_student:
-            return models.ContactUsUser.objects.filter(user=user)
-        else:
-            return models.ContactUsUser.objects.all()
+        if self.request.user.is_student:
+            return models.ContactUsUser.objects.filter(user=self.request.user)
+        return models.ContactUsUser.objects.all()
+
+    # def get_queryset(self):
+    #     # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
+    #     if getattr(self, 'swagger_fake_view', False):
+    #         return models.ReviewUser.objects.none()
+        
+    #     user = self.request.user
+    #     if user.is_student:
+    #         return models.ContactUsUser.objects.filter(user=user)
+    #     else:
+    #         return models.ContactUsUser.objects.all()
 
 
 # 
@@ -1530,10 +1660,14 @@ class ContactusUserSearchList(generics.ListCreateAPIView):
     queryset = models.ContactUsUser.objects.all()
     serializer_class = serializers.ContactUsUserSerializer
     pagination_class = StandardResultSetPagination
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.request.user.is_student:
+            qs = models.ContactUsUser.objects.filter(user=self.request.user)
+        else:
+            qs = models.ContactUsUser.objects.all()
 
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring'] 
@@ -1547,30 +1681,61 @@ class ContactusUserSearchList(generics.ListCreateAPIView):
 
 
 
+# class ContactusUserSearchList(generics.ListCreateAPIView):
+#     queryset = models.ContactUsUser.objects.all()
+#     serializer_class = serializers.ContactUsUserSerializer
+#     pagination_class = StandardResultSetPagination
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         if self.request.user.is_student:
+#             qs = models.ContactUsUser.objects.filter(user=self.request.user)
+#         else:
+#             qs = models.ContactUsUser.objects.all()
+
+#         search = self.request.GET.get('searchstring')
+#         if search:
+#             qs = qs.filter(
+#                 Q(full_name__icontains=search) |
+#                 Q(email__icontains=search) |
+#                 Q(titleofmessage__icontains=search) |
+#                 Q(message__icontains=search)
+#             )
+#         return qs
+
 
 # ******************************************************************************
 # ==============================================================================
 # *** Review ***
 # (List of review -> [GET, POST])
 class ReviewUserListAPIView(generics.ListCreateAPIView):
-    # queryset = models.ReviewUser.objects.all()
+    queryset = models.ReviewUser.objects.all()
     serializer_class = serializers.ReviewUserSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_student:
-            return models.ReviewUser.objects.filter(user=user)
-        else:
-            return models.ReviewUser.objects.all()
+        if self.request.user.is_student:
+            return models.ReviewUser.objects.filter(user=self.request.user)
+        return models.ReviewUser.objects.all()
+
+    # def get_queryset(self):
+    #     if self.request.user.is_authenticated:
+    #         if self.request.user.is_student:
+    #             return models.ReviewUser.objects.filter(user=self.request.user)
+    #         else:
+    #             return models.ReviewUser.objects.all()
+    #     else:
+    #         # يمكنك إرجاع queryset فارغ أو رفع استثناء إذا لم يكن المستخدم مصادقًا عليه
+    #         return models.ReviewUser.objects.none()
+
 
 
 # (List of review -> [GET, POST, PUT, DELETE])
 class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
-    # queryset = models.ReviewUser.objects.all()
+    queryset = models.ReviewUser.objects.all()
     serializer_class = serializers.ReviewUserSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # هذه السطر يمنع المشكلة أثناء إنشاء schema لوثائق API
@@ -1589,10 +1754,14 @@ class ReviewUserSearchList(generics.ListCreateAPIView):
     queryset = models.ReviewUser.objects.all()
     serializer_class = serializers.ReviewUserSerializer
     pagination_class = StandardResultSetPagination
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.request.user.is_student:
+            qs = models.ReviewUser.objects.filter(user=self.request.user)
+        else:
+            qs = models.ReviewUser.objects.all()
 
         if 'searchstring' in self.kwargs:
             search = self.kwargs['searchstring'] 
@@ -1611,8 +1780,17 @@ class ReviewUserSearchList(generics.ListCreateAPIView):
 
 # ******************************************************************************
 # ==============================================================================
-# *** Admin Dashboard Stats ***
-class AdminDashboardStatsView(generics.GenericAPIView):
+# ***  ***
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** App Stats ***
+class AppStatsView(generics.GenericAPIView):
     def get(self, request):
         users_count = models.User.objects.count()
         admins_count = models.User.objects.filter(is_admin=True).count()
@@ -1620,18 +1798,19 @@ class AdminDashboardStatsView(generics.GenericAPIView):
         staffs_count = models.User.objects.filter(is_staff=True).count()
         students_count = models.User.objects.filter(is_student=True).count()
 
-        categories_count = models.CategorySection.objects.count()
+        categories_section_count = models.CategorySection.objects.count()
         sections_course_count = models.SectionCourse.objects.count()
 
         courses_count = models.Course.objects.count()
         sections_in_course_count = models.SectionInCourse.objects.count()
         lessons_count = models.LessonInCourse.objects.count()
 
-        couponscourse_count = models.CouponCourse.objects.count()
+        coupons_course_count = models.CouponCourse.objects.count()
         
         total_enrolled_students = models.StudentCourseEnrollment.objects.count()
 
         questionbanks_count = models.QuestionBank.objects.count()
+
 
         contacts_count = models.ContactUsUser.objects.count()
         reviews_count = models.ReviewUser.objects.count()
@@ -1643,14 +1822,14 @@ class AdminDashboardStatsView(generics.GenericAPIView):
             'staffs_count': staffs_count,
             'students_count': students_count,
 
-            'categories_count': categories_count,
+            'categories_section_count': categories_section_count,
             'sections_course_count': sections_course_count,
 
             'courses_count': courses_count,
             'sections_in_course_count': sections_in_course_count,
             'lessons_count': lessons_count,
             
-            'couponscourse_count': couponscourse_count,
+            'coupons_course_count': coupons_course_count,
 
             'total_enrolled_students': total_enrolled_students,
 
@@ -1659,6 +1838,144 @@ class AdminDashboardStatsView(generics.GenericAPIView):
             'contacts_count': contacts_count,
             'reviews_count': reviews_count,
         })
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Admin Dashboard Stats ***
+class AdminDashboardStatsView(generics.GenericAPIView):
+    def get(self, request):
+        users_count = models.User.objects.count()
+        admins_count = models.User.objects.filter(is_admin=True).count()
+        teachers_count = models.User.objects.filter(is_teacher=True).count()
+        staffs_count = models.User.objects.filter(is_staff=True).count()
+        students_count = models.User.objects.filter(is_student=True).count()
+
+        categories_section_count = models.CategorySection.objects.count()
+        sections_course_count = models.SectionCourse.objects.count()
+
+        courses_count = models.Course.objects.count()
+        sections_in_course_count = models.SectionInCourse.objects.count()
+        lessons_count = models.LessonInCourse.objects.count()
+
+        coupons_course_count = models.CouponCourse.objects.count()
+        
+        total_enrolled_students = models.StudentCourseEnrollment.objects.count()
+
+        questionbanks_count = models.QuestionBank.objects.count()
+
+        if 'user_id' in request.GET:
+            user_id = request.GET['user_id']
+            if user_id[-1] == "/":
+                user_id = user_id[:-1]
+            user_id = int(user_id)
+            admin_categories_section_count = models.CategorySection.objects.filter(user=user_id).count()
+            admin_sections_course_count = models.SectionCourse.objects.filter(user=user_id).count()
+            admin_courses_count = models.Course.objects.filter(user=user_id).count()
+            admin_coupon_course_count = models.CouponCourse.objects.filter(user=user_id).count()
+            admin_banks_count = models.QuestionBank.objects.filter(user=user_id).count()
+        else:
+            admin_categories_section_count = 0
+            admin_sections_course_count = 0
+            admin_courses_count = 0
+            admin_coupon_course_count = 0
+            admin_banks_count = 0
+
+        contacts_count = models.ContactUsUser.objects.count()
+        reviews_count = models.ReviewUser.objects.count()
+
+        return Response({
+            'users_count': users_count,
+            'admins_count': admins_count,
+            'teachers_count': teachers_count,
+            'staffs_count': staffs_count,
+            'students_count': students_count,
+
+            'categories_section_count': categories_section_count,
+            'sections_course_count': sections_course_count,
+
+            'courses_count': courses_count,
+            'sections_in_course_count': sections_in_course_count,
+            'lessons_count': lessons_count,
+            
+            'coupons_course_count': coupons_course_count,
+
+            'total_enrolled_students': total_enrolled_students,
+
+            'questionbanks_count': questionbanks_count,
+
+            "admin_categories_section_count": admin_categories_section_count,
+            "admin_sections_course_count": admin_sections_course_count,
+            "admin_courses_count": admin_courses_count,
+            "admin_coupon_course_count": admin_coupon_course_count,
+            "admin_banks_count": admin_banks_count,
+
+            'contacts_count': contacts_count,
+            'reviews_count': reviews_count,
+        })
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Teacher Dashboard Stats ***
+class TeacherDashboardStatsView(generics.GenericAPIView):
+    def get(self, request):
+        if 'user_id' in request.GET:
+            user_id = request.GET['user_id']
+            if user_id[-1] == "/":
+                user_id = user_id[:-1]
+            user_id = int(user_id)
+            teacher_courses_count = models.Course.objects.filter(user=user_id).count()
+            teacher_banks_count = models.QuestionBank.objects.filter(user=user_id).count()
+        else:
+            teacher_courses_count = 0
+            teacher_banks_count = 0
+
+        contacts_count = models.ContactUsUser.objects.count()
+        reviews_count = models.ReviewUser.objects.count()
+
+        return Response({
+            "teacher_courses_count": teacher_courses_count,
+            "teacher_banks_count": teacher_banks_count,
+
+            'contacts_count': contacts_count,
+            'reviews_count': reviews_count,
+        })
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Student Dashboard Stats ***
+class StudentDashboardStatsView(generics.GenericAPIView):
+    def get(self, request):
+        if 'user_id' in request.GET:
+            user_id = request.GET['user_id']
+            if user_id[-1] == "/":
+                user_id = user_id[:-1]
+            user_id = int(user_id)
+            student_courses_enrollment_count = models.StudentCourseEnrollment.objects.filter(student=user_id).count()
+            student_favorite_course_count = models.StudentFavoriteCourse.objects.filter(student=user_id).count()
+        else:
+            student_courses_enrollment_count = 0
+            student_favorite_course_count = 0
+
+        return Response({
+            "student_courses_enrollment_count": student_courses_enrollment_count,
+            "student_favorite_course_count": student_favorite_course_count,
+ 
+        })
+
 
 
 

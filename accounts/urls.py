@@ -443,20 +443,14 @@ urlpatterns = [
     # (Users)
     path(
         "public/users-list/",
-        views.UsersListView.as_view(),
+        views.PublicUsersListView.as_view(),
         name="public-users-list-api",
     ),
     # (User ID)
     path(
         "public/user/<int:pk>/",
-        views.UserPKAPIView.as_view(),
+        views.PublicUserPKAPIView.as_view(),
         name="public-user-pk-api",
-    ),
-    # (Login)
-    path(
-        "public/login/",
-        views.PublicLoginView.as_view(),
-        name="public-login-api",
     ),
     # (ID)
     path(
@@ -464,7 +458,54 @@ urlpatterns = [
         views.PublicIDView.as_view(),
         name="public-user-id-api",
     ),
-    
+    # (Verify Account)
+    path(
+        "public/verify-account/",
+        views.PublicVerifyAccountView.as_view(),
+        name="verify-account-api",
+    ),
+    # (Resend OTP)
+    path(
+        "public/resend-otp/",
+        views.PublicResendOTPView.as_view(),
+        name="public-resend-otp-api",
+    ),
+    # (Login)
+    path(
+        "public/login/",
+        views.PublicLoginView.as_view(),
+        name="public-login-api",
+    ),
+    # (Refresh)
+    path(
+        "public/refresh/",
+        views.PublicRefreshView.as_view(),
+        name="public-user-refresh",
+    ),
+    # (Change Password)
+    path(
+        "public/change-password/",
+        views.PublicChangePasswordView.as_view(),
+        name="public-change-password-api",
+    ),
+    # (Logout)
+    path(
+        "public/logout/",
+        views.PublicLogoutView.as_view(),
+        name="public-logout-api",
+    ),
+    # (Reset Password)
+    path(
+        "public/reset-password/",
+        views.PublicPasswordResetView.as_view(),
+        name="public-reset-password-api",
+    ),
+    # (Confirm Reset Password)
+    path(
+        "public/confirm-reset-password/",
+        views.PublicConfirmResetPasswordView.as_view(),
+        name="public-confirm-reset-password",
+    ),
     path(
         'public/user/search/<str:searchstring>/', 
         views.PublicUserSearchList.as_view(),

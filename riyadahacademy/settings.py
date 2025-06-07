@@ -64,6 +64,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    #
+    "corsheaders.middleware.CorsMiddleware",
+    # 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,9 +74,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #
-    "corsheaders.middleware.CorsMiddleware",
 ]
+
 
 ROOT_URLCONF = 'riyadahacademy.urls'
 
@@ -143,6 +145,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
 
 # 
 SITE_ID = 1
@@ -162,18 +171,45 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #
 AUTH_USER_MODEL = "accounts.User"
+
+# 
 CORS_ALLOW_ALL_ORIGINS = True
 
 # CORS settings
 # CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:5174').split(',')
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://localhost:5174',
+    "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://127.0.0.1:5173",
 ]
 # CORS_ALLOWED_ORIGINS = ["*"]
 CORS_ALLOW_CREDENTIALS = True
+
+# 
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# 
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 
 # 
 X_FRAME_OPTIONS = 'ALLOWALL'

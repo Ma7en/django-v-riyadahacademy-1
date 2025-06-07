@@ -562,18 +562,36 @@ class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
 
 class QuestionInBankSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    question_bank = serializers.PrimaryKeyRelatedField(queryset=models.QuestionBank.objects.all()) 
     # question_bank = QuestionBankSerializer(many=True, read_only=True)
 
     choices = ChoiceQuestionInBankSerializer(many=True, read_only=True)
     
     class Meta:
         model = models.QuestionInBank
-        # fields = ['id', 'text', 'image', 'image_url', 'display_image', 'choices']
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            'id', 
+
+            "user",
+            "question_bank",
+
+            'text', 
+            'image', 
+            'image_url', 
+            # 'display_image', 
+            'choices',
+
+            "slug", 
+            "created_at",
+            "updated_at",
+
+        ]
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['question_bank'] = QuestionBankSerializer(instance.question_bank).data  # لعرض تفاصيل المستخدم
         return representation
     
 
@@ -618,6 +636,9 @@ class QuestionInBankDetailSerializer(serializers.ModelSerializer):
 
 
 class QuestionBankSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    section = serializers.PrimaryKeyRelatedField(queryset=models.SectionCourse.objects.all()) 
+
     question_count = serializers.IntegerField(read_only=True)
     section_name = serializers.CharField(source='section.name', read_only=True)
     
@@ -625,9 +646,38 @@ class QuestionBankSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.QuestionBank
-        fields = "__all__"
-        # fields = ['id', 'title', 'description', 'image', 'image_url', 
-        #           'display_image', 'section', 'section_name', 'question_count']
+        # fields = "__all__"
+        fields = [
+            'id',
+
+            "user",
+            "section",
+            
+            'title', 
+            'description', 
+            'image', 
+            'image_url', 
+
+            'is_visible', 
+
+            'section_name', 
+            'question_count',
+
+            'total_question_in_bank',
+            'question_count',
+            'display_image', 
+            
+            "slug", 
+            "created_at",
+            "updated_at",
+        ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['section'] = SectionCourseSerializer(instance.section).data  # لعرض تفاصيل المستخدم
+        return representation
+
 
 
 class QuestionBankDetailSerializer(serializers.ModelSerializer):
