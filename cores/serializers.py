@@ -543,7 +543,7 @@ class StudentCertificateSerializer(serializers.ModelSerializer):
 # *** Questions Banks *** #
 class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
-    section = serializers.PrimaryKeyRelatedField(queryset=models.SectionCourse.objects.all()) 
+    # question = serializers.PrimaryKeyRelatedField(queryset=models.SectionCourse.objects.all()) 
     # section = SectionCourseSerializer(many=True, read_only=True)
 
     slug = serializers.SlugField(read_only=True)
@@ -556,7 +556,7 @@ class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
-        representation['section'] = SectionCourseSerializer(instance.section).data  # لعرض تفاصيل المستخدم
+        # representation['question'] = QuestionBankSerializer(instance.question).data  # لعرض تفاصيل المستخدم
         return representation
     
 
@@ -565,28 +565,27 @@ class QuestionInBankSerializer(serializers.ModelSerializer):
     question_bank = serializers.PrimaryKeyRelatedField(queryset=models.QuestionBank.objects.all()) 
     # question_bank = QuestionBankSerializer(many=True, read_only=True)
 
-    choices = ChoiceQuestionInBankSerializer(many=True, read_only=True)
+    # choices = ChoiceQuestionInBankSerializer(many=True)
     
     class Meta:
         model = models.QuestionInBank
-        # fields = "__all__"
-        fields = [
-            'id', 
+        fields = "__all__"
+        # fields = [
+        #     'id', 
 
-            "user",
-            "question_bank",
+        #     "user",
+        #     "question_bank",
 
-            'text', 
-            'image', 
-            'image_url', 
-            # 'display_image', 
-            'choices',
+        #     'text', 
+        #     'image', 
+        #     'image_url', 
+        #     # 'display_image', 
+        #     'choices',
 
-            "slug", 
-            "created_at",
-            "updated_at",
-
-        ]
+        #     "slug", 
+        #     "created_at",
+        #     "updated_at",
+        # ]
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -596,7 +595,11 @@ class QuestionInBankSerializer(serializers.ModelSerializer):
     
 
 class QuestionInBankDetailSerializer(serializers.ModelSerializer):
-    choices = ChoiceQuestionInBankSerializer(many=True)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    question_bank = serializers.PrimaryKeyRelatedField(queryset=models.QuestionBank.objects.all()) 
+
+    choices = ChoiceQuestionInBankSerializer(many=True, source='choices_question_in_bank', read_only=True)
+ 
     
     class Meta:
         model = models.QuestionInBank
@@ -604,23 +607,32 @@ class QuestionInBankDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
     
     def create(self, validated_data):
-        choices_data = validated_data.pop('choices')
+        # choices_data = validated_data.pop('choices', [])
+        choices_data = validated_data.pop('choices', [])
         question = models.QuestionInBank.objects.create(**validated_data)
         
         for choice_data in choices_data:
             models.ChoiceQuestionInBank.objects.create(question=question, **choice_data)
-        
+        # print("\n\n\n\n\n\n\n\n\n\n\n")
+        # print("validated_data", validated_data)
+        # print("question", question)
+        # print("choices_data", choices_data)
+        # print("\n\n\n\n\n\n\n\n\n\n\n")
         return question
     
     def update(self, instance, validated_data):
         choices_data = validated_data.pop('choices', None)
         
         # Update question fields
-        instance.text = validated_data.get('text', instance.text)
+        # instance.text = validated_data.get('text', instance.text)
         
-        instance.image = validated_data.get('image', instance.image)
-        instance.image_url = validated_data.get('image_url', instance.image_url)
+        # instance.image = validated_data.get('image', instance.image)
+        # instance.image_url = validated_data.get('image_url', instance.image_url)
+        # instance.save()
 
+        # Update question fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         instance.save()
         
         # Update choices if provided
@@ -633,6 +645,14 @@ class QuestionInBankDetailSerializer(serializers.ModelSerializer):
                 models.ChoiceQuestionInBank.objects.create(question=instance, **choice_data)
         
         return instance
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['question_bank'] = QuestionBankSerializer(instance.question_bank).data  # لعرض تفاصيل المستخدم
+        return representation
+    
+
 
 
 class QuestionBankSerializer(serializers.ModelSerializer):
@@ -664,6 +684,7 @@ class QuestionBankSerializer(serializers.ModelSerializer):
             'question_count',
 
             'total_question_in_bank',
+            "total_student_result",
             'question_count',
             'display_image', 
             
@@ -697,36 +718,67 @@ class QuestionBankDetailSerializer(serializers.ModelSerializer):
 
 
 
-class QuestionBankResultSerializer(serializers.Serializer): # QuizResult
-    question_id = serializers.IntegerField()
-    selected_choice_id = serializers.IntegerField()
 
 
 
+# ******************************************************************************
+# ==============================================================================
+# ***   *** #
+
+# class QuestionBankResultSerializer(serializers.Serializer): # QuizResult
+#     question_id = serializers.IntegerField()
+#     selected_choice_id = serializers.IntegerField(allow_null=True)
+
+
+
+# class StudentQuestionBankResultSerializer(serializers.ModelSerializer):
+#     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+#     question_bank = QuestionBankSerializer(many=True, read_only=True)
+
+#     class Meta:
+#         model = models.StudentQuestionBankResult
+#         fields = '__all__'
+#         # read_only_fields = ('user', 'created_at')
+    
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+#         return representation
+
+
+# class StudentQuestionBankAnswerSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = models.StudentQuestionBankAnswer
+#         fields = '__all__'
+#         extra_kwargs = {
+#             'all_choices': {'write_only': True}
+#         }
+
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 class StudentQuestionBankResultSerializer(serializers.ModelSerializer):
+    """Serializer for Student Question Bank Result (admin view)"""
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
-    question_bank = QuestionBankSerializer(many=True, read_only=True)
+    question_bank = serializers.PrimaryKeyRelatedField(queryset=models.QuestionBank.objects.all()) 
 
+    slug = serializers.SlugField(read_only=True)
+  
     class Meta:
         model = models.StudentQuestionBankResult
         fields = '__all__'
-        # read_only_fields = ('user', 'created_at')
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['question_bank'] = QuestionBankSerializer(instance.question_bank).data  # لعرض تفاصيل المستخدم
         return representation
-
-
-class StudentQuestionBankAnswerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.StudentQuestionBankAnswer
-        fields = '__all__'
-        extra_kwargs = {
-            'all_choices': {'write_only': True}
-        }
-
-
 
 
 
@@ -759,6 +811,7 @@ class ContactUsUserSerializer(serializers.ModelSerializer):
 # *** Review *** #
 class ReviewUserSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    profile = serializers.PrimaryKeyRelatedField(queryset=StudentProfile.objects.all()) 
 
     slug = serializers.SlugField(read_only=True)
 
@@ -769,6 +822,7 @@ class ReviewUserSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['profile'] = StudentProfileSerializer(instance.profile).data  # لعرض تفاصيل المستخدم
         return representation
 
 

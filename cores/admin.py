@@ -112,7 +112,7 @@ admin.site.register(models.QuestionBank)
 admin.site.register(models.QuestionInBank)
 admin.site.register(models.ChoiceQuestionInBank)
 admin.site.register(models.StudentQuestionBankResult)
-admin.site.register(models.StudentQuestionBankAnswer)
+# admin.site.register(models.StudentQuestionBankAnswer)
 
 
 

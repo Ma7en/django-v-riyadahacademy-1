@@ -794,6 +794,10 @@ class QuestionBank(models.Model):
     def total_question_in_bank(self):
         return QuestionInBank.objects.filter(question_bank=self).count()
 
+
+    def total_student_result(self):
+        return StudentQuestionBankResult.objects.filter(question_bank=self).count()
+
     @property
     def question_count(self):
         return self.questions.count()
@@ -828,10 +832,13 @@ class QuestionInBank(models.Model):
         related_name='questions_question_in_bank'
     )
 
-    text = models.TextField(max_length=10_000)
+    text = models.TextField(max_length=10_000, null=True, blank=True)
     
     image = models.ImageField(upload_to='questionsbanks/questions/', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
+        
+    choices = models.JSONField(default=list)
+    correct_answer = models.PositiveIntegerField(default=0)
     
     is_visible = models.BooleanField(default=True)
 
@@ -863,7 +870,9 @@ class ChoiceQuestionInBank(models.Model):
     question = models.ForeignKey(
         QuestionInBank, 
         on_delete=models.CASCADE, 
-        related_name='questions_choices_question_bank'
+        related_name='choices_question_in_bank',
+        # null=True,
+        # blank=True,
     )
 
     text = models.CharField(max_length=1_000)
@@ -880,6 +889,92 @@ class ChoiceQuestionInBank(models.Model):
         return f"{self.id}): ({self.text[:30]}) - ({self.is_correct})"
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# class StudentQuestionBankResult(models.Model):
+#     user = models.ForeignKey(
+#         User, 
+#         on_delete=models.CASCADE,
+#         related_name='student_question_bank_results',
+#     )
+#     question_bank = models.ForeignKey(
+#         QuestionBank, 
+#         on_delete=models.CASCADE,
+#         related_name='question_bank_bank_result',
+#     )
+
+#     answered_questions = models.PositiveIntegerField()
+#     correct_answers = models.PositiveIntegerField()
+#     percentage = models.FloatField()
+#     total_questions = models.PositiveIntegerField()
+
+
+#     slug = models.SlugField(unique=True, null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         verbose_name_plural="2-4) Student Question Bank Result"
+   
+
+#     def __str__(self):
+#         return f"{self.id}): ({self.user}) - ({self.question_bank})"
+    
+
+# class StudentQuestionBankAnswer(models.Model):
+#     question_bank_result = models.ForeignKey(
+#         StudentQuestionBankResult, 
+#         on_delete=models.CASCADE,
+#         related_name='question_bank_answers', 
+#     )
+
+#     question_id = models.PositiveIntegerField()
+#     question_text = models.TextField()
+
+#     is_answered = models.BooleanField()
+    
+#     selected_choice_id = models.PositiveIntegerField(null=True, blank=True)
+#     selected_choice_text = models.TextField(null=True, blank=True)
+#     correct_choice_id = models.PositiveIntegerField(null=True, blank=True)
+#     correct_choice_text = models.TextField(null=True, blank=True)
+    
+#     is_correct = models.BooleanField(null=True, blank=True)
+#     all_choices = models.JSONField(default=list)
+
+#     slug = models.SlugField(unique=True, null=True, blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         ordering = ['-created_at']
+#         verbose_name_plural="2-5) Student Question Bank Answer"
+   
+#     def __str__(self):
+#         return f"{self.id}): ({self.question_text})" 
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***  Student Question Bank Result  *** // 
 class StudentQuestionBankResult(models.Model):
     user = models.ForeignKey(
         User, 
@@ -892,10 +987,13 @@ class StudentQuestionBankResult(models.Model):
         related_name='question_bank_bank_result',
     )
 
-    answered_questions = models.PositiveIntegerField()
+    # answered_questions = models.PositiveIntegerField()
+    
+    total_questions = models.PositiveIntegerField()
     correct_answers = models.PositiveIntegerField()
     percentage = models.FloatField()
-    total_questions = models.PositiveIntegerField()
+
+    results = models.JSONField(default=list)
 
 
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -912,44 +1010,13 @@ class StudentQuestionBankResult(models.Model):
         return f"{self.id}): ({self.user}) - ({self.question_bank})"
     
 
-class StudentQuestionBankAnswer(models.Model):
-    question_bank_result = models.ForeignKey(
-        StudentQuestionBankResult, 
-        on_delete=models.CASCADE,
-        related_name='question_bank_answers', 
-    )
-
-    question_id = models.PositiveIntegerField()
-    question_text = models.TextField()
-    is_answered = models.BooleanField()
-    selected_choice_id = models.PositiveIntegerField(null=True, blank=True)
-    selected_choice_text = models.TextField(null=True, blank=True)
-    correct_choice_id = models.PositiveIntegerField(null=True, blank=True)
-    correct_choice_text = models.TextField(null=True, blank=True)
-    is_correct = models.BooleanField(null=True, blank=True)
-    all_choices = models.JSONField(default=list)
-
-    slug = models.SlugField(unique=True, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name_plural="2-5) Student Question Bank Answer"
-   
-    def __str__(self):
-        return f"{self.id}): ({self.question_text})" 
-
-
-
-
 
 
 
 
 # ******************************************************************************
 # ==============================================================================
-# *** ContactUs *** #
+# ***  ContactUs  *** #
 class ContactUsUser(models.Model):
     user = models.ForeignKey(
         User,
@@ -1031,12 +1098,17 @@ class ContactUsUser(models.Model):
 
 # ******************************************************************************
 # ==============================================================================
-# *** Review *** #
+# ***  Review  *** #
 class ReviewUser(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='reviewuser_user',
+    )
+    profile = models.ForeignKey(
+        StudentProfile,
+        on_delete=models.CASCADE,
+        related_name='reviewuser_profile',
     )
 
     STATUS_CHOICES = (

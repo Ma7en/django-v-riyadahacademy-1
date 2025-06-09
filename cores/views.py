@@ -94,6 +94,13 @@ class CategorySectionList(generics.ListCreateAPIView):
     # permission_classes = [IsAuthenticated]
 
 
+class CategorySectionListApp(generics.ListCreateAPIView):
+    queryset = models.CategorySection.objects.all()
+    serializer_class = serializers.CategorySectionSerializer
+    # pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+
+
 class CategorySectionPK(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.CategorySection.objects.all()
     serializer_class = serializers.CategorySectionSerializer
@@ -130,6 +137,13 @@ class SectionCourseList(generics.ListCreateAPIView):
     serializer_class = serializers.SectionCourseSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
+
+
+class SectionCourseListApp(generics.ListCreateAPIView):
+    queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.SectionCourseSerializer
+    permission_classes = [AllowAny]
+    # pagination_class = StandardResultSetPagination
 
 
 class SectionCoursePK(generics.RetrieveUpdateDestroyAPIView):
@@ -210,6 +224,11 @@ class CourseList(generics.ListCreateAPIView):
     #         return models.Course.objects.filter(user=user)
         
 
+class CourseListApp(generics.ListCreateAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseSerializer
+    permission_classes = [AllowAny]
+    # pagination_class = StandardResultSetPagination
         
 
 class CoursePK(generics.RetrieveUpdateDestroyAPIView):
@@ -239,7 +258,7 @@ class CourseListAPI(generics.ListCreateAPIView):
         qs = super().get_queryset()
         if 'result' in self.request.GET:
             limit = int(self.request.GET['result'])
-            qs = models.Course.objects.all().order_by('-id')#[:limit]
+            qs = models.Course.objects.all().order_by('-id')[:limit]
 
         if 'popular' in self.request.GET:
             qs = models.Course.objects.all().order_by('-id')#[:limit]
@@ -274,6 +293,8 @@ class CourseListAPI(generics.ListCreateAPIView):
                 )
         
         return qs
+
+
 
 
 
@@ -366,7 +387,7 @@ class CoursesSearchList(generics.ListCreateAPIView):
 
 
 
-class CourseSectionList(generics.ListCreateAPIView):
+class CourseSectionCourseList(generics.ListCreateAPIView):
     # queryset = models.SectionCourse.objects.all()
     serializer_class = serializers.CourseSerializer
     pagination_class = StandardResultSetPagination
@@ -689,6 +710,12 @@ class CouponCourseList(generics.ListCreateAPIView):
     serializer_class = serializers.CouponCourseSerializer
     pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
+
+
+class CouponCourseListApp(generics.ListCreateAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializers.CouponCourseSerializer
+    permission_classes = [AllowAny]
 
 
 class CouponCoursePK(generics.RetrieveUpdateDestroyAPIView):
@@ -1265,12 +1292,117 @@ class StudentVerifyCertificateView(APIView):
                 }, 
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
+
+
 
 
 # ******************************************************************************
 # ==============================================================================
-# *** Question Bank ***
+# # *** Question Bank ***
+# # https://chat.deepseek.com/a/chat/s/213f735f-4a29-4eff-b6e7-72262c349c91
+# class QuestionBankList(generics.ListCreateAPIView):
+#     queryset = models.QuestionBank.objects.all()
+#     serializer_class = serializers.QuestionBankSerializer
+#     pagination_class = StandardResultSetPagination
+#     permission_classes = [AllowAny]
+#     # permission_classes = [IsAuthenticated]
+
+#     # def get_queryset(self):
+#     #     if self.request.user.is_student:
+#     #         return models.QuestionBank.objects.filter(user=self.request.user)
+#     #     return models.QuestionBank.objects.all()
+
+#     # def get_queryset(self):
+#     #     user = self.request.user
+#     #     if user.is_student:
+#     #         return models.QuestionBank.objects.filter(user=user)
+#     #     return models.QuestionBank.objects.all()
+
+
+# class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = models.QuestionBank.objects.all()
+#     serializer_class = serializers.QuestionBankSerializer
+#     # permission_classes = [IsAuthenticated]
+
+#     # def get_queryset(self):
+#     #     # هذه السطر يحل مشكلة إنشاء schema
+#     #     if getattr(self, 'swagger_fake_view', False):
+#     #         return models.QuestionBank.objects.none()
+        
+#     #     user = self.request.user
+#     #     if user.is_superuser:
+#     #         return models.QuestionBank.objects.all()
+#     #     else:
+#     #         return models.QuestionBank.objects.filter(user=user)
+
+
+
+# class QuestionBankViewSet(viewsets.ModelViewSet):
+#     queryset = models.QuestionBank.objects.all()
+    
+#     def get_serializer_class(self):
+#         if self.action == 'retrieve':
+#             return serializers.QuestionBankDetailSerializer
+#         return serializers.QuestionBankSerializer
+    
+#     @action(detail=True, methods=['get'])
+#     def questions(self, request, pk=None):
+#         """Get all questions for a question bank"""
+#         question_bank = self.get_object()
+#         questions = question_bank.questions.all()
+#         serializer = serializers.QuestionBankSerializer(questions, many=True)
+#         return Response(serializer.data)
+    
+#     @action(detail=True, methods=['get'])
+#     def quiz(self, request, pk=None):
+#         """Get randomized questions for quiz taking"""
+#         question_bank = self.get_object()
+#         questions = list(question_bank.questions.all())
+        
+#         # Randomize questions
+#         random.shuffle(questions)
+        
+#         # Serialize questions but exclude is_correct from choices
+#         serialized_questions = []
+#         for question in questions:
+#             question_data = serializers.QuestionBankSerializer(question).data
+            
+#             # Remove is_correct field from choices
+#             for choice in question_data['choices']:
+#                 if 'is_correct' in choice:
+#                     del choice['is_correct']
+            
+#             serialized_questions.append(question_data)
+        
+#         return Response(serialized_questions)
+
+
+# class QuestionInBankViewSet(viewsets.ModelViewSet):
+#     queryset = models.QuestionInBank.objects.all()
+    
+#     def get_serializer_class(self):
+#         if self.action in ['create', 'update', 'partial_update']:
+#             return serializers.QuestionInBankDetailSerializer
+#         return serializers.QuestionInBankSerializer
+    
+#     def get_queryset(self):
+#         queryset = models.QuestionInBank.objects.all()
+#         question_bank_id = self.request.query_params.get('question_bank')
+        
+#         if question_bank_id:
+#             queryset = queryset.filter(question_bank_id=question_bank_id)
+        
+#         return queryset
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***    *** #
+
+# Question Bank Views
 class QuestionBankList(generics.ListCreateAPIView):
     queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankSerializer
@@ -1278,19 +1410,34 @@ class QuestionBankList(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
 
-    # def get_queryset(self):
-    #     if self.request.user.is_student:
-    #         return models.QuestionBank.objects.filter(user=self.request.user)
-    #     return models.QuestionBank.objects.all()
+    # def get_serializer_class(self):
+    #     return serializers.QuestionBankSerializer
+
+    # def perform_create(self, serializer):
+    #     serializer.save(user=self.request.user)
 
     # def get_queryset(self):
-    #     user = self.request.user
-    #     if user.is_student:
-    #         return models.QuestionBank.objects.filter(user=user)
-    #     return models.QuestionBank.objects.all()
+    #     if self.request.user.is_staff:
+    #         return self.queryset
+    #     return self.queryset.filter(user=self.request.user)
 
 
-class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
+
+class QuestionBankListAdmin(generics.ListCreateAPIView):
+    queryset = models.QuestionBank.objects.all()
+    serializer_class = serializers.QuestionBankSerializer
+    permission_classes = [AllowAny]
+
+
+
+class QuestionBankListApp(generics.ListCreateAPIView):
+    queryset = models.QuestionBank.objects.all()
+    serializer_class = serializers.QuestionBankSerializer
+    permission_classes = [AllowAny]
+
+
+
+class QuestionBankRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankSerializer
     # permission_classes = [IsAuthenticated]
@@ -1306,66 +1453,174 @@ class QuestionBankPK(generics.RetrieveUpdateDestroyAPIView):
     #     else:
     #         return models.QuestionBank.objects.filter(user=user)
 
+    # permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    # def get_serializer_class(self):
+    #     if self.request.method == 'GET':
+    #         return serializers.QuestionBankDetailSerializer
+    #     return serializers.QuestionBankSerializer
 
 
-class QuestionBankViewSet(viewsets.ModelViewSet):
-    queryset = models.QuestionBank.objects.all()
-    
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return serializers.QuestionBankDetailSerializer
-        return serializers.QuestionBankSerializer
-    
-    @action(detail=True, methods=['get'])
-    def questions(self, request, pk=None):
-        """Get all questions for a question bank"""
-        question_bank = self.get_object()
-        questions = question_bank.questions.all()
-        serializer = serializers.QuestionBankSerializer(questions, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['get'])
-    def quiz(self, request, pk=None):
-        """Get randomized questions for quiz taking"""
-        question_bank = self.get_object()
-        questions = list(question_bank.questions.all())
-        
-        # Randomize questions
-        random.shuffle(questions)
-        
-        # Serialize questions but exclude is_correct from choices
-        serialized_questions = []
-        for question in questions:
-            question_data = serializers.QuestionBankSerializer(question).data
-            
-            # Remove is_correct field from choices
-            for choice in question_data['choices']:
-                if 'is_correct' in choice:
-                    del choice['is_correct']
-            
-            serialized_questions.append(question_data)
-        
-        return Response(serialized_questions)
+
+# Custom Views for Relationships
+class BankQuestionsListView(generics.ListAPIView):
+    serializer_class = serializers.QuestionInBankSerializer
+    # pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        bank_id = self.kwargs['bank_id']
+        return models.QuestionInBank.objects.filter(question_bank=bank_id)
 
 
-class QuestionInBankViewSet(viewsets.ModelViewSet):
+
+
+
+
+
+
+
+
+
+# Question Views
+class QuestionListCreateView(generics.ListCreateAPIView):
     queryset = models.QuestionInBank.objects.all()
-    
+    serializer_class = serializers.QuestionInBankDetailSerializer
+    # pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
     def get_serializer_class(self):
-        if self.action in ['create', 'update', 'partial_update']:
+        if self.request.method == 'POST':
             return serializers.QuestionInBankDetailSerializer
         return serializers.QuestionInBankSerializer
-    
+
+    # def perform_create(self, serializer):
+    #     serializer.save(user=self.request.user)
+
     def get_queryset(self):
-        queryset = models.QuestionInBank.objects.all()
-        question_bank_id = self.request.query_params.get('question_bank')
+        queryset = super().get_queryset()
+        # if not self.request.user.is_staff:
+        #     queryset = queryset.filter(user=self.request.user)
         
-        if question_bank_id:
-            queryset = queryset.filter(question_bank_id=question_bank_id)
+        bank_id = self.request.query_params.get('bank')
+        if bank_id:
+            queryset = queryset.filter(bank_id=bank_id)
         
         return queryset
 
 
+
+
+# Question Views
+class QuestionListCreate(generics.ListCreateAPIView):
+    queryset = models.QuestionInBank.objects.all()
+    serializer_class = serializers.QuestionInBankSerializer
+    # pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+
+
+class QuestionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.QuestionInBank.objects.all()
+    serializer_class = serializers.QuestionInBankSerializer    
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    # def get_serializer_class(self):
+    #     if self.request.method in ['PUT', 'PATCH']:
+    #         return serializers.QuestionInBankDetailSerializer
+    #     return serializers.QuestionInBankSerializer
+
+
+
+
+class QuestionChoicesListView(generics.ListAPIView):
+    serializer_class = serializers.ChoiceQuestionInBankSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        question_id = self.kwargs['question_id']
+        return models.ChoiceQuestionInBank.objects.filter(question=question_id)
+
+
+class QuestionInBankSearchList(generics.ListCreateAPIView):
+    queryset = models.QuestionInBank.objects.all()
+    serializer_class = serializers.QuestionInBankSerializer
+    # pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(text__icontains=search)
+                # |Q(description__icontains=search)
+                )
+        return qs
+    
+
+
+
+class BanksQuestionInBankSearchList(generics.ListAPIView):
+    queryset = models.QuestionInBank.objects.all()
+    serializer_class = serializers.QuestionInBankSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        bank_id = self.kwargs['bank_id']
+        search = self.kwargs['searchstring']
+        qs = qs.filter(question_bank_id=bank_id).filter(
+            Q(text__icontains=search)
+        )
+        return qs
+
+
+
+# Choice Views
+class ChoiceListCreateView(generics.ListCreateAPIView):
+    queryset = models.ChoiceQuestionInBank.objects.all()
+    serializer_class = serializers.ChoiceQuestionInBankSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    # def perform_create(self, serializer):
+    #     serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # if not self.request.user.is_staff:
+        #     queryset = queryset.filter(user=self.request.user)
+        
+        question_id = self.request.query_params.get('question')
+        if question_id:
+            queryset = queryset.filter(question_id=question_id)
+        
+        return queryset
+
+
+
+class ChoiceRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.ChoiceQuestionInBank.objects.all()
+    serializer_class = serializers.ChoiceQuestionInBankSerializer
+    # permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+
+
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***   *** #
 # old code 
 # class QuestionBankResultView(APIView):
 #     def post(self, request, question_bank_id):
@@ -1417,129 +1672,409 @@ class QuestionInBankViewSet(viewsets.ModelViewSet):
 #         })
 
 
-# 
-class QuestionBankResultView(APIView):
-    def post(self, request, question_bank_id):
-        """Calculate quiz results"""
-        # Get the question bank
-        question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
-        
-        # Get all questions for this bank
-        all_questions = models.QuestionInBank.objects.filter(question_bank_id=question_bank_id)
-        
-        # Validate the request data
-        serializer = serializers.QuestionBankResultSerializer(data=request.data, many=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Process the results
-        submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
-        total_questions = all_questions.count()
-        correct_answers = 0
-        results = []
-        
-        for question in all_questions:
-            question_id = question.id
-            selected_choice_id = submitted_answers.get(question_id)
-            
-            # Get the correct choice
-            correct_choice = question.choices.filter(is_correct=True).first()
-            
-            # Check if the answer is correct (only if answered)
-            is_answered = question_id in submitted_answers
-            is_correct = False
-            
-            if is_answered and correct_choice:
-                is_correct = correct_choice.id == selected_choice_id
-                if is_correct:
-                    correct_answers += 1
-            
-            # Add to results
-            results.append({
-                'question_id': question_id,
-                'question_text': question.text,
-                'is_answered': is_answered,
-                'selected_choice_id': selected_choice_id,
-                'correct_choice_id': correct_choice.id if correct_choice else None,
-                'is_correct': is_correct,
-                'choices': [
-                    {
-                        'id': choice.id,
-                        'text': choice.text,
-                        'is_correct': choice.is_correct
-                    }
-                    for choice in question.choices.all()
-                ]
-            })
-        
-        # Calculate percentage
-        percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
-        
-        return Response({
-            'total_questions': total_questions,
-            'answered_questions': len(submitted_answers),
-            'correct_answers': correct_answers,
-            'percentage': round(percentage, 2),
-            'results': results
-        })
 
 
-# 
-class StudentQuestionBankResultSaveView(APIView):
-    # permission_classes = [IsAuthenticated]
 
-    def post(self, request, question_bank_id):
-        question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***   *** #
+
+# class QuestionBankResultView(APIView):
+#     def post(self, request, question_bank_id):
+#         """Calculate quiz results"""
+#         # Get the question bank
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
         
-        result_data = {
-            'user': request.user.id,
-            'question_bank': question_bank.id,
-            'answered_questions': request.data.get('answered_questions'),
-            'correct_answers': request.data.get('correct_answers'),
-            'percentage': request.data.get('percentage'),
-            'total_questions': request.data.get('total_questions'),
-        }
+#         # Get all questions for this bank
+#         all_questions = models.QuestionInBank.objects.filter(question_bank=question_bank_id)
         
-        result_serializer = serializers.StudentQuestionBankResultSerializer(data=result_data)
-        if not result_serializer.is_valid():
-            return Response(result_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         # Validate the request data
+#         serializer = serializers.QuestionBankResultSerializer(data=request.data, many=True)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        quiz_result = result_serializer.save()
+#         # Process the results
+#         submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
+#         total_questions = all_questions.count()
+#         correct_answers = 0
+#         results = []
         
-        answers_data = request.data.get('results', [])
-        for answer_data in answers_data:
-            selected_choice = next(
-                (c for c in answer_data.get('choices', []) if c['id'] == answer_data.get('selected_choice_id')),
-                None
-            )
-            correct_choice = next(
-                (c for c in answer_data.get('choices', []) if c.get('is_correct', False)),
-                None
-            )
+#         for question in all_questions:
+#             question_id = question.id
+#             selected_choice_id = submitted_answers.get(question_id)
             
-            answer_data['quiz_result'] = quiz_result.id
-            answer_data['selected_choice_text'] = selected_choice['text'] if selected_choice else None
-            answer_data['correct_choice_text'] = correct_choice['text'] if correct_choice else None
-            answer_data['all_choices'] = answer_data.get('choices', [])
+#             # Get the correct choice
+#             correct_choice = question.choices.filter(is_correct=True).first()
             
-            answer_serializer = serializers.StudentQuestionBankAnswerSerializer(data=answer_data)
-            if answer_serializer.is_valid():
-                answer_serializer.save()
+#             # Check if the answer is correct (only if answered)
+#             is_answered = question_id in submitted_answers
+#             is_correct = False
+            
+#             if is_answered and correct_choice:
+#                 is_correct = correct_choice.id == selected_choice_id
+#                 if is_correct:
+#                     correct_answers += 1
+            
+#             # Add to results
+#             results.append({
+#                 'question_id': question_id,
+#                 'question_text': question.text,
+#                 'is_answered': is_answered,
+#                 'selected_choice_id': selected_choice_id,
+#                 'correct_choice_id': correct_choice.id if correct_choice else None,
+#                 'is_correct': is_correct,
+#                 'choices': [
+#                     {
+#                         'id': choice.id,
+#                         'text': choice.text,
+#                         'is_correct': choice.is_correct
+#                     }
+#                     for choice in question.choices.all()
+#                 ]
+#             })
         
-        return Response({
-            'status': 'success',
-            'result_id': quiz_result.id
-        }, status=status.HTTP_201_CREATED)
+#         # Calculate percentage
+#         percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+#         return Response({
+#             'total_questions': total_questions,
+#             'answered_questions': len(submitted_answers),
+#             'correct_answers': correct_answers,
+#             'percentage': round(percentage, 2),
+#             'results': results
+#         })
+
+
+# # 
+# class StudentQuestionBankResultSaveView(APIView):
+#     # permission_classes = [IsAuthenticated]
+
+#     def post(self, request, question_bank_id):
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+        
+#         result_data = {
+#             'user': request.user.id,
+#             'question_bank': question_bank.id,
+#             'answered_questions': request.data.get('answered_questions'),
+#             'correct_answers': request.data.get('correct_answers'),
+#             'percentage': request.data.get('percentage'),
+#             'total_questions': request.data.get('total_questions'),
+#         }
+        
+#         result_serializer = serializers.StudentQuestionBankResultSerializer(data=result_data)
+#         if not result_serializer.is_valid():
+#             return Response(result_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         quiz_result = result_serializer.save()
+        
+#         answers_data = request.data.get('results', [])
+#         for answer_data in answers_data:
+#             selected_choice = next(
+#                 (c for c in answer_data.get('choices', []) if c['id'] == answer_data.get('selected_choice_id')),
+#                 None
+#             )
+#             correct_choice = next(
+#                 (c for c in answer_data.get('choices', []) if c.get('is_correct', False)),
+#                 None
+#             )
+            
+#             answer_data['quiz_result'] = quiz_result.id
+#             answer_data['selected_choice_text'] = selected_choice['text'] if selected_choice else None
+#             answer_data['correct_choice_text'] = correct_choice['text'] if correct_choice else None
+#             answer_data['all_choices'] = answer_data.get('choices', [])
+            
+#             answer_serializer = serializers.StudentQuestionBankAnswerSerializer(data=answer_data)
+#             if answer_serializer.is_valid():
+#                 answer_serializer.save()
+        
+#         return Response({
+#             'status': 'success',
+#             'result_id': quiz_result.id
+#         }, status=status.HTTP_201_CREATED)
     
 
 
 
 
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***   *** #
+
+# class QuestionBankResultView(APIView):
+#     def post(self, request, question_bank_id):
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+#         questions = models.QuestionInBank.objects.filter(question_bank=question_bank)
+        
+#         serializer = serializers.QuestionBankResultSerializer(data=request.data, many=True)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
+#         total_questions = questions.count()
+#         correct_answers = 0
+#         results = []
+        
+#         for question in questions:
+#             question_id = question.id
+#             selected_choice_id = submitted_answers.get(question_id)
+#             is_answered = selected_choice_id is not None
+#             is_correct = False
+            
+#             if is_answered:
+#                 # تحقق مما إذا كان الخيار المحدد هو الصحيح
+#                 correct_index = question.correct_answer
+#                 if correct_index < len(question.choices):
+#                     is_correct = selected_choice_id == correct_index
+#                     if is_correct:
+#                         correct_answers += 1
+            
+#             # إعداد بيانات النتيجة
+#             result_data = {
+#                 'question_id': question_id,
+#                 'question_text': question.text,
+#                 'is_answered': is_answered,
+#                 'selected_choice_id': selected_choice_id,
+#                 'correct_choice_id': question.correct_answer,
+#                 'is_correct': is_correct,
+#                 'all_choices': question.choices,
+#             }
+#             results.append(result_data)
+        
+#         # حساب النسبة المئوية
+#         percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+#         return Response({
+#             'total_questions': total_questions,
+#             'answered_questions': len(submitted_answers),
+#             'correct_answers': correct_answers,
+#             'percentage': round(percentage, 2),
+#             'results': results
+#         })
+    
+
+# class StudentQuestionBankResultSaveView(APIView):
+#     def post(self, request, question_bank_id):
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+#         user = request.user
+        
+#         # حفظ النتيجة الرئيسية
+#         result_data = {
+#             'user': user.id,
+#             'question_bank': question_bank.id,
+#             'answered_questions': request.data.get('answered_questions'),
+#             'correct_answers': request.data.get('correct_answers'),
+#             'percentage': request.data.get('percentage'),
+#             'total_questions': request.data.get('total_questions'),
+#         }
+        
+#         result_serializer = serializers.StudentQuestionBankResultSerializer(data=result_data)
+#         if not result_serializer.is_valid():
+#             return Response(result_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         quiz_result = result_serializer.save()
+        
+#         # حفظ الإجابات التفصيلية
+#         answers_data = request.data.get('results', [])
+#         for answer_data in answers_data:
+#             answer_data['question_bank_result'] = quiz_result.id
+            
+#             # الحصول على نص الخيار المحدد والصحيح
+#             selected_choice_text = None
+#             correct_choice_text = None
+            
+#             if answer_data.get('selected_choice_id') is not None:
+#                 selected_choice = answer_data['all_choices'][answer_data['selected_choice_id']]
+#                 selected_choice_text = selected_choice.get('text')
+            
+#             if answer_data.get('correct_choice_id') is not None:
+#                 correct_choice = answer_data['all_choices'][answer_data['correct_choice_id']]
+#                 correct_choice_text = correct_choice.get('text')
+            
+#             answer_data.update({
+#                 'selected_choice_text': selected_choice_text,
+#                 'correct_choice_text': correct_choice_text,
+#             })
+            
+#             answer_serializer = serializers.StudentQuestionBankAnswerSerializer(data=answer_data)
+#             if answer_serializer.is_valid():
+#                 answer_serializer.save()
+        
+#         return Response({
+#             'status': 'success',
+#             'result_id': quiz_result.id
+#         }, status=status.HTTP_201_CREATED)
+
+
+# ******************************************************************************
+# ==============================================================================
+# 
+
+# class QuestionBankResultView(APIView):
+#     def post(self, request, question_bank_id):
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+#         questions = models.QuestionInBank.objects.filter(question_bank=question_bank)
+        
+#         serializer = serializers.QuestionBankResultSerializer(data=request.data, many=True)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         submitted_answers = {answer['question_id']: answer['selected_choice_id'] for answer in serializer.validated_data}
+#         total_questions = questions.count()
+#         correct_answers = 0
+#         results = []
+        
+#         for question in questions:
+#             question_id = question.id
+#             selected_choice_id = submitted_answers.get(question_id)
+#             is_answered = selected_choice_id is not None
+#             is_correct = False
+            
+#             if is_answered:
+#                 # تحقق مما إذا كان الخيار المحدد هو الصحيح
+#                 correct_index = question.correct_answer
+#                 if correct_index < len(question.choices):
+#                     is_correct = selected_choice_id == correct_index
+#                     if is_correct:
+#                         correct_answers += 1
+            
+#             # إعداد بيانات النتيجة
+#             result_data = {
+#                 'question_id': question_id,
+#                 'question_text': question.text,
+#                 'is_answered': is_answered,
+#                 'selected_choice_id': selected_choice_id,
+#                 'correct_choice_id': question.correct_answer,
+#                 'is_correct': is_correct,
+#                 'all_choices': question.choices,
+#             }
+#             results.append(result_data)
+        
+#         # حساب النسبة المئوية
+#         percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+        
+#         return Response({
+#             'total_questions': total_questions,
+#             'answered_questions': len(submitted_answers),
+#             'correct_answers': correct_answers,
+#             'percentage': round(percentage, 2),
+#             'results': results
+#         })
+
+# class StudentQuestionBankResultSaveView(APIView):
+#     def post(self, request, question_bank_id):
+#         question_bank = get_object_or_404(models.QuestionBank, pk=question_bank_id)
+#         user = request.user
+        
+#         # حفظ النتيجة الرئيسية
+#         result_data = {
+#             'user': user.id,
+#             'question_bank': question_bank.id,
+#             'answered_questions': request.data.get('answered_questions'),
+#             'correct_answers': request.data.get('correct_answers'),
+#             'percentage': request.data.get('percentage'),
+#             'total_questions': request.data.get('total_questions'),
+#         }
+        
+#         result_serializer = serializers.StudentQuestionBankResultSerializer(data=result_data)
+#         if not result_serializer.is_valid():
+#             return Response(result_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+#         quiz_result = result_serializer.save()
+        
+#         # حفظ الإجابات التفصيلية
+#         answers_data = request.data.get('results', [])
+#         for answer_data in answers_data:
+#             answer_data['question_bank_result'] = quiz_result.id
+            
+#             # الحصول على نص الخيار المحدد والصحيح
+#             selected_choice_text = None
+#             correct_choice_text = None
+            
+#             if answer_data.get('selected_choice_id') is not None:
+#                 selected_choice = answer_data['all_choices'][answer_data['selected_choice_id']]
+#                 selected_choice_text = selected_choice.get('text')
+            
+#             if answer_data.get('correct_choice_id') is not None:
+#                 correct_choice = answer_data['all_choices'][answer_data['correct_choice_id']]
+#                 correct_choice_text = correct_choice.get('text')
+            
+#             answer_data.update({
+#                 'selected_choice_text': selected_choice_text,
+#                 'correct_choice_text': correct_choice_text,
+#             })
+            
+#             answer_serializer = serializers.StudentQuestionBankAnswerSerializer(data=answer_data)
+#             if answer_serializer.is_valid():
+#                 answer_serializer.save()
+        
+#         return Response({
+#             'status': 'success',
+#             'result_id': quiz_result.id
+#         }, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# 
+
+
+class StudentQuestionBankResultListApp(generics.ListCreateAPIView):
+    queryset = models.StudentQuestionBankResult.objects.all()
+    serializer_class = serializers.StudentQuestionBankResultSerializer
+    permission_classes = [AllowAny]
+    # pagination_class = StandardResultSetPagination
+
+
+class StudentQuestionBankResultPK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.StudentQuestionBankResult.objects.all()
+    serializer_class = serializers.StudentQuestionBankResultSerializer
+    permission_classes = [AllowAny]
+
+
+class StudentQuestionBankResultBankList(generics.ListAPIView):
+    serializer_class = serializers.StudentQuestionBankResultSerializer
+    # pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        bank_id = self.kwargs['bank_id']
+        return models.StudentQuestionBankResult.objects.filter(question_bank=bank_id)
+
+
+class StudentQuestionBankResultUserList(generics.ListAPIView):
+    serializer_class = serializers.StudentQuestionBankResultSerializer
+    # pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        return models.StudentQuestionBankResult.objects.filter(user=user_id)
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***   *** #
 # 
 class QuestionBankSearchList(generics.ListCreateAPIView):
     queryset = models.QuestionBank.objects.all()
     serializer_class = serializers.QuestionBankSerializer
-    pagination_class = StandardResultSetPagination
+    # pagination_class = StandardResultSetPagination
     # permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -1730,6 +2265,27 @@ class ReviewUserListAPIView(generics.ListCreateAPIView):
     #         return models.ReviewUser.objects.none()
 
 
+class ReviewUserListApp(generics.ListCreateAPIView):
+    queryset = models.ReviewUser.objects.all()
+    serializer_class = serializers.ReviewUserSerializer
+    permission_classes = [AllowAny]
+
+
+
+class ReviewUserResultList(generics.ListCreateAPIView):
+    queryset = models.ReviewUser.objects.all()
+    serializer_class = serializers.ReviewUserSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'result' in self.request.GET:
+            try:
+                limit = int(self.request.GET['result'])
+                qs = qs.order_by('-id').filter(is_visible=True,status="publication")[:limit]
+            except ValueError:
+                # Handle the case where 'result' is not an integer
+                pass
+        return qs
 
 # (List of review -> [GET, POST, PUT, DELETE])
 class ReviewUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):

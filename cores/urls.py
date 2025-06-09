@@ -55,25 +55,33 @@ from . import views
 
 # =================================================================
 questionbank = DefaultRouter() 
-questionbank.register(r'', views.QuestionBankViewSet)
-questionbank.register(r'questions/', views.QuestionInBankViewSet)
+# questionbank.register(r'', views.QuestionBankViewSet)
+# questionbank.register(r'', views.QuestionInBankViewSet)
 
 
 
 urlpatterns = [
     # =================================================================
     # *** Category Section *** #
+    # (List)
     path(
         "category-section/list/",
         views.CategorySectionList.as_view(),
         name="category-section-list",
     ),
+    # (List App)
+    path(
+        "category-section/list-app/",
+        views.CategorySectionListApp.as_view(),
+        name="category-section-list",
+    ),
+    # (PK)
     path(
         "category-section/<int:pk>/",
         views.CategorySectionPK.as_view(),
         name="category-section-pk",
     ),
-
+    # (Search)
     path(
         'category-section/search/<str:searchstring>/', 
         views.CategorySectionSearchList.as_view(),
@@ -88,17 +96,25 @@ urlpatterns = [
     ),
     # =================================================================
     # *** Section Course *** #
+    # (List)
     path(
         "section-course/list/",
         views.SectionCourseList.as_view(),
         name="section-course-list",
     ),
+    # (List App)
+    path(
+        "section-course/list-app/",
+        views.SectionCourseListApp.as_view(),
+        name="section-course-list",
+    ),
+    # (PK)
     path(
         "section-course/<int:pk>/",
         views.SectionCoursePK.as_view(),
         name="section-course-pk",
     ),
-    
+    # (Search)
     path(
         'section-course/search/<str:searchstring>/', 
         views.SectionCourseSearchList.as_view(),
@@ -106,17 +122,18 @@ urlpatterns = [
     ),
 
 
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
     ),
+    # +++
     path(
         "section-course/category/list/",
         views.SectionCourseCategoriesList.as_view(),
         name="section-course-list",
     ),
-
-    # (Category)
+    # (Category PK)
     path(
         "section-course/category/<int:pk>/",
         views.SectionCourseCategoryList.as_view(),
@@ -131,22 +148,31 @@ urlpatterns = [
     ),
     # =================================================================
     # *** Course *** #
+    # (List)
     path(
         "course/list/",
         views.CourseList.as_view(),
         name="course-list",
     ),
+    # (List App)
+    path(
+        "course/list-app/",
+        views.CourseListApp.as_view(),
+        name="course-list",
+    ),
+    # (PK)
     path(
         "course/<int:pk>/",
         views.CoursePK.as_view(),
         name="course-pk",
     ),
-    
+    # +++
     path(
         "course/",
         views.CourseListAPI.as_view(),
         name="course-list-api",
     ),
+    # +++
     path(
         'courses/search/<str:searchstring>/', 
         views.CourseListAPI.as_view(),
@@ -160,18 +186,19 @@ urlpatterns = [
         views.CourseListCreate.as_view(), 
         name='course-list',
     ),
+    # +++
     path(
         'courses/<int:pk>/', 
         views.CourseRetrieveUpdateDestroy.as_view(), 
         name='course-detail',
     ),
+    # +++
     path(
         'public/courses/', 
         views.PublicCourseList.as_view(), 
         name='public-course-list',
     ),
-
-        
+    # (Search)
     path(
         'courses/search/<str:searchstring>/', 
         views.CoursesSearchList.as_view(),
@@ -184,10 +211,10 @@ urlpatterns = [
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
     ),
-    # (Section)
+    # (Section PK)
     path(
         "course/section-course/<int:pk>/",
-        views.CourseSectionList.as_view(),
+        views.CourseSectionCourseList.as_view(),
         name="course-section-course-pk",
     ),
 
@@ -203,17 +230,19 @@ urlpatterns = [
         views.SectionInCourseList.as_view(), 
         name='sections-in-course-list',
     ),
+    # (PK)
     path(
         'courses/sections/<int:pk>/', 
         views.SectionInCoursePK.as_view(), 
         name='section-in-course-pk',
     ),
-
+    # ()
     path(
         'courses/<int:course_id>/sections/', 
         views.SectionInCourseListCreate.as_view(), 
         name='section-in-course-list',
     ),
+    # 
     path(
         'courses/<int:course_id>/sections/<int:pk>/', 
         views.SectionInCourseRetrieveUpdateDestroy.as_view(), 
@@ -256,6 +285,8 @@ urlpatterns = [
     ),
 
 
+
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
@@ -288,6 +319,7 @@ urlpatterns = [
         views.FileInCourseCreateView.as_view(), 
         name='lesson-file-create',
     ),
+
 
     
     path(
@@ -336,18 +368,25 @@ urlpatterns = [
     ),
     # =================================================================
     # *** Coupon Course *** #
+    # (List)
     path(
         "coupon-course/list/",
         views.CouponCourseList.as_view(),
         name="coupon-course-list",
     ),
+    # (List App)
+    path(
+        "coupon-course/list-app/",
+        views.CouponCourseListApp.as_view(),
+        name="coupon-course-list",
+    ),
+    # (PK)
     path(
         "coupon-course/<int:pk>/",
         views.CouponCoursePK.as_view(),
         name="coupon-course-pk",
     ),
-
-
+    # (Search)
     path(
         "coupon-course/search/<str:searchstring>/",
         views.CouponCourseSearch.as_view(),
@@ -356,22 +395,26 @@ urlpatterns = [
     
 
 
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
     ),
     # =================================================================
     # *** Course Payment Checkout *** #
+    # (checkout)
     path(
         'create-checkout/', 
         views.CourseCreateCheckoutView.as_view(), 
         name='create-checkout',
     ),
+    # (payment)
     path(
         'payment-result/', 
         views.CoursePaymentResultView.as_view(), 
         name='payment-result',
     ),
+
 
 
 
@@ -575,6 +618,7 @@ urlpatterns = [
     ),
 
 
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
@@ -610,43 +654,118 @@ urlpatterns = [
     ),
     # ================================================================
     # *** ) Questions Banks *** #
+    # (List)
     path(
-        'question-bank/list/',
+        'question-bank/list/', 
         views.QuestionBankList.as_view(), 
-        name="Question-Bank-List",  
+        name='questionbank-list',
     ),
+    # (List Admin)
     path(
-        'question-bank/<int:pk>/',  
-        views.QuestionBankPK.as_view(), 
-        name="Question-Bank-PK",
+        'question-bank/list-admin/', 
+        views.QuestionBankListAdmin.as_view(), 
+        name='questionbank-list',
     ),
-
-    # path('question-bank/', include(questionbank.urls)),
+    # (List App)
     path(
-        'question-bank/questions/', 
-        views.QuestionInBankViewSet.as_view({'get': 'list'}),
-        name=""
+        'question-bank/list-app/', 
+        views.QuestionBankListApp.as_view(), 
+        name='questionbank-list',
     ),
-
-
+    # (PK)
     path(
-        'question-bank/results/<int:question_bank_id>/', 
-        views.QuestionBankResultView.as_view(), 
-        name='quiz-results',
+        'question-bank/<int:pk>/', 
+        views.QuestionBankRetrieveUpdateDestroyView.as_view(), 
+        name='questionbank-detail',
     ),
-
+    
+    
+    
     path(
-        'quiz-results/save/<int:question_bank_id>/',
-        views.StudentQuestionBankResultSaveView.as_view(),
-        name='save-QuestionBank-results'
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
     ),
-
+    # (Search)
     path(
         'question-bank/search/<str:searchstring>/', 
         views.QuestionBankSearchList.as_view(),
         name="question-bank-search-list",
+    ),    
+    # (Pk Section)
+    path(
+        "question-bank/section-course/<int:pk>/",
+        views.QuestionBankSectionList.as_view(),
+        name="question-bank-section-course-pk",
+    ),
+    
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # Get all questions for a specific bank
+    # (Questions)
+    path(
+        'question-bank/<int:bank_id>/questions/', 
+        views.BankQuestionsListView.as_view(), 
+        name='bank-questions-list',
     ),
 
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # *** ) Question In Banks *** #
+    # (List)
+    path(
+        'question-bank/questions/list/', 
+        views.QuestionListCreate.as_view(), 
+        name='question-list',
+    ),
+    # (Pk)
+    path(
+        'question-bank/questions/<int:pk>/', 
+        views.QuestionRetrieveUpdateDestroyView.as_view(), 
+        name='question-detail',
+    ),
+    
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # *** ) Question In Banks *** # 
+    path(
+        'question-bank/questions/search/<str:searchstring>/', 
+        views.QuestionInBankSearchList.as_view(),
+        name="question-in-bank-search-list",
+    ),
+    # (Pk Search)
+    path(
+        'question-bank/<int:bank_id>/questions/search/<str:searchstring>/', 
+        views.BanksQuestionInBankSearchList.as_view(),
+        name="question-in-bank-search-list",
+    ),
+    
+    # path(
+    #     '---------------------------------------------------------------------------------------------------------------/', 
+    #     views.Space.as_view(),
+    # ),
+    # Choice URLs
+    # path(
+    #     'question-bank/questions/choices/list/', 
+    #     views.ChoiceListCreateView.as_view(), 
+    #     name='choice-list',
+    # ),
+    # path(
+    #     'question-bank/questions/choices/<int:pk>/', 
+    #     views.ChoiceRetrieveUpdateDestroyView.as_view(), 
+    #     name='choice-detail',
+    # ),
 
 
     
@@ -654,12 +773,41 @@ urlpatterns = [
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
     ),
-    # (Section)
+    # *** ) Student Questions Banks Result *** #
+    # (List)
     path(
-        "question-bank/section-course/<int:pk>/",
-        views.QuestionBankSectionList.as_view(),
-        name="question-bank-section-course-pk",
+        "student-questionbank/result/list-app/",
+        views.StudentQuestionBankResultListApp.as_view(),
+        name="student-question-bank-result-list",
     ),
+    # (PK)
+    path(
+        "student-questionbank/result/<int:pk>/",
+        views.StudentQuestionBankResultPK.as_view(),
+        name="student-question-bank-result-pk",
+    ),
+    # (Pk Results)
+    path(
+        'question-bank/<int:bank_id>/results/', 
+        views.StudentQuestionBankResultBankList.as_view(), 
+        name="student-question-bank-result-bank-list",
+    ),
+    # (Pk User)
+    path(
+        'question-bank/results/<int:user_id>/', 
+        views.StudentQuestionBankResultUserList.as_view(), 
+        name="student-question-bank-result-bank-list",
+    ),
+
+    
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+
+
     
 
     path(
@@ -668,22 +816,25 @@ urlpatterns = [
     ),
     # ================================================================
     # *** 1) ContactUs *** #
+    # (List)
     path(
         "contactus-user/list/",
         views.ContactUsListAPIView.as_view(),
         name="contactus-list",
     ),
+    # (PK)
     path(
         "contactus-user/<int:pk>/",
         views.ContactUsPKAPIView.as_view(),
         name="contactus-details-pk",
     ),
-
+    # (Search)
     path(
         'contactus-user/search/<str:searchstring>/', 
         views.ContactusUserSearchList.as_view(),
         name="contactus-user-search-list",
     ),
+
 
 
 
@@ -693,17 +844,31 @@ urlpatterns = [
     ),
     # ================================================================
     # *** 2) Review *** #
+    # (List)
     path(
         "review-user/list/",
         views.ReviewUserListAPIView.as_view(),
         name="review-user-list",
     ),
+    # (List App)
+    path(
+        "review-user/list-app/",
+        views.ReviewUserListApp.as_view(),
+        name="review-user-list",
+    ),
+    # (List App)
+    path(
+        "review-user/result/", #?result=5
+        views.ReviewUserResultList.as_view(),
+        name="review-user-list",
+    ),
+    # (PK)
     path(
         "review-user/<int:pk>/",
         views.ReviewUserPKAPIView.as_view(),
         name="review-user-details-pk",
     ),
-    
+    # (Search)
     path(
         'review-user/search/<str:searchstring>/', 
         views.ReviewUserSearchList.as_view(),
@@ -712,30 +877,32 @@ urlpatterns = [
 
 
 
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
     ),
     # =================================================================
-    # *** ) Admin Dashboard Stats *** #
+    # *** ) Stats *** #
+    # (App)
     path(
         'app-stats/',
         views.AppStatsView.as_view(), 
         name='app-stats',
     ),
-
+    # (Admin)
     path(
         'admin-dashboard-stats/', # ?user_id=1/
         views.AdminDashboardStatsView.as_view(), 
         name='admin-dashboard-stats',
     ),
-
+    # (Teacher)
     path(
         'teacher-dashboard-stats/', # ?user_id=1/
         views.TeacherDashboardStatsView.as_view(), 
         name='teacher-dashboard-stats',
     ),
-
+    # (Student)
     path(
         'student-dashboard-stats/', # ?user_id=1/
         views.StudentDashboardStatsView.as_view(), 
