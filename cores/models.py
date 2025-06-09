@@ -212,9 +212,10 @@ class Course(models.Model):
 
 
     def teach_list(self):
-        teach_list = self.techs.split(',')
-        return teach_list
-
+        if self.techs:
+            teach_list = self.techs.split(',')
+            return teach_list
+        return self.techs
 
     def total_section(self):
         return SectionInCourse.objects.filter(course=self).count()
@@ -268,7 +269,7 @@ class Course(models.Model):
         verbose_name_plural = "1-3. Courses"
 
     def __str__(self):
-        return f"{self.id}): ({self.title})"
+        return f"{self.id}): ({self.title}) - ({self.is_visible})"
 
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug is None:

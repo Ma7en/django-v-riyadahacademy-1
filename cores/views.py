@@ -232,20 +232,21 @@ class CourseListApp(generics.ListCreateAPIView):
         
 
 class CoursePK(generics.RetrieveUpdateDestroyAPIView):
-    # queryset = models.Course.objects.all()
+    queryset = models.Course.objects.all()
     serializer_class = serializers.CourseSerializer
+    permission_classes = [AllowAny]
     # permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        # هذه السطر يحل مشكلة إنشاء schema
-        if getattr(self, 'swagger_fake_view', False):
-            return models.Course.objects.none()
+    # def get_queryset(self):
+    #     # هذه السطر يحل مشكلة إنشاء schema
+    #     if getattr(self, 'swagger_fake_view', False):
+    #         return models.Course.objects.none()
         
-        user = self.request.user
-        if user.is_superuser:
-            return models.Course.objects.all()
-        else:
-            return models.Course.objects.filter(user=user)
+    #     user = self.request.user
+    #     if user.is_superuser:
+    #         return models.Course.objects.all()
+    #     else:
+    #         return models.Course.objects.filter(user=user)
 
 
 class CourseListAPI(generics.ListCreateAPIView):
@@ -740,6 +741,21 @@ class CouponCourseSearch(generics.ListCreateAPIView):
                 Q(name__icontains=search)
                 |Q(discount__icontains=search)
                 )
+        return qs
+
+
+class CouponCourseSearchApp(generics.ListCreateAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializers.CouponCourseSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring']
+            qs = qs.filter(is_visible=True).filter(
+                Q(name__iexact=search)
+            )
         return qs
 
 

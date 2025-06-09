@@ -207,6 +207,7 @@ urlpatterns = [
 
    
 
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
@@ -268,7 +269,7 @@ urlpatterns = [
     ),
 
     path(
-        'courses/sections/list/<int:section_id>/lessons/', 
+        'courses/sections/<int:section_id>/lessons/', 
         views.LessonInCourseListCreate.as_view(), 
         name='lesson-list',
     ),
@@ -279,7 +280,7 @@ urlpatterns = [
         name='lesson-detail',
     ),
     path(
-        'courses/sections/<int:section_id>/lessons/', 
+        'courses/sections/list/<int:section_id>/lessons/', 
         views.LessonInCourseCreateView.as_view(), 
         name='lesson-create',
     ),
@@ -390,6 +391,12 @@ urlpatterns = [
     path(
         "coupon-course/search/<str:searchstring>/",
         views.CouponCourseSearch.as_view(),
+        name="coupon-course-search",
+    ),
+    # (Search App)
+    path(
+        "coupon-course/search-app/<str:searchstring>/",
+        views.CouponCourseSearchApp.as_view(),
         name="coupon-course-search",
     ),
     
