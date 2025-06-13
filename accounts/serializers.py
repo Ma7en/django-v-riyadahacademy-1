@@ -29,26 +29,35 @@ from . import utils
 # ==============================================================================
 # *** User *** #
 class UserSerializer(serializers.ModelSerializer):
+    # profile = serializers.SerializerMethodField()
+
     class Meta:
         model = models.User
         fields = "__all__"
         # fields = [        
         # "id",
+        # "profile",
+        
         # "last_login",
         # "date_joined",
+        
         # "email",
         # "first_name",
         # "last_name",
         # "username",
         # "full_name",
+        
         # "is_superuser",
         # "is_admin",
         # "is_teacher",
         # "is_staff",
         # "is_student",
+
+        
         # "is_active",
         # "is_verified",
         # ]
+
         extra_kwargs = {
             "password": {
                 "write_only": True,
@@ -62,6 +71,20 @@ class UserSerializer(serializers.ModelSerializer):
             }
         }
 
+        # exclude = ["password", "groups", "user_permissions"]
+
+    # def get_profile(self, obj):
+    #     if hasattr(obj, 'superuser_profile'):
+    #         return SuperuserProfileSerializer(obj.superuser_profile).data
+    #     elif hasattr(obj, 'admin_profile'):
+    #         return AdminProfileSerializer(obj.admin_profile).data
+    #     elif hasattr(obj, 'teacher_profile'):
+    #         return TeacherProfileSerializer(obj.teacher_profile).data
+    #     elif hasattr(obj, 'staff_profile'):
+    #         return StaffProfileSerializer(obj.staff_profile).data
+    #     elif hasattr(obj, 'student_profile'):
+    #         return StudentProfileSerializer(obj.student_profile).data
+    #     return None
 
 
 # ******************************************************************************
@@ -576,6 +599,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         response = super().to_representation(instance)
         response["user"] = UserSerializer(instance.user).data
         return response
+
 
 
 # *** Student Register *** #

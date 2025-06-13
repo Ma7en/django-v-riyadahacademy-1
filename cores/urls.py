@@ -75,6 +75,18 @@ urlpatterns = [
         views.CategorySectionListApp.as_view(),
         name="category-section-list",
     ),
+    # (List App)
+    path(
+        "category-section/list-admin/",
+        views.CategorySectionListAdmin.as_view(),
+        name="category-section-list",
+    ),
+    # (List Result)
+    path(
+        "category-section/result/", #?result=9
+        views.CategorySectionResultList.as_view(),
+        name="course-result-list",
+    ),
     # (PK)
     path(
         "category-section/<int:pk>/",
@@ -107,6 +119,18 @@ urlpatterns = [
         "section-course/list-app/",
         views.SectionCourseListApp.as_view(),
         name="section-course-list",
+    ),
+    # (List Admin)
+    path(
+        "section-course/list-admin/",
+        views.SectionCourseListAdmin.as_view(),
+        name="section-course-list",
+    ),
+    # (List Result)
+    path(
+        "section-course/result/", #?result=9
+        views.SectionCourseResultList.as_view(),
+        name="course-result-list",
     ),
     # (PK)
     path(
@@ -160,11 +184,29 @@ urlpatterns = [
         views.CourseListApp.as_view(),
         name="course-list",
     ),
+    # (List Admin)
+    path(
+        "course/list-admin/",
+        views.CourseListAdmin.as_view(),
+        name="course-list",
+    ),
+    # (List Result)
+    path(
+        "course/result/", #?result=9
+        views.CourseResultList.as_view(),
+        name="course-result-list",
+    ),
     # (PK)
     path(
         "course/<int:pk>/",
         views.CoursePK.as_view(),
         name="course-pk",
+    ),
+    # (All PK)
+    path(
+        "course/all/<int:pk>/",
+        views.CourseDetailAll.as_view(),
+        name="course-all-pk",
     ),
     # +++
     path(
@@ -284,6 +326,7 @@ urlpatterns = [
         views.LessonInCourseCreateView.as_view(), 
         name='lesson-create',
     ),
+
 
 
 
@@ -455,28 +498,29 @@ urlpatterns = [
         name="fetch-enroll-status-student_id-course_id",
     ),
 
+    #- 
     path(
         'fetch-enrolled-students/<int:course_id>/', 
-        views.EnrolledStuentList.as_view(),
+        views.EnrolledStuentCourseList.as_view(),
         name="fetch-enrolled-students-course_id",
     ),
 
     path(
         'fetch-all-enrolled-students/<int:teacher_id>/', 
-        views.EnrolledStuentList.as_view(),
+        views.EnrolledAllStuentList.as_view(),
         name="fetch-all-enrolled-students-teacher_id",
     ),
 
     path(
         'fetch-enrolled-courses/<int:student_id>/', 
-        views.EnrolledStuentList.as_view(),
+        views.EnrolledStuentPkList.as_view(),
         name="fetch-enrolled-courses-student_id",
     ),
 
     path(
-        'fetch-recomemded-coourses/<int:student_id>/', 
-        views.EnrolledStuentList.as_view(),
-        name="fetch-recomemded-coourses-student_id",
+        'fetch-recomemded-courses/<int:student_id>/', 
+        views.EnrolledRecomemdedStuentList.as_view(),
+        name="fetch-recomemded-courses-student_id",
     ),
 
 
@@ -588,9 +632,14 @@ urlpatterns = [
     ),
 
 
+    # path(
+    #     'send-message-teacher-student-chat/<int:teacher_id>/<int:student_id>/', 
+    #     views.TeacherStudentChatBot, 
+    #     name="Chat-Bot",
+    # ),
     path(
         'send-message-teacher-student-chat/<int:teacher_id>/<int:student_id>/', 
-        views.TeacherStudentChatBot, 
+        views.TeacherStudentChatBot.as_view(), 
         name="Chat-Bot",
     ),
 
@@ -679,6 +728,12 @@ urlpatterns = [
         views.QuestionBankListApp.as_view(), 
         name='questionbank-list',
     ),
+    # (List Result)
+    path(
+        "question-bank/result/", #?result=9
+        views.QuestionBankResultList.as_view(),
+        name="course-result-list",
+    ),
     # (PK)
     path(
         'question-bank/<int:pk>/', 
@@ -688,6 +743,7 @@ urlpatterns = [
     
     
     
+
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
@@ -705,6 +761,7 @@ urlpatterns = [
         name="question-bank-section-course-pk",
     ),
     
+
 
 
     path(
@@ -863,7 +920,7 @@ urlpatterns = [
         views.ReviewUserListApp.as_view(),
         name="review-user-list",
     ),
-    # (List App)
+    # (List Result)
     path(
         "review-user/result/", #?result=5
         views.ReviewUserResultList.as_view(),

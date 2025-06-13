@@ -60,7 +60,7 @@ class CategorySection(models.Model):
         verbose_name_plural="1-1. Categories Sections"
 
     def __str__(self) :
-        return f"{self.id}): ({self.title}) - ({self.is_visible})"
+        return f"{self.id}): ({self.title}) - [{self.user}] - ({self.is_visible})"
     
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug == None:
@@ -121,7 +121,7 @@ class SectionCourse(models.Model):
         verbose_name_plural="1-2. Section Course"
 
     def __str__(self):
-        return f"{self.id}): ({self.title}) - ({self.is_visible})"
+        return f"{self.id}): ({self.title}) - [{self.user}] - ({self.is_visible})"
     
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug == None:
@@ -140,6 +140,20 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name='courses',
     )
+    # admin_profile = models.ForeignKey(
+    #     AdminProfile,
+    #     on_delete=models.CASCADE,
+    #     related_name="admin_profile_course",
+    #     null=True,
+    #     blank=True,
+    # )
+    # teacher_profile = models.ForeignKey(
+    #     TeacherProfile,
+    #     on_delete=models.CASCADE,
+    #     related_name="teacher_profile_course",
+    #     null=True,
+    #     blank=True,
+    # )
     section = models.ForeignKey(
         SectionCourse, 
         on_delete=models.CASCADE, 
@@ -269,12 +283,13 @@ class Course(models.Model):
         verbose_name_plural = "1-3. Courses"
 
     def __str__(self):
-        return f"{self.id}): ({self.title}) - ({self.is_visible})"
+        return f"{self.id}): ({self.title}) - [{self.user}] - ({self.is_visible})"
 
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug is None:
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
         super(Course, self).save(*args, **kwargs)
+
 
 
 class SectionInCourse(models.Model):
@@ -303,7 +318,8 @@ class SectionInCourse(models.Model):
         return LessonInCourse.objects.filter(section=self).count()
 
     def __str__(self):
-        return f"{self.id}): ({self.title})"
+        return f"{self.id}): ({self.title}) - ({self.is_visible})"
+
 
 
 class LessonInCourse(models.Model):
@@ -328,12 +344,18 @@ class LessonInCourse(models.Model):
     duration = models.CharField(max_length=1_000, null=True, blank=True)
     description = models.TextField(max_length=10_000, null=True, blank=True)
 
-    # For video lessons
+    # For Video Lessons
     video_file = models.FileField(upload_to="course/lesson/videos", null=True, blank=True)
-    video_url = models.URLField(null=True, blank=True)
+    video_url = models.URLField(max_length=10_000, null=True, blank=True)
 
-    # For document lessons
+    # For Question Lessons
+    questions = models.JSONField(default=list)
+
+    # For Document Lessons
     content = models.TextField(max_length=10_000, null=True, blank=True)
+
+    # For Files Lessons
+    uploaded_files  = models.JSONField(default=list)
 
     is_visible = models.BooleanField(default=True) #
     is_free = models.BooleanField(default=False)
@@ -349,7 +371,8 @@ class LessonInCourse(models.Model):
         verbose_name_plural = "1-5. Lesson In Course"
 
     def __str__(self):
-        return f"{self.id}): ({self.section.course.title}) - ({self.section.title}) - ({self.title})"
+        return f"{self.id}): [{self.section.course.title}] - [{self.section.title}] - ({self.title}) - ({self.is_visible})"
+
 
 
 class FileInCourse(models.Model):
@@ -359,12 +382,14 @@ class FileInCourse(models.Model):
         related_name='lesson_file',
     )
 
-    title = models.CharField(max_length=1_000)
+    name = models.CharField(max_length=1_000, null=True, blank=True)
     file = models.FileField(upload_to="course/lesson/file", null=True, blank=True)
+    size = models.PositiveIntegerField(default=0, null=True, blank=True)
+    file_type = models.CharField(max_length=1_000, null=True, blank=True)
+    
+    title = models.CharField(max_length=1_000)
     file_url = models.URLField(null=True, blank=True)
 
-    name = models.CharField(max_length=1_000, null=True, blank=True)
-    size = models.PositiveIntegerField(default=0, null=True, blank=True)
     type = models.CharField(max_length=1_000, null=True, blank=True)
     url = models.URLField(null=True, blank=True)
 
@@ -404,7 +429,7 @@ class QuestionInCourse(models.Model):
 
     # image_file = models.JSONField(null=True, blank=True)
     
-    options = models.JSONField(default=list)
+    choices = models.JSONField(default=list)
     correct_answer = models.PositiveIntegerField(default=0)
     
     order = models.PositiveIntegerField(default=0)
@@ -606,7 +631,7 @@ class TeacherStudentChat(models.Model):
         on_delete=models.CASCADE,
         related_name='teacher_chats'
     )
-    student=models.ForeignKey(
+    student = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='student_chats'
@@ -624,7 +649,7 @@ class TeacherStudentChat(models.Model):
         verbose_name_plural="1-12. Teacher Student ChatBot"
 
     def __str__(self):
-        return f"{self.id}): ({self.teacher}) - ({self.student})"
+        return f"{self.id}): [{self.teacher}] - [{self.student}]"
 
 
 
@@ -773,6 +798,20 @@ class QuestionBank(models.Model):
         on_delete=models.CASCADE,
         related_name='question_banks',
     )
+    # admin_profile = models.ForeignKey(
+    #     AdminProfile,
+    #     on_delete=models.CASCADE,
+    #     related_name="admin_profile_question_bank",
+    #     null=True,
+    #     blank=True,
+    # )
+    # teacher_profile = models.ForeignKey(
+    #     TeacherProfile,
+    #     on_delete=models.CASCADE,
+    #     related_name="teacher_profile_question_bank",
+    #     null=True,
+    #     blank=True,
+    # )
     section = models.ForeignKey(
         SectionCourse, 
         on_delete=models.CASCADE, 
@@ -816,7 +855,7 @@ class QuestionBank(models.Model):
     
     
     def __str__(self):
-        return f"{self.id}): ({self.title}) - ({self.is_visible})"
+        return f"{self.id}): ({self.title}) - [{self.user}] - ({self.is_visible})"
     
 
 
@@ -860,6 +899,8 @@ class QuestionInBank(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.text[:50]}) - ({self.is_visible})"
     
+
+
 
 class ChoiceQuestionInBank(models.Model):
     """Answer choices for questions"""
@@ -1008,7 +1049,7 @@ class StudentQuestionBankResult(models.Model):
    
 
     def __str__(self):
-        return f"{self.id}): ({self.user}) - ({self.question_bank})"
+        return f"{self.id}): ({self.user}) - ({self.question_bank}) - [{self.user}]"
     
 
 

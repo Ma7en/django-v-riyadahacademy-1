@@ -149,7 +149,7 @@ class FileInCourseSerializer(serializers.ModelSerializer):
 
 class LessonInCourseSerializer(serializers.ModelSerializer):
     files = FileInCourseSerializer(many=True, read_only=True)
-    questions = QuestionInCourseSerializer(many=True, read_only=True)
+    # questions = QuestionInCourseSerializer(many=True, read_only=True)
 
     slug = serializers.SlugField(read_only=True)
 
@@ -160,6 +160,11 @@ class LessonInCourseSerializer(serializers.ModelSerializer):
 
 class SectionInCourseSerializer(serializers.ModelSerializer):
     # items = LessonInCourseSerializer(many=True, read_only=True)
+    lessons = LessonInCourseSerializer(
+        many=True, 
+        read_only=True, 
+        source='section_lesson'  # يستخدم related_name الموجود في الموديل
+    )
 
     slug = serializers.SlugField(read_only=True)
 
@@ -175,6 +180,9 @@ class SectionInCourseSerializer(serializers.ModelSerializer):
             "is_visible",
             "is_free",
             "order",
+
+            # 
+            "lessons",
 
             "slug", 
             "created_at",
@@ -192,7 +200,11 @@ class CourseSerializer(serializers.ModelSerializer):
     # section_course = SectionCourseSerializer(read_only=True, context={'request': None})
     
     # sections = SectionInCourseSerializer(many=True, read_only=True)
-
+    sections = SectionInCourseSerializer(
+        many=True, 
+        read_only=True, 
+        source='course_sections'  # يستخدم related_name الموجود في الموديل
+    )
 
     slug = serializers.SlugField(read_only=True)
     
@@ -223,6 +235,9 @@ class CourseSerializer(serializers.ModelSerializer):
             "requirements",
             "target_audience",
             "is_visible",
+
+            # 
+            "sections",
 
             "slug",
             "created_at",

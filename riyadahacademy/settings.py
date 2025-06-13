@@ -240,3 +240,9 @@ FROM_EMAIL = "no-reply@localhost"
 EMAIL_HOST_USER = "no-reply@localhost"
 
 
+
+# =====================================================================================
+# Payment
+HYPERPAY_BASE_URL = os.environ.get('HYPERPAY_BASE_URL', 'https://eu-test.oppwa.com')
+HYPERPAY_ENTITY_ID = os.getenv("HYPERPAY_ENTITY_ID")
+HYPERPAY_TOKEN = os.getenv("HYPERPAY_TOKEN")

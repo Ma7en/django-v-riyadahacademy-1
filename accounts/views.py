@@ -1797,6 +1797,13 @@ class StudentsListView(generics.ListCreateAPIView):
     # permission_classes = [IsAuthenticated]
 
 
+# *** Student (Students) -> [GET, POST] *** #
+class StudentsListAdmin(generics.ListCreateAPIView):
+    serializer_class = serializers.UserSerializer
+    queryset = models.User.objects.filter(is_student=True)
+    permission_classes = [AllowAny]
+
+
 # *** Student (Student ID) -> [GET, POST, PUT, DELETE] *** #
 class StudentPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer

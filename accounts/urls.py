@@ -353,6 +353,12 @@ urlpatterns = [
         views.StudentsListView.as_view(),
         name="student-students-list-api",
     ),
+    # (Students Admin)
+    path(
+        "student/students-list-admin/",
+        views.StudentsListAdmin.as_view(),
+        name="student-students-list-admin-api",
+    ),
     # (Student ID)
     path(
         "student/pk/<int:pk>/",

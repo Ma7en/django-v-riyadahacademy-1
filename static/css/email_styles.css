@@ -1,0 +1,109 @@
+/* CSS Variables */
+:root {
+    --primary-color: #2563eb;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --text-color: #4a5568;
+    --light-bg: #f9fafb;
+    --border-radius: 8px;
+    --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Base Styles */
+.email-container {
+    max-width: 600px;
+    margin: auto;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.email-header {
+    text-align: center;
+    padding: 10px;
+}
+
+.email-header h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+}
+
+.email-content p {
+    font-size: 16px;
+    color: var(--text-color);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.email-footer {
+    text-align: center;
+    font-size: 12px;
+    color: #a0aec0;
+    padding: 10px;
+    margin-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Components */
+.otp-code {
+    display: inline-block;
+    padding: 10px 20px;
+    border: 2px solid var(--success-color);
+    border-radius: var(--border-radius);
+    background-color: #f0fdf4;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 15px 0;
+}
+
+.action-button {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    margin: 15px 0;
+    font-weight: bold;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .email-container {
+        background-color: #1a202c;
+        color: #e2e8f0;
+    }
+
+    .email-content p {
+        color: #e2e8f0;
+    }
+
+    .email-header h2 {
+        color: #63b3ed;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .email-container {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .email-header h2 {
+        font-size: 20px;
+    }
+
+    .email-content p {
+        font-size: 14px;
+    }
+
+    .otp-code {
+        font-size: 20px;
+        padding: 8px 16px;
+    }
+}

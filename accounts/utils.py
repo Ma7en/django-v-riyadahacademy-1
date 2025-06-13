@@ -1,3 +1,4 @@
+# https://chat.deepseek.com/a/chat/s/85456c3f-0d9f-4c23-bf2f-0946d6d8a27e
 #
 import random
 import logging

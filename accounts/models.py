@@ -63,6 +63,20 @@ class User(AbstractUser, PermissionsMixin):
 
     objects = UserManager()
 
+    # @property
+    # def profile(self):
+    #     if hasattr(self, 'superuser_profile'):
+    #         return self.superuser_profile
+    #     elif hasattr(self, 'admin_profile'):
+    #         return self.admin_profile
+    #     elif hasattr(self, 'teacher_profile'):
+    #         return self.teacher_profile
+    #     elif hasattr(self, 'staff_profile'):
+    #         return self.staff_profile
+    #     elif hasattr(self, 'student_profile'):
+    #         return self.student_profile
+    #     return None
+
     def __str__(self):
         return f"{self.id}): ({self.email})"
 
