@@ -551,6 +551,43 @@ class StudentCertificateSerializer(serializers.ModelSerializer):
         return representation   
 
 
+# ******************************************************************************
+# ==============================================================================
+# ***  Subscribe Course   *** #
+class SubscribeCourseSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    course = serializers.PrimaryKeyRelatedField(queryset=models.Course.objects.all()) 
+    coupon_course = serializers.PrimaryKeyRelatedField(queryset=models.CouponCourse.objects.all()) 
+    # course = CourseSerializer() 
+
+    slug = serializers.SlugField(read_only=True)
+
+    class Meta:
+        model = models.SubscribeCourse
+        # fields = "__all__"
+        fields = [
+            "user",
+            "course",
+            "coupon_course",
+
+            "status",
+            "image_url",
+            "full_name",
+            "email",
+            "uploaded_files",
+            
+            
+            "slug",
+            "created_at",
+            "updated_at",
+        ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['course'] = CourseSerializer(instance.course).data  # لعرض تفاصيل المستخدم
+        representation['coupon_course'] = CouponCourseSerializer(instance.coupon_course).data  # لعرض تفاصيل المستخدم
+        return representation
 
 
 # ******************************************************************************

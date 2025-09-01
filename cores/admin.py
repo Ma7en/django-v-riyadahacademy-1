@@ -79,6 +79,14 @@ admin.site.register(models.StudentCertificate)
 
 # ******************************************************************************
 # ==============================================================================
+# *** Subscribe Course *** #
+admin.site.register(models.SubscribeCourse)
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Question Bank *** #
 # admin.site.register(models.QuestionBank)
 # admin.site.register(models.QuestionInBank)

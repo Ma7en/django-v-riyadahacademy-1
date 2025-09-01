@@ -1681,6 +1681,84 @@ class StudentVerifyCertificateView(APIView):
 
 
 
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***   Subscribe Course   ***
+class SubscribeCourseList(generics.ListCreateAPIView):
+    queryset = models.SubscribeCourse.objects.all()
+    serializer_class = serializers.SubscribeCourseSerializer
+    pagination_class = StandardResultSetPagination
+    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_student:
+            return models.SubscribeCourse.objects.filter(user=self.request.user)
+        return models.SubscribeCourse.objects.all()
+    
+
+class SubscribeCourseListApp(generics.ListAPIView):
+    queryset = models.SubscribeCourse.objects.all()
+    serializer_class = serializers.SubscribeCourseSerializer 
+    permission_classes = [AllowAny]
+
+
+class SubscribeCourseListAdmin(generics.ListCreateAPIView):
+    queryset = models.SubscribeCourse.objects.all()
+    serializer_class = serializers.SubscribeCourseSerializer 
+    permission_classes = [IsAuthenticated]
+
+
+class SubscribeCourseResultList(generics.ListCreateAPIView):
+    queryset = models.SubscribeCourse.objects.all()
+    serializer_class = serializers.SubscribeCourseSerializer  
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'result' in self.request.GET:
+            try:
+                limit = int(self.request.GET['result'])
+                qs = qs.order_by('-id').filter(is_visible=True)[:limit]
+            except ValueError:
+                # Handle the case where 'result' is not an integer
+                pass
+        return qs
+
+
+class SubscribeCoursePK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.SubscribeCourse.objects.all()
+    serializer_class = serializers.SubscribeCourseSerializer
+    permission_classes = [AllowAny]
+ 
+    
+  
+  
+
+class SubscribeCoursesSearchList(generics.ListCreateAPIView):
+    queryset = models.SubscribeCourse.objects.all()
+    serializer_class = serializers.SubscribeCourseSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(status__icontains=search)
+                |Q(full_name__icontains=search) 
+                |Q(email__icontains=search)  
+                )
+        return qs
+
+  
+
+
+
 # ******************************************************************************
 # ==============================================================================
 # ***    *** #

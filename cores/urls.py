@@ -702,6 +702,54 @@ urlpatterns = [
         views.StudentVerifyCertificateView.as_view(), 
         name='verify-certificate'
     ),
+  
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+     # =================================================================
+    # *** 7) Subscribe Course *** #
+    # (List) 
+    path(
+        'subscribe-course/list/', 
+        views.SubscribeCourseList.as_view(), 
+        name='subscribe-course-list',
+    ),
+    # (List App)
+    path(
+        'subscribe-course/list-app/', 
+        views.SubscribeCourseListApp.as_view(), 
+        name='subscribe-course-list-app',
+    ),
+    # (List Admin)
+    path(
+        'subscribe-course/list-admin/', 
+        views.SubscribeCourseListAdmin.as_view(), 
+        name='subscribe-course-list-admin',
+    ),
+    # (List Result)
+    path(
+        'subscribe-course/result/',  #?result=9
+        views.SubscribeCourseResultList.as_view(), 
+        name='subscribe-course-result-list',
+    ),
+    # (PK)
+    path(
+        'subscribe-course/<int:pk>/', 
+        views.SubscribeCoursePK.as_view(), 
+        name='subscribe-course-pk',
+    ),
+    # (Search)
+    path(
+        'subscribe-courses/search/<str:searchstring>/', 
+        views.SubscribeCoursesSearchList.as_view(),
+        name="subscribe-courses-search-list",
+    ),
+
+
+  
 
 
     path(

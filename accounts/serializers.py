@@ -116,7 +116,21 @@ class SuperuserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.SuperuserProfile
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+            "user",
+
+            "gender",
+            "powers",
+            "image",
+            "bio",
+            "phone_number",
+            "age",
+
+            "created_at",
+            "updated_at",
+        ]
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
@@ -132,17 +146,22 @@ class AdminProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.AdminProfile
-        fields = "__all__"
-        # fields = [
-        #     "id",
+        # fields = "__all__"
+        fields = [
+            "id",
+            "user",
 
-        #     "user",
+            "gender",
+            "powers",
+            "work",
+            "image",
+            "bio",
+            "phone_number",
+            "age",
 
-        #     "gender",
-        #     "powers",
-        #     "image",
-
-        # ]
+            "created_at",
+            "updated_at",
+        ]
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
@@ -296,7 +315,21 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.TeacherProfile
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+            "user",
+
+            "gender",
+            "subject", 
+            "image",
+            "bio",
+            "phone_number",
+            "age",
+
+            "created_at",
+            "updated_at",
+        ]
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
@@ -444,7 +477,22 @@ class StaffProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.StaffProfile
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+            "user",
+
+            "gender",
+            "position", 
+            "department", 
+            "image",
+            "bio",
+            "phone_number",
+            "age",
+
+            "created_at",
+            "updated_at",
+        ]
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
@@ -593,7 +641,20 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.StudentProfile
-        fields = "__all__"
+        # fields = "__all__"
+        fields = [
+            "id",
+            "user",
+
+            "gender", 
+            "image",
+            "bio",
+            "phone_number",
+            "age",
+
+            "created_at",
+            "updated_at",
+        ]
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
@@ -775,6 +836,11 @@ class PublicVerifyAccountSerializer(serializers.Serializer):
 # *** Public (Resend OTP) *** #
 class PublicResendOTPSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = models.User
+        fields = ["email"]
+
 
 
 # *** Public (Refresh) *** #

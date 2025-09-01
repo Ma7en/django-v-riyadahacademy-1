@@ -85,7 +85,7 @@ def send_otp_for_user(email, type_user="user"):
             "logoimage": logoimage,
         }
 
-        subject = f"{type_user.capitalize() or "User".capitalize()} Confirmation Email"
+        subject = f"{type_user.capitalize() or 'User'.capitalize()} Confirmation Email"
 
         template = "send_otp.html"
         html_content = render_to_string(template, context)
@@ -203,7 +203,7 @@ def send_otp_for_password_reset(email, user_type="user"):
 def send_reset_password_confirm(user):
     subject = "Reset Password Confirmation"
     plain_message = (
-        f"Dear {user.first_name}, your password has been successfully reseted "
+        f"Dear {user.first_name}, your password has been successfully reseted."
     )
     receiver_email = user.email
 
@@ -237,7 +237,7 @@ def send_reset_password_confirm(user):
 def send_change_password_confirm(user):
     subject = "Change Password Confirmation"
     plain_message = (
-        f"Dear {user.first_name}, your password has been successfully changed"
+        f"Dear {user.first_name}, your password has been successfully changed."
     )
     receiver_email = user.email
 

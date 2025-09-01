@@ -10,12 +10,16 @@ from datetime import timedelta
 
 #
 from django.utils import timezone
+from django.dispatch import receiver
+
 from django.db import models
+from django.db.models.signals import post_save
+
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
+
 from django.core.validators import RegexValidator
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.core.files.storage import default_storage
 
 
 
@@ -170,9 +174,9 @@ class SuperuserProfile(models.Model):
         null=True,
         blank=True,
     )
-
     
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -180,6 +184,19 @@ class SuperuserProfile(models.Model):
 
     def __str__(self):
         return f"{self.id}): ({self.user.email})"
+    
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # image
+            old_instance_image = SuperuserProfile.objects.get(pk=self.pk)
+            if old_instance_image.image and old_instance_image.image != self.image:
+                default_storage.delete(old_instance_image.image.path)
+                self.updated_at = timezone.now()
+
+        super(SuperuserProfile, self).save(*args, **kwargs)
+
 
 
 # ******************************************************************************
@@ -287,9 +304,8 @@ class AdminProfile(models.Model):
         blank=True,
     )
 
-    
-
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # class Meta:
     #     """
@@ -304,6 +320,16 @@ class AdminProfile(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.user.email})"
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # image
+            old_instance = AdminProfile.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)
+                self.updated_at = timezone.now()
+
+        super(AdminProfile, self).save(*args, **kwargs)
 
 
 
@@ -401,6 +427,7 @@ class TeacherProfile(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # class Meta:
     #     """
@@ -415,6 +442,16 @@ class TeacherProfile(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.user.email})"
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            
+            # image
+            old_instance_image = TeacherProfile.objects.get(pk=self.pk)
+            if old_instance_image.image and old_instance_image.image != self.image:
+                default_storage.delete(old_instance_image.image.path)
+                self.updated_at = timezone.now()
+
+        super(TeacherProfile, self).save(*args, **kwargs)
 
 
 
@@ -534,6 +571,7 @@ class StaffProfile(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # class Meta:
     #     """
@@ -548,6 +586,16 @@ class StaffProfile(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.phone_number})"
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # image
+            old_instance_image = StaffProfile.objects.get(pk=self.pk)
+            if old_instance_image.image and old_instance_image.image != self.image:
+                default_storage.delete(old_instance_image.image.path)
+                self.updated_at = timezone.now()
+
+        super(StaffProfile, self).save(*args, **kwargs)
 
 
 
@@ -617,6 +665,7 @@ class StudentProfile(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # class Meta:
     #     """
@@ -631,6 +680,16 @@ class StudentProfile(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.phone_number})"
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # image
+            old_instance_image = StudentProfile.objects.get(pk=self.pk)
+            if old_instance_image.image and old_instance_image.image != self.image:
+                default_storage.delete(old_instance_image.image.path)
+                self.updated_at = timezone.now()
+
+        super(StudentProfile, self).save(*args, **kwargs)
 
 
 

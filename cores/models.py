@@ -9,6 +9,7 @@ from django.db import models
 from django.db import models
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.files.storage import default_storage
 
 
 
@@ -65,6 +66,14 @@ class CategorySection(models.Model):
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug == None:
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
+
+        if self.pk:
+
+            # image
+            old_instance_image = CategorySection.objects.get(pk=self.pk)
+            if old_instance_image.image and old_instance_image.image != self.image:
+                default_storage.delete(old_instance_image.image.path)
+
         super(CategorySection, self).save(*args, **kwargs)
     
 
@@ -126,6 +135,12 @@ class SectionCourse(models.Model):
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug == None:
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
+
+        if self.pk:
+            old_instance = SectionCourse.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)
+
         super(SectionCourse, self).save(*args, **kwargs)
 
 
@@ -288,6 +303,12 @@ class Course(models.Model):
     def save(self, *args, **kwargs):
         if self.slug == "" or self.slug is None:
             self.slug = slugify(self.title) + "-" + shortuuid.uuid()[:2]
+
+        if self.pk:
+            old_instance = Course.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)
+
         super(Course, self).save(*args, **kwargs)
 
 
@@ -319,6 +340,9 @@ class SectionInCourse(models.Model):
 
     def __str__(self):
         return f"{self.id}): ({self.title}) - ({self.is_visible})"
+
+
+
 
 
 
@@ -372,6 +396,15 @@ class LessonInCourse(models.Model):
 
     def __str__(self):
         return f"{self.id}): [{self.section.course.title}] - [{self.section.title}] - ({self.title}) - ({self.is_visible})"
+    
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = LessonInCourse.objects.get(pk=self.pk)
+            if old_instance.video_file and old_instance.video_file != self.video_file:
+                default_storage.delete(old_instance.video_file.path)
+
+        super(LessonInCourse, self).save(*args, **kwargs)
 
 
 
@@ -403,6 +436,9 @@ class FileInCourse(models.Model):
 
     def __str__(self):
         return f"{self.id}): ({self.name})"
+
+
+
 
 
 class QuestionInCourse(models.Model):
@@ -451,6 +487,13 @@ class QuestionInCourse(models.Model):
         return f"{self.id}): ({self.lesson.title}) - ({self.text[:50]})"
 
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = QuestionInCourse.objects.get(pk=self.pk)
+            if old_instance.image_file and old_instance.image_file != self.image_file:
+                default_storage.delete(old_instance.image_file.path)
+
+        super(QuestionInCourse, self).save(*args, **kwargs)
 
 
 
@@ -659,6 +702,73 @@ class TeacherStudentChat(models.Model):
 
 # ******************************************************************************
 # ==============================================================================
+# *** Subscribe Course *** #
+class SubscribeCourse(models.Model):
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='subscribe_course_user',
+    )
+    course = models.ForeignKey(
+        Course, 
+        on_delete=models.CASCADE, 
+        related_name='subscribe_course_course',
+    )
+    coupon_course = models.ForeignKey(
+        CouponCourse, 
+        on_delete=models.CASCADE, 
+        related_name='subscribe_course_coupon_course',
+        null=True,
+        blank=True,
+    )
+    
+    STATUS_CHOICES = (
+        ("new", "جديد"),
+        ("under-processing", "قيد المعالجة"),
+        ("reply", "تم الرد"),
+        ("cancel", "الغاء"),
+    )
+    status = models.CharField(
+        max_length=1_000, 
+        choices=STATUS_CHOICES, 
+        default="new",
+    )
+
+    image_url = models.URLField(null=True, blank=True)
+
+    full_name = models.CharField(max_length=1_000)
+    email = models.EmailField()
+
+  
+    uploaded_files  = models.JSONField(default=list)
+
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+ 
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="7-1. Subscribe Course"
+
+    def __str__(self) :
+        return f"{self.id}): [{self.user}] - ({self.course})"
+    
+    def save(self, *args, **kwargs):
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.full_name) + "-" + shortuuid.uuid()[:2]
+        super(SubscribeCourse, self).save(*args, **kwargs)
+    
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Student Progress Course *** #
 # class StudentProgressCourse(models.Model):
 #     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress')
@@ -856,7 +966,16 @@ class QuestionBank(models.Model):
     
     def __str__(self):
         return f"{self.id}): ({self.title}) - [{self.user}] - ({self.is_visible})"
-    
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = QuestionBank.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)
+
+        super(QuestionBank, self).save(*args, **kwargs)
+
 
 
 class QuestionInBank(models.Model):
@@ -898,7 +1017,15 @@ class QuestionInBank(models.Model):
     
     def __str__(self):
         return f"{self.id}): ({self.text[:50]}) - ({self.is_visible})"
-    
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = QuestionInBank.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)  
+             
+        super(QuestionInBank, self).save(*args, **kwargs)
 
 
 
