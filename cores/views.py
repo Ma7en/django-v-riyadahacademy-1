@@ -1761,8 +1761,98 @@ class SubscribeCoursesSearchList(generics.ListCreateAPIView):
 
 # ******************************************************************************
 # ==============================================================================
-# ***    *** #
+# ***  Documents  *** #
+class DocumentList(generics.ListCreateAPIView):
+    queryset = models.Document.objects.all()
+    serializer_class = serializers.DocumentSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return models.Document.objects.none()
+        
+        user = self.request.user
+        if user.is_superuser:
+            return models.Document.objects.all()
+        else:
+            return models.Document.objects.filter(user=user)
+     
+
+
+class DocumentListAdmin(generics.ListCreateAPIView):
+    queryset = models.Document.objects.all()
+    serializer_class = serializers.DocumentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return models.Document.objects.none()
+        
+        user = self.request.user
+        if user.is_superuser:
+            return models.Document.objects.all()
+        else:
+            return models.Document.objects.filter(user=user)
+
+
+class DocumentListApp(generics.ListAPIView):
+    queryset = models.Document.objects.filter(is_visible=True)
+    serializer_class = serializers.DocumentSerializer
+    permission_classes = [AllowAny]
+
+
+
+class DocumentResultList(generics.ListCreateAPIView):
+    queryset = models.Document.objects.all()
+    serializer_class = serializers.DocumentSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'result' in self.request.GET:
+            try:
+                limit = int(self.request.GET['result'])
+                qs = qs.order_by('-id').filter(is_visible=True)[:limit]
+            except ValueError:
+                # Handle the case where 'result' is not an integer
+                pass
+        return qs
+    
+
+
+class DocumentPK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Document.objects.all()
+    serializer_class = serializers.DocumentSerializer
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+
+class DocumentSearchList(generics.ListCreateAPIView):
+    queryset = models.Document.objects.all()
+    serializer_class = serializers.DocumentSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(title__icontains=search)
+                |Q(description__icontains=search)
+                )
+        return qs
+
+
+  
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***    *** #
 # Question Bank Views
 class QuestionBankList(generics.ListCreateAPIView):
     queryset = models.QuestionBank.objects.all()

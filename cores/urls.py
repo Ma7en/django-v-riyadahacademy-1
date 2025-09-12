@@ -757,6 +757,52 @@ urlpatterns = [
         views.Space.as_view(),
     ),
     # ================================================================
+    # *** ) Document *** #
+    # (List)
+    path(
+        'document/list/', 
+        views.DocumentList.as_view(), 
+        name='Document-list',
+    ),
+    # (List Admin)
+    path(
+        'document/list-admin/', 
+        views.DocumentListAdmin.as_view(), 
+        name='Document-list-admin',
+    ),
+    # (List App)
+    path(
+        'document/list-app/', 
+        views.DocumentListApp.as_view(), 
+        name='Document-list-app',
+    ),
+    # (List Result)
+    path(
+        "document/result/", #?result=9
+        views.DocumentResultList.as_view(),
+        name="document-result-list",
+    ),
+    # (PK)
+    path(
+        'document/<int:pk>/', 
+        views.DocumentPK.as_view(), 
+        name='Document-detail',
+    ),
+    # (Search)
+    path(
+        'document/search/<str:searchstring>/', 
+        views.DocumentSearchList.as_view(),
+        name="document-search-list",
+    ),
+
+  
+
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # ================================================================
     # *** ) Questions Banks *** #
     # (List)
     path(

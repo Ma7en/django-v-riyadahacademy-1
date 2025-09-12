@@ -899,6 +899,98 @@ class StudentCertificate(models.Model):
 
 # ******************************************************************************
 # ==============================================================================
+# *** Documents *** #
+class Document(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='document_user',
+    )
+    # admin_profile = models.ForeignKey(
+    #     AdminProfile,
+    #     on_delete=models.CASCADE,
+    #     related_name="admin_profile_document",
+    #     null=True,
+    #     blank=True,
+    # )
+    # teacher_profile = models.ForeignKey(
+    #     TeacherProfile,
+    #     on_delete=models.CASCADE,
+    #     related_name="teacher_profile_document",
+    #     null=True,
+    #     blank=True,
+    # )
+
+    section = models.ForeignKey(
+        SectionCourse, 
+        on_delete=models.CASCADE, 
+        related_name='section_course_documents',
+    )
+    
+    title = models.CharField(max_length=1_000)
+    description = models.TextField(max_length=10_000, null=True, blank=True)
+    
+    image = models.ImageField(upload_to='documents/iamges/', null=True, blank=True)
+    image_url = models.URLField(null=True, blank=True)
+    
+    # For Files Lessons
+    uploaded_files  = models.JSONField(default=list)
+
+    
+    is_visible = models.BooleanField(default=True)
+
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    
+    # def total_question_in_bank(self):
+    #     return QuestionInBank.objects.filter(question_bank=self).count()
+
+
+    # def total_student_result(self):
+    #     return StudentQuestionBankResult.objects.filter(question_bank=self).count()
+
+    # @property
+    # def question_count(self):
+    #     return self.questions.count()
+    
+    @property
+    def display_image(self):
+        if self.image:
+            return self.image.url
+        return self.image_url
+    
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural="2-1) Documents"
+    
+    
+    def __str__(self):
+        return f"{self.id}): ({self.title}) - [{self.user}] - ({self.is_visible})"
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            old_instance = Document.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)
+
+        super(Document, self).save(*args, **kwargs)
+
+
+
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Questions Banks *** #
 class QuestionBank(models.Model):
     """Question bank model containing groups of questions"""
