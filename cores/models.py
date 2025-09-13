@@ -539,15 +539,15 @@ class CouponCourse(models.Model):
 class StudentCourseEnrollment(models.Model):
     student = models.ForeignKey(
         User,
-        null=True,
         on_delete=models.CASCADE,
         related_name='enrolled_student',
+        null=True,
     )
     course = models.ForeignKey(
         Course,
-        null=True,
         on_delete=models.CASCADE,
         related_name='enrolled_courses',
+        null=True,
     )
 
     price = models.DecimalField(
@@ -726,7 +726,7 @@ class SubscribeCourse(models.Model):
         ("new", "جديد"),
         ("under-processing", "قيد المعالجة"),
         ("reply", "تم الرد"),
-        ("cancel", "الغاء"),
+        ("cancel", "تم الألغاء"),
     )
     status = models.CharField(
         max_length=1_000, 
@@ -925,6 +925,8 @@ class Document(models.Model):
         SectionCourse, 
         on_delete=models.CASCADE, 
         related_name='section_course_documents',
+        null=True,
+        blank=True,
     )
     
     title = models.CharField(max_length=1_000)

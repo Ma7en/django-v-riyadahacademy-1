@@ -226,7 +226,10 @@ CORS_ALLOW_HEADERS = [
 X_FRAME_OPTIONS = 'ALLOWALL'
 XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
 
-
+# =====================================================================================
+# File Sizes
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB in bytes
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB in bytes
 
 # =====================================================================================
 # SMTP Google

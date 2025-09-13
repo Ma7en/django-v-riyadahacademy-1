@@ -280,6 +280,13 @@ class CourseListApp(generics.ListCreateAPIView):
     # pagination_class = StandardResultSetPagination
 
 
+class CourseNotAllListApp(generics.ListCreateAPIView):
+    queryset = models.Course.objects.filter(is_visible=True)
+    serializer_class = serializers.CourseNotAllSerializer
+    permission_classes = [AllowAny]
+    # pagination_class = StandardResultSetPagination
+
+
 class CourseListAdmin(generics.ListCreateAPIView):
     queryset = models.Course.objects.filter(is_visible=True)
     serializer_class = serializers.CourseSerializer
@@ -301,6 +308,22 @@ class CourseListAdmin(generics.ListCreateAPIView):
 class CourseResultList(generics.ListCreateAPIView):
     queryset = models.Course.objects.all()
     serializer_class = serializers.CourseSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'result' in self.request.GET:
+            try:
+                limit = int(self.request.GET['result'])
+                qs = qs.order_by('-id').filter(is_visible=True)[:limit]
+            except ValueError:
+                # Handle the case where 'result' is not an integer
+                pass
+        return qs
+        
+
+class CourseNotAllResultList(generics.ListCreateAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseNotAllSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -1050,6 +1073,25 @@ class EnrolledStuentPkList(generics.ListCreateAPIView):
             student = models.User.objects.get(pk=student_id)
             return models.StudentCourseEnrollment.objects.filter(student=student).distinct()
         
+       
+
+class EnrolledStuentCoursesNotaAllPkList(generics.ListCreateAPIView):
+    queryset = models.StudentCourseEnrollment.objects.all()
+    serializer_class = serializers.StudentCourseNotAllEnrollSerializer
+    pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = ""
+        if 'student_id' in self.kwargs:
+            student_id = self.kwargs['student_id']
+            student = models.User.objects.get(pk=student_id)
+            return models.StudentCourseEnrollment.objects.filter(student=student).distinct()
+        
+
+
+    
 
 class EnrolledRecomemdedStuentList(generics.ListCreateAPIView):
     queryset = models.StudentCourseEnrollment.objects.all()
@@ -1709,6 +1751,7 @@ class SubscribeCourseListApp(generics.ListAPIView):
 class SubscribeCourseListAdmin(generics.ListCreateAPIView):
     queryset = models.SubscribeCourse.objects.all()
     serializer_class = serializers.SubscribeCourseSerializer 
+    pagination_class = StandardResultSetPagination
     permission_classes = [IsAuthenticated]
 
 

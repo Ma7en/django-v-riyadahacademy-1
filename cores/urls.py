@@ -254,6 +254,25 @@ urlpatterns = [
         '---------------------------------------------------------------------------------------------------------------/', 
         views.Space.as_view(),
     ),
+    # *** Course Not All *** #
+    # (List App)
+    path(
+        "course-not-all/list-app/",
+        views.CourseNotAllListApp.as_view(),
+        name="course-not-all-list",
+    ),
+   
+    # (List Result)
+    path(
+        "course-not-all/result/", #?result=9
+        views.CourseNotAllResultList.as_view(),
+        name="course-not-all-result-list",
+    ),
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # (Section PK)
     path(
         "course/section-course/<int:pk>/",
@@ -511,16 +530,31 @@ urlpatterns = [
         name="fetch-all-enrolled-students-teacher_id",
     ),
 
+    # user enrolled course()
     path(
         'fetch-enrolled-courses/<int:student_id>/', 
         views.EnrolledStuentPkList.as_view(),
         name="fetch-enrolled-courses-student_id",
     ),
 
+
     path(
         'fetch-recomemded-courses/<int:student_id>/', 
         views.EnrolledRecomemdedStuentList.as_view(),
         name="fetch-recomemded-courses-student_id",
+    ),
+
+    
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # user enrolled course (not all)
+    path(
+        'fetch-enrolled-courses-not-all/<int:student_id>/', 
+        views.EnrolledStuentCoursesNotaAllPkList.as_view(),
+        name="fetch-enrolled-courses-nota-all-student_id",
     ),
 
 

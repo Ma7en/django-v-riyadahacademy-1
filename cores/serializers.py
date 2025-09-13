@@ -279,7 +279,62 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 
+class CourseNotAllSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    section = serializers.PrimaryKeyRelatedField(queryset=models.SectionCourse.objects.all())
 
+
+    slug = serializers.SlugField(read_only=True)
+    
+    class Meta:
+        model = models.Course
+        # fields = "__all__"
+        fields = [
+            "id",
+            
+            "user",
+            "section",
+
+            "level",
+            "title",
+            "description",
+            "image",
+            "image_url",
+            "duration",
+            "price",
+            "discount",
+            "rating",
+            "reviews_count",
+            "students_count",
+            "language",
+            "tag",
+            "techs",
+            "features",
+            "requirements",
+            "target_audience",
+            "is_visible",
+
+            # 
+            # "sections",
+
+            "slug",
+            "created_at",
+            "updated_at",
+
+            "teach_list",
+            "total_section",
+            "total_lesson",
+            "total_enrolled_students",
+            "course_rating",
+            "price_after_discount",
+        ]
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        representation['section'] = SectionCourseSerializer(instance.section).data  # لعرض تفاصيل المستخدم
+        return representation
+    
 
 
 
@@ -355,7 +410,21 @@ class StudentCourseEnrollSerializer(serializers.ModelSerializer):
     #         self.Meta.depth = 2
 
 
-
+class StudentCourseNotAllEnrollSerializer(serializers.ModelSerializer):
+    student = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    course = serializers.PrimaryKeyRelatedField(queryset=models.Course.objects.all()) 
+  
+    slug = serializers.SlugField(read_only=True)
+  
+    class Meta:
+        model = models.StudentCourseEnrollment
+        fields = '__all__'
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['student'] = UserSerializer(instance.student).data  # لعرض تفاصيل المستخدم
+        representation['course'] = CourseNotAllSerializer(instance.course).data  # لعرض تفاصيل المستخدم
+        return representation
 
 
 
@@ -566,6 +635,8 @@ class SubscribeCourseSerializer(serializers.ModelSerializer):
         model = models.SubscribeCourse
         # fields = "__all__"
         fields = [
+            "id",
+            
             "user",
             "course",
             "coupon_course",
