@@ -255,6 +255,12 @@ urlpatterns = [
         views.Space.as_view(),
     ),
     # *** Course Not All *** #
+    # (List)
+    path(
+        "course-not-all/list/",
+        views.CourseNotAllList.as_view(),
+        name="course-list",
+    ),
     # (List App)
     path(
         "course-not-all/list-app/",
@@ -268,6 +274,21 @@ urlpatterns = [
         views.CourseNotAllResultList.as_view(),
         name="course-not-all-result-list",
     ),
+
+    # (PK)
+    path(
+        "course-and-section-in-course/<int:pk>/",
+        views.CourseAndSectionInCoursePK.as_view(),
+        name="course-pk",
+    ),
+
+    # (All PK)
+    path(
+        "course-not-all/all/<int:pk>/",
+        views.CourseDetailAll.as_view(),
+        name="course-all-pk",
+    ),
+
 
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
@@ -829,6 +850,18 @@ urlpatterns = [
         name="document-search-list",
     ),
 
+
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # ================================================================
+    # (Pk Section)
+    path(
+        "document/section-course/<int:pk>/",
+        views.DocumentSectionList.as_view(),
+        name="document-section-course-pk",
+    ),
   
 
 

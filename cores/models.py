@@ -511,9 +511,10 @@ class CouponCourse(models.Model):
     )
 
     name = models.CharField(max_length=1_000, unique=True)
-    discount = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(1000)]
-    )
+    # discount = models.IntegerField(
+    #     validators=[MinValueValidator(1), MaxValueValidator(1000)]
+    # )
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     is_visible = models.BooleanField(default=True)
 
@@ -721,7 +722,21 @@ class SubscribeCourse(models.Model):
         null=True,
         blank=True,
     )
+
+    coupon_discount = models.CharField(
+        max_length=100_000,
+        null=True,
+        blank=True, 
+    )
+    final_price = models.CharField(
+        max_length=100_000,
+        null=True,
+        blank=True, 
+    )
     
+    # coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0)
+    # final_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0)
+
     STATUS_CHOICES = (
         ("new", "جديد"),
         ("under-processing", "قيد المعالجة"),

@@ -272,6 +272,23 @@ class CourseList(generics.ListCreateAPIView):
             return models.Course.objects.filter(user=user)
 
 
+class CourseNotAllList(generics.ListCreateAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseNotAllSerializer
+    pagination_class = StandardResultSetPagination
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return models.Course.objects.none()
+        
+        user = self.request.user
+        if user.is_superuser:
+            return models.Course.objects.all()
+        else:
+            return models.Course.objects.filter(user=user)
+
+
 
 class CourseListApp(generics.ListCreateAPIView):
     queryset = models.Course.objects.filter(is_visible=True)
@@ -357,12 +374,44 @@ class CoursePK(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+class CourseAndSectionInCoursePK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = serializers.CourseAndSectionInCourseSerializer
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+    # def get_queryset(self):
+    #     # هذه السطر يحل مشكلة إنشاء schema
+    #     if getattr(self, 'swagger_fake_view', False):
+    #         return models.Course.objects.none()
+        
+    #     user = self.request.user
+    #     if user.is_superuser:
+    #         return models.Course.objects.all()
+    #     else:
+    #         return models.Course.objects.filter(user=user)
+
+
+
+
+
+
 class CourseDetailAll(generics.RetrieveAPIView):
     """
     API View لعرض تفاصيل الكورس باستخدام الـ PK
     """
     queryset = models.Course.objects.all()  # كل الكورسات
     serializer_class = serializers.CourseSerializer  # السيريالايزر الذي نستخدمه
+    lookup_field = 'pk'  # البحث بالـ PK (هذا هو الافتراضي، يمكن حذفه إذا أردت)
+
+
+
+class CourseNotAllDetailAll(generics.RetrieveAPIView):
+    """
+    API View لعرض تفاصيل الكورس باستخدام الـ PK
+    """
+    queryset = models.Course.objects.all()  # كل الكورسات
+    serializer_class = serializers.CourseNotAllSerializer  # السيريالايزر الذي نستخدمه
     lookup_field = 'pk'  # البحث بالـ PK (هذا هو الافتراضي، يمكن حذفه إذا أردت)
 
 
@@ -1890,6 +1939,21 @@ class DocumentSearchList(generics.ListCreateAPIView):
 
 
   
+
+
+
+class DocumentSectionList(generics.ListCreateAPIView):
+    queryset = models.SectionCourse.objects.all()
+    serializer_class = serializers.DocumentSerializer
+    # pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        section_id = self.kwargs["pk"]
+        section = models.SectionCourse.objects.get(id=section_id)
+        return models.Document.objects.filter(section=section)
+
 
 
 

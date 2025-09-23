@@ -35,7 +35,7 @@ DEBUG = True
 # ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 # ALLOWED_HOSTS = ["riyadacademy.com", "109.106.244.173", "localhost:5173", "riyadahacademy.vercel.app"]
 ALLOWED_HOSTS = ["*"]
-
+# ALLOWED_HOSTS = ["m9ee9m03riyadah.pythonanywhere.com"]
 
 # Application definition
 
@@ -237,10 +237,18 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
 EMAIL_HOST_USER = "riyadahacademy684@gmail.com"
-EMAIL_HOST_PASSWORD = "cwsylwukjwwzbegv"
+# EMAIL_HOST_USER = "m9ee9m@gmail.com"
+
+EMAIL_HOST_PASSWORD = "nbiyixmfajojqeli"
+# EMAIL_HOST_PASSWORD = "wituggzgyqnjgknh" # -
+
 FROM_EMAIL = "riyadahacademy684@gmail.com"
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# FROM_EMAIL = "m9ee9m@gmail.com"
+
+DEFAULT_FROM_EMAIL = "riyadahacademy684@gmail.com"
+# DEFAULT_FROM_EMAIL = "m9ee9m@gmail.com" # -
 
 
 # =====================================================================================
@@ -260,6 +268,18 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 HYPERPAY_BASE_URL = os.environ.get('HYPERPAY_BASE_URL', 'https://eu-test.oppwa.com')
 HYPERPAY_ENTITY_ID = os.getenv("HYPERPAY_ENTITY_ID")
 HYPERPAY_TOKEN = os.getenv("HYPERPAY_TOKEN")
+
+
+# =====================================================================================
+# # In riyadahacademy/settings.py
+
+# # At the top of the file, with other imports
+# import decimal
+# from django.db.backends.sqlite3.operations import DatabaseOperations
+
+# # At the bottom of the file
+# # This overrides the default converter to handle empty strings
+# DatabaseOperations.register_converter("decimal", lambda value: decimal.Decimal(value) if value is not None and value != '' else None)
 
 
 # =====================================================================================
