@@ -1043,6 +1043,28 @@ class StudentQuestionBankResultSerializer(serializers.ModelSerializer):
 
 # ******************************************************************************
 # ==============================================================================
+# *** Startapp *** #
+class StartappSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+
+    slug = serializers.SlugField(read_only=True)
+
+    class Meta:
+        model = models.Startapp
+        fields = "__all__"
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+        return representation
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** ContactUs *** #
 class ContactUsUserSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 

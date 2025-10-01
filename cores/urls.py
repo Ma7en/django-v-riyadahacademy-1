@@ -65,6 +65,46 @@ urlpatterns = [
     # *** Category Section *** #
     # (List)
     path(
+        "startapp/list/",
+        views.StartappList.as_view(),
+        name="startapp-list",
+    ),
+    # (List App)
+    path(
+        "startapp/list-app/",
+        views.StartappListApp.as_view(),
+        name="startapp-list-app",
+    ),
+    # (List App)
+    path(
+        "startapp/list-admin/",
+        views.StartappListAdmin.as_view(),
+        name="startapp-list-admin",
+    ),
+    # (List Result)
+    path(
+        "startapp/result/", #?result=9
+        views.StartappResultList.as_view(),
+        name="course-result-list",
+    ),
+    # (PK)
+    path(
+        "startapp/<int:pk>/",
+        views.StartappPK.as_view(),
+        name="startapp-pk",
+    ),
+    # (Search)
+    path(
+        'startapp/search/<str:searchstring>/', 
+        views.StartappSearchList.as_view(),
+        name="startapp-search-list",
+    ),
+
+
+    # =================================================================
+    # *** Category Section *** #
+    # (List)
+    path(
         "category-section/list/",
         views.CategorySectionList.as_view(),
         name="category-section-list",
@@ -75,7 +115,13 @@ urlpatterns = [
         views.CategorySectionListApp.as_view(),
         name="category-section-list",
     ),
-    # (List App)
+    # (List App Ordered )
+    path(
+        "category-section/list-app-ordered/",
+        views.CategorySectionListAppOrdered.as_view(),
+        name="category-section-list",
+    ),
+    # (List Admin)
     path(
         "category-section/list-admin/",
         views.CategorySectionListAdmin.as_view(),
@@ -259,13 +305,20 @@ urlpatterns = [
     path(
         "course-not-all/list/",
         views.CourseNotAllList.as_view(),
-        name="course-list",
+        name="course-not-all-list",
     ),
     # (List App)
     path(
         "course-not-all/list-app/",
         views.CourseNotAllListApp.as_view(),
-        name="course-not-all-list",
+        name="course-not-all-list-app",
+    ),
+
+    # (List Admin)
+    path(
+        "course-not-all/list-admin/",
+        views.CourseNotAllListAdmin.as_view(),
+        name="course-not-all-list-admin",
     ),
    
     # (List Result)
@@ -279,14 +332,14 @@ urlpatterns = [
     path(
         "course-and-section-in-course/<int:pk>/",
         views.CourseAndSectionInCoursePK.as_view(),
-        name="course-pk",
+        name="course-and-section-in-course-pk",
     ),
 
     # (All PK)
     path(
         "course-not-all/all/<int:pk>/",
         views.CourseDetailAll.as_view(),
-        name="course-all-pk",
+        name="course-not-all-all-pk",
     ),
 
 
@@ -482,7 +535,18 @@ urlpatterns = [
         views.CouponCourseSearchApp.as_view(),
         name="coupon-course-search",
     ),
-    
+    # (Search App)
+    path(
+        "coupon-course/search-app-usage/<str:searchstring>/",
+        views.CouponCourseSearchAppUsage.as_view(),
+        name="coupon-course-search",
+    ),
+    # (Increment Usage)
+    path(
+        'coupon-course/increment/<str:name>/',
+        views.CouponCourseIncrementUsageView.as_view(),
+        name='coupon-course-increment-usage'
+    ),
 
 
 

@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django_filters.rest_framework import DjangoFilterBackend
-
+from django.db.models import F
 
 # 
 from reportlab.lib.pagesizes import letter
@@ -85,6 +85,76 @@ class Space(generics.ListCreateAPIView):
 
 # ******************************************************************************
 # ==============================================================================
+# *** Startapp ***
+class StartappList(generics.ListCreateAPIView):
+    queryset = models.Startapp.objects.all()
+    serializer_class = serializers.StartappSerializer
+    pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+
+class StartappListAdmin(generics.ListCreateAPIView):
+    queryset = models.Startapp.objects.all()
+    serializer_class = serializers.StartappSerializer
+    permission_classes = [AllowAny]
+
+
+class StartappListApp(generics.ListCreateAPIView):
+    queryset = models.Startapp.objects.filter(is_visible=True)
+    serializer_class = serializers.StartappSerializer
+    # pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
+
+        
+
+class StartappResultList(generics.ListCreateAPIView):
+    queryset = models.Startapp.objects.all()
+    serializer_class = serializers.StartappSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if 'result' in self.request.GET:
+            try:
+                limit = int(self.request.GET['result'])
+                qs = qs.order_by('-id').filter(is_visible=True)[:limit]
+            except ValueError:
+                # Handle the case where 'result' is not an integer
+                pass
+        return qs
+
+
+class StartappPK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.Startapp.objects.all()
+    serializer_class = serializers.StartappSerializer
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+
+
+class StartappSearchList(generics.ListCreateAPIView):
+    queryset = models.Startapp.objects.all()
+    serializer_class = serializers.StartappSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring'] 
+            qs = qs.filter(
+                Q(title__icontains=search)
+                |Q(description__icontains=search)
+                )
+        return qs
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Category Section *** #
 class CategorySectionList(generics.ListCreateAPIView):
     queryset = models.CategorySection.objects.all()
@@ -106,6 +176,12 @@ class CategorySectionListApp(generics.ListCreateAPIView):
     # pagination_class = StandardResultSetPagination
     permission_classes = [AllowAny]
 
+
+class CategorySectionListAppOrdered(generics.ListCreateAPIView):
+    queryset = models.CategorySection.objects.filter(is_visible=True).order_by('created_at')
+    serializer_class = serializers.CategorySectionSerializer
+    # pagination_class = StandardResultSetPagination
+    permission_classes = [AllowAny]
         
 
 class CategorySectionResultList(generics.ListCreateAPIView):
@@ -307,6 +383,23 @@ class CourseNotAllListApp(generics.ListCreateAPIView):
 class CourseListAdmin(generics.ListCreateAPIView):
     queryset = models.Course.objects.filter(is_visible=True)
     serializer_class = serializers.CourseSerializer
+    permission_classes = [IsAuthenticated]
+    # pagination_class = StandardResultSetPagination
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return models.Course.objects.none()
+        
+        user = self.request.user
+        if user.is_superuser:
+            return models.Course.objects.all()
+        else:
+            return models.Course.objects.filter(user=user)
+
+
+class CourseNotAllListAdmin(generics.ListAPIView):
+    queryset = models.Course.objects.filter(is_visible=True)
+    serializer_class = serializers.CourseNotAllSerializer
     permission_classes = [IsAuthenticated]
     # pagination_class = StandardResultSetPagination
 
@@ -935,6 +1028,95 @@ class CouponCourseSearchApp(generics.ListCreateAPIView):
 
 
 
+class CouponCourseSearchAppUsage(generics.ListCreateAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializers.CouponCourseSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Filter for visible coupons and where current_usage is less than usage_limit
+        qs = qs.filter(is_visible=True, current_usage__lt=F('usage_limit'))
+        
+        if 'searchstring' in self.kwargs:
+            search = self.kwargs['searchstring']
+            qs = qs.filter(
+                Q(name__iexact=search)
+            )
+        return qs
+
+
+
+class CouponCourseIncrementUsageView(generics.UpdateAPIView):
+    queryset = models.CouponCourse.objects.all()
+    serializer_class = serializers.CouponCourseSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'name' # Use coupon name to lookup the coupon
+
+    def update(self, request, *args, **kwargs):
+        coupon = self.get_object()
+        
+        if not coupon.is_valid():
+            return Response(
+                {'detail': 'Coupon is not valid or has reached its usage limit.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if coupon.decrement_usage():
+            serializer = self.get_serializer(coupon)
+            return Response(serializer.data)
+        else:
+            return Response(
+                {'detail': 'Failed to increment coupon usage.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+class ApplyCouponCourseView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        coupon_name = request.data.get('coupon_name')
+
+        if not coupon_name:
+            return Response({
+            'detail'
+            : 
+            'Coupon name is required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            coupon = get_object_or_404(models.CouponCourse, name__iexact=coupon_name)
+
+        except:
+            return Response({
+            'detail'
+            : 
+            'Coupon not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if not coupon.is_valid():
+            return Response({
+            'detail'
+            : 
+            'Coupon is not valid or has reached its usage limit.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if coupon.decrement_usage():
+            serializer = serializers.CouponCourseSerializer(coupon)
+            return Response({
+                'detail'
+                : 
+                'Coupon applied successfully.', 
+                'coupon'
+                : serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'detail'
+                : 
+                'Failed to apply coupon.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -2723,6 +2905,10 @@ class QuestionBankSectionList(generics.ListCreateAPIView):
 
 
 
+
+
+
+
 # ******************************************************************************
 # ==============================================================================
 # *** ContactUs ***
@@ -3118,15 +3304,28 @@ class StudentDashboardStatsView(generics.GenericAPIView):
             if user_id[-1] == "/":
                 user_id = user_id[:-1]
             user_id = int(user_id)
+
+            # 
             student_courses_enrollment_count = models.StudentCourseEnrollment.objects.filter(student=user_id).count()
             student_favorite_course_count = models.StudentFavoriteCourse.objects.filter(student=user_id).count()
+
+            # 
+            student_questionbank_result_count = models.StudentQuestionBankResult.objects.filter(user=user_id).count()
         else:
+            # 
             student_courses_enrollment_count = 0
             student_favorite_course_count = 0
 
+            # 
+            student_questionbank_result_count = 0
+
         return Response({
+            # 
             "student_courses_enrollment_count": student_courses_enrollment_count,
             "student_favorite_course_count": student_favorite_course_count,
+
+            # 
+            "student_questionbank_result_count": student_questionbank_result_count,
  
         })
 

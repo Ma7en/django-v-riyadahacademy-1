@@ -10,6 +10,14 @@ from . import models
 
 # ******************************************************************************
 # ==============================================================================
+# *** Startapp *** #
+admin.site.register(models.Startapp)
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # *** Category & Section *** #
 admin.site.register(models.CategorySection)
 admin.site.register(models.SectionCourse)
@@ -89,7 +97,6 @@ admin.site.register(models.SubscribeCourse)
 # ==============================================================================
 # *** Documents *** #
 admin.site.register(models.Document)
-
 
 
 

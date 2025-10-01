@@ -22,6 +22,83 @@ from accounts.models import *
 
 
 
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***  startapp  *** #
+class Startapp(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,        
+        related_name='startapp_user',
+        null=True,
+        blank=True,
+    )
+
+    CONTENT_TYPE_CHOICES = (
+        ("text", "نص"),
+        ("image", "صورة"),
+        ("link", "رابط"),
+        ("file", "ملف"),
+    )
+    content_type = models.CharField(
+        max_length=1_000, 
+        choices=CONTENT_TYPE_CHOICES,
+        default="text",
+        null=True,
+        blank=True,
+    )
+
+    description = models.TextField(
+        max_length=100_000, 
+        null=True, 
+        blank=True,
+    )
+    
+    image = models.ImageField(
+        upload_to="startapp/images", 
+        null=True,
+        blank=True,
+    )
+    image_url = models.URLField(null=True, blank=True)
+
+    file = models.FileField(upload_to="startapp/files", null=True, blank=True)
+
+    link_url = models.URLField(null=True, blank=True)
+
+    is_visible = models.BooleanField(default=True)
+
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.id}):  - ({self.is_visible})"
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "9-1] startapp"
+
+    def save(self, *args, **kwargs):
+        if self.slug == "" or self.slug == None:
+            self.slug = slugify(self.is_visible) + "-" + shortuuid.uuid()[:2]
+        
+        
+        if self.pk:
+
+            # image
+            old_instance_image = Startapp.objects.get(pk=self.pk)
+            if old_instance_image.image and old_instance_image.image != self.image:
+                default_storage.delete(old_instance_image.image.path)
+
+        super(Startapp, self).save(*args, **kwargs)
+
+
+
+
+
+
 # ******************************************************************************
 # ==============================================================================
 # *** Category Section *** #
@@ -313,6 +390,9 @@ class Course(models.Model):
 
 
 
+
+
+
 class SectionInCourse(models.Model):
     course = models.ForeignKey(
         Course,
@@ -370,7 +450,7 @@ class LessonInCourse(models.Model):
 
     # For Video Lessons
     video_file = models.FileField(upload_to="course/lesson/videos", null=True, blank=True)
-    video_url = models.URLField(max_length=10_000, null=True, blank=True)
+    video_url = models.URLField(null=True, blank=True)
 
     # For Question Lessons
     questions = models.JSONField(default=list)
@@ -405,6 +485,7 @@ class LessonInCourse(models.Model):
                 default_storage.delete(old_instance.video_file.path)
 
         super(LessonInCourse, self).save(*args, **kwargs)
+
 
 
 
@@ -516,11 +597,34 @@ class CouponCourse(models.Model):
     # )
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    usage_limit = models.PositiveIntegerField(
+        default=1, 
+        null=True, 
+        blank=True, 
+        help_text="Maximum number of times this coupon can be used.",
+    )
+    current_usage = models.PositiveIntegerField(
+        default=0, 
+        null=True, 
+        blank=True, 
+        help_text="Current number of times this coupon has been used.",
+    )
+
     is_visible = models.BooleanField(default=True)
 
     slug = models.SlugField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def is_valid(self):
+        return self.is_visible and self.current_usage < self.usage_limit
+
+    def decrement_usage(self):
+        if self.is_valid():
+            self.current_usage += 1
+            self.save()
+            return True
+        return False
     
     class Meta:
         ordering = ['-created_at']
@@ -1287,6 +1391,23 @@ class StudentQuestionBankResult(models.Model):
     def __str__(self):
         return f"{self.id}): ({self.user}) - ({self.question_bank}) - [{self.user}]"
     
+
+
+
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# ***    *** #
+
+
+
+
 
 
 
