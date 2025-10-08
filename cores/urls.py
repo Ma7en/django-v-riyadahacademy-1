@@ -61,6 +61,10 @@ questionbank = DefaultRouter()
 
 
 urlpatterns = [
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Category Section *** #
     # (List)
@@ -101,6 +105,10 @@ urlpatterns = [
     ),
 
 
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
     # =================================================================
     # *** Category Section *** #
     # (List)
@@ -774,6 +782,26 @@ urlpatterns = [
         name="Group-Chat-Bot",
     ),
 
+    
+    path(
+        'get-message-teacher-chat/<int:teacher_id>/', 
+        views.TeacherAllChatListAPI.as_view(), 
+        name="teacher-Message-List",
+    ),
+
+    path(
+        'teacher-student-chats/', 
+        views.TeacherStudentChatListView.as_view(), 
+        name='teacher-student-chat-list',
+    ),
+    path(
+        'teacher-student-chats/<int:teacher_id>/', 
+        views.TeacherSpecificStudentsListView.as_view(), 
+        name='teacher-specific-students-list',
+    ),
+
+
+
 
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
@@ -912,6 +940,18 @@ urlpatterns = [
         'document/search/<str:searchstring>/', 
         views.DocumentSearchList.as_view(),
         name="document-search-list",
+    ),
+
+    # Document files endpoints
+    path(
+        'document/<int:document_id>/files/', 
+        views.DocumentFileList.as_view(), 
+        name='document-file-list',
+    ),
+    path(
+        'document/file/<int:pk>/', 
+        views.DocumentFileDetail.as_view(), 
+        name='document-file-detail',
     ),
 
 

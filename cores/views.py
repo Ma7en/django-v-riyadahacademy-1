@@ -1636,6 +1636,96 @@ def GroupTeacherStudentChatBot(request,teacher_id):
 
 
 
+
+
+
+class TeacherAllChatListAPI(generics.ListAPIView):
+    queryset = models.TeacherStudentChat.objects.all()
+    serializer_class = serializers.TeacherStudentChatSerializer
+
+    def get_queryset(self):
+        teacher_id = self.kwargs['teacher_id'] 
+        teacher = models.User.objects.get(pk=teacher_id) 
+        return models.TeacherStudentChat.objects.filter(teacher=teacher)
+
+
+
+class TeacherStudentChatListView(APIView):
+    """
+    View لعرض قائمة فريدة بكل معلم والطلاب الذين تحدث معهم.
+    """
+    def get(self, request, *args, **kwargs):
+        # 1. إنشاء قاموس لتخزين الطلاب لكل معلم
+        #    استخدام set يضمن عدم وجود تكرار للطلاب
+        teacher_students_map = {}
+
+        # 2. جلب جميع محادثات الشات
+        #    select_related يقوم بتحسين الأداء عن طريق جلب بيانات المعلم والطالب في استعلام واحد
+        chats = models.TeacherStudentChat.objects.select_related('teacher', 'student').all()
+
+        # 3. المرور على جميع المحادثات وتجميع البيانات
+        for chat in chats:
+            teacher_id = chat.teacher.id
+            student = chat.student
+
+            if teacher_id not in teacher_students_map:
+                # إذا كان هذا أول ظهور للمعلم، قم بإنشاء إدخال جديد له
+                teacher_students_map[teacher_id] = {
+                    'teacher': chat.teacher,
+                    'students': set() # استخدم set لتجنب تكرار الطلاب
+                }
+            
+            # أضف الطالب إلى مجموعة الطلاب الخاصة بالمعلم
+            teacher_students_map[teacher_id]['students'].add(student)
+
+        # 4. تحويل البيانات المجمعة إلى قائمة من القواميس
+        #    وتحويل مجموعة الطلاب (set) إلى قائمة (list)
+        results = [
+            {
+                'teacher': data['teacher'],
+                'students': list(data['students'])
+            }
+            for data in teacher_students_map.values()
+        ]
+
+        # 5. استخدام الـ Serializer لتحويل البيانات إلى JSON
+        serializer = serializers.TeacherWithStudentsSerializer(results, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class TeacherSpecificStudentsListView(APIView):
+    """
+    View لعرض قائمة فريدة بالطلاب الذين تواصل معهم معلم معين.
+    """
+    def get(self, request, teacher_id, *args, **kwargs):
+        # 1. التحقق من وجود المعلم، وإرجاع خطأ 404 إذا لم يكن موجودًا
+        teacher = get_object_or_404(models.User, id=teacher_id)
+
+        # 2. جلب جميع الطلاب الفريدين الذين لديهم محادثات مع هذا المعلم
+        #    - نقوم بتصفية المحادثات حسب `teacher_id`.
+        #    - `values_list('student_id', flat=True)`: نختار فقط IDs الطلاب.
+        #    - `.distinct()`: هذا هو الجزء الأهم، يضمن عدم تكرار IDs الطلاب.
+        student_ids = models.TeacherStudentChat.objects.filter(
+            teacher=teacher
+        ).values_list('student_id', flat=True).distinct()
+
+        # 3. الآن، جلب كائنات المستخدمين (الطلاب) بناءً على الـ IDs التي حصلنا عليها
+        students = models.User.objects.filter(id__in=student_ids)
+
+        # 4. استخدام الـ Serializer لتحويل بيانات الطلاب إلى JSON
+        #    `many=True` لأننا نعرض قائمة من الطلاب
+        serializer = UserSerializer(students, many=True)
+        
+        # 5. إرجاع البيانات كاستجابة
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+
 # ******************************************************************************
 # ==============================================================================
 # *** Student Progress Course *** #
@@ -2120,9 +2210,6 @@ class DocumentSearchList(generics.ListCreateAPIView):
         return qs
 
 
-  
-
-
 
 class DocumentSectionList(generics.ListCreateAPIView):
     queryset = models.SectionCourse.objects.all()
@@ -2135,6 +2222,56 @@ class DocumentSectionList(generics.ListCreateAPIView):
         section_id = self.kwargs["pk"]
         section = models.SectionCourse.objects.get(id=section_id)
         return models.Document.objects.filter(section=section)
+
+
+
+
+
+
+
+
+
+
+class DocumentFileList(generics.ListCreateAPIView):
+    serializer_class = serializers.DocumentFileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        document_id = self.kwargs.get('document_id')
+        return models.DocumentFile.objects.filter(document_id=document_id)
+    
+    def perform_create(self, serializer):
+        document_id = self.kwargs.get('document_id')
+        document = models.Document.objects.get(id=document_id)
+        
+        # التحقق من أن المستخدم يملك المستند
+        if not self.request.user.is_superuser and document.user != self.request.user:
+            raise PermissionDenied("You don't have permission to add files to this document")
+        
+        file = self.request.FILES.get('file')
+        serializer.save(
+            document=document,
+            file_name=file.name,
+            file_size=file.size,
+            file_type=file.content_type
+        )
+
+
+class DocumentFileDetail(generics.RetrieveDestroyAPIView):
+    serializer_class = serializers.DocumentFileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return models.DocumentFile.objects.all()
+        else:
+            return models.DocumentFile.objects.filter(document__user=user)
+
+
+
+
+
 
 
 

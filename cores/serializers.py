@@ -147,15 +147,166 @@ class FileInCourseSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+# class LessonInCourseSerializer(serializers.ModelSerializer):
+#     files = FileInCourseSerializer(many=True, read_only=True)
+#     # questions = QuestionInCourseSerializer(many=True, read_only=True)
+
+#     slug = serializers.SlugField(read_only=True)
+
+#     class Meta:
+#         model = models.LessonInCourse
+#         fields = "__all__"
+
+
+
+class LessonInCourseFileSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = models.LessonInCourseFile
+        fields = [
+            'id', 
+            
+            'file', 
+            'file_url', 
+            'file_name', 
+            'file_size', 
+            'file_type', 
+
+            'uploaded_at',
+        ]
+        read_only_fields = ['id', 'uploaded_at', 'file_url']
+    
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+
+
+
+
 class LessonInCourseSerializer(serializers.ModelSerializer):
-    files = FileInCourseSerializer(many=True, read_only=True)
-    # questions = QuestionInCourseSerializer(many=True, read_only=True)
+    files = LessonInCourseFileSerializer(
+        many=True, 
+        read_only=True,
+        source='lesson_in_course_file',
+    )
 
-    slug = serializers.SlugField(read_only=True)
-
+    uploaded_files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False
+    )
+ 
+    
     class Meta:
         model = models.LessonInCourse
-        fields = "__all__"
+        fields = [
+            'id', 
+            # 'user', 
+            'section', 
+            
+            'type', 
+            
+            'title', 
+            'duration', 
+            'description',
+
+
+            'video_file', 
+            'video_url', 
+             
+            'questions', 
+
+            'content', 
+
+            'uploaded_files_old', 
+            
+            'is_visible',
+            'is_free',
+
+            'order',
+            
+            'slug', 
+            'created_at', 
+            'updated_at',
+
+
+            'files', 
+            'uploaded_files',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'slug']
+    
+    def create(self, validated_data):
+        # استخراج الملفات من validated_data
+        uploaded_files = validated_data.pop('uploaded_files', [])
+        
+        # إنشاء Lesson
+        lesson = models.LessonInCourse.objects.create(**validated_data)
+        
+        # إنشاء DocumentFile لكل ملف
+        for file in uploaded_files:
+            models.LessonInCourseFile.objects.create(
+                lesson=lesson,
+                
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type
+            )
+        
+        return lesson
+    
+    def update(self, instance, validated_data):
+        # استخراج الملفات من validated_data
+        uploaded_files = validated_data.pop('uploaded_files', [])
+        
+        # تحديث lesson
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # إضافة ملفات جديدة إذا تم رفعها
+        for file in uploaded_files:
+            models.LessonInCourseFile.objects.create(
+                lesson=instance,
+
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type
+            )
+        
+        return instance
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -538,6 +689,9 @@ class StudentCourseNotAllEnrollSerializer(serializers.ModelSerializer):
 
 
 
+
+
+
 # ******************************************************************************
 # ==============================================================================
 # *** Course Rating *** #
@@ -611,12 +765,17 @@ class StudentFavoriteCourseSerializer(serializers.ModelSerializer):
 # ==============================================================================
 # *** Teacher Student Chat *** #
 class TeacherStudentChatSerializer(serializers.ModelSerializer):
+    teacher = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())    
+    student = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())    
+
     class Meta :
         model = models.TeacherStudentChat
         fields = "__all__"
 
     def to_representation(self,instance):
         representation = super(TeacherStudentChatSerializer, self).to_representation(instance)
+        representation['teacher'] = UserSerializer(instance.teacher).data  # لعرض تفاصيل المستخدم
+        representation['student'] = UserSerializer(instance.student).data  # لعرض تفاصيل المستخدم
         representation['msg_time'] = instance.msg_time.strftime("%Y-%m-%d %H:%M")
         return representation
 
@@ -631,6 +790,14 @@ class TeacherStudentChatSerializer(serializers.ModelSerializer):
     #         print(f"Method is - {request.method}")
     #         self.Meta.depth = 3
 
+
+
+class TeacherWithStudentsSerializer(serializers.Serializer):
+    """
+    Serializer مخصص لعرض المعلم مع قائمة الطلاب الذين تحدث معهم.
+    """
+    teacher = UserSerializer()
+    students = UserSerializer(many=True)
 
 
 
@@ -733,11 +900,93 @@ class StudentCertificateSerializer(serializers.ModelSerializer):
 # ******************************************************************************
 # ==============================================================================
 # ***  Subscribe Course   *** #
+# class SubscribeCourseSerializer(serializers.ModelSerializer):
+#     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+#     course = serializers.PrimaryKeyRelatedField(queryset=models.Course.objects.all()) 
+#     # coupon_course = serializers.PrimaryKeyRelatedField(queryset=models.CouponCourse.objects.all()) 
+#     # course = CourseSerializer() 
+
+#     slug = serializers.SlugField(read_only=True)
+
+#     class Meta:
+#         model = models.SubscribeCourse
+#         # fields = "__all__"
+#         fields = [
+#             "id",
+            
+#             "user",
+#             "course",
+#             # "coupon_course",
+
+#             "status",
+#             "image_url",
+#             "full_name",
+#             "email",
+#             "uploaded_files",
+            
+#             "coupon_discount",
+#             "final_price",
+            
+#             "slug",
+#             "created_at",
+#             "updated_at",
+#         ]
+    
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+#         # representation['course'] = CourseSerializer(instance.course).data  # لعرض تفاصيل المستخدم
+#         representation['course'] = CourseNotAllSerializer(instance.course).data  # لعرض تفاصيل المستخدم
+#         # representation['coupon_course'] = CouponCourseSerializer(instance.coupon_course).data  # لعرض تفاصيل المستخدم
+#         return representation
+
+
+
+
+
+class SubscribeCourseFileSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = models.SubscribeCourseFile
+        fields = [
+            'id', 
+            'file', 
+            'file_url', 
+            'file_name', 
+            'file_size', 
+            'file_type', 
+            'uploaded_at',
+        ]
+        read_only_fields = ['id', 'uploaded_at', 'file_url']
+    
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+
+
+
+
+
 class SubscribeCourseSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     course = serializers.PrimaryKeyRelatedField(queryset=models.Course.objects.all()) 
-    # coupon_course = serializers.PrimaryKeyRelatedField(queryset=models.CouponCourse.objects.all()) 
-    # course = CourseSerializer() 
+
+    files = SubscribeCourseFileSerializer(
+        many=True, 
+        read_only=True,
+        source='subscribe_course_file',
+    )
+    
+    uploaded_files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False
+    )
 
     slug = serializers.SlugField(read_only=True)
 
@@ -755,7 +1004,8 @@ class SubscribeCourseSerializer(serializers.ModelSerializer):
             "image_url",
             "full_name",
             "email",
-            "uploaded_files",
+
+            "uploaded_files_old",
             
             "coupon_discount",
             "final_price",
@@ -763,33 +1013,207 @@ class SubscribeCourseSerializer(serializers.ModelSerializer):
             "slug",
             "created_at",
             "updated_at",
+
+            'files', 
+            'uploaded_files',
         ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'slug']
     
+       
+    def create(self, validated_data):
+        # استخراج الملفات من validated_data
+        uploaded_files = validated_data.pop('uploaded_files', [])
+        
+        # إنشاء Document
+        subscribecourse = models.SubscribeCourse.objects.create(**validated_data)
+        
+        # إنشاء DocumentFile لكل ملف
+        for file in uploaded_files:
+            models.SubscribeCourseFile.objects.create(
+                subscribecourse=subscribecourse,
+
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type
+            )
+        
+        return subscribecourse
+    
+    def update(self, instance, validated_data):
+        # استخراج الملفات من validated_data
+        uploaded_files = validated_data.pop('uploaded_files', [])
+        
+        # تحديث Document
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # إضافة ملفات جديدة إذا تم رفعها
+        for file in uploaded_files:
+            models.SubscribeCourseFile.objects.create(
+                subscribecourse=instance,
+
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type
+            )
+        
+        return instance
+
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
-        # representation['course'] = CourseSerializer(instance.course).data  # لعرض تفاصيل المستخدم
         representation['course'] = CourseNotAllSerializer(instance.course).data  # لعرض تفاصيل المستخدم
-        # representation['coupon_course'] = CouponCourseSerializer(instance.coupon_course).data  # لعرض تفاصيل المستخدم
         return representation
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ******************************************************************************
 # ==============================================================================
 # *** Documents *** #
+# class DocumentSerializer(serializers.ModelSerializer):
+#     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+
+#     slug = serializers.SlugField(read_only=True)
+
+#     class Meta:
+#         model = models.Document
+#         fields = "__all__"
+    
+#     def to_representation(self, instance):
+#         representation = super().to_representation(instance)
+#         representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
+#         return representation
+
+
+
+class DocumentFileSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = models.DocumentFile
+        fields = [
+            'id', 
+            'file', 
+            'file_url', 
+            'file_name', 
+            'file_size', 
+            'file_type', 
+            'uploaded_at',
+        ]
+        read_only_fields = ['id', 'uploaded_at', 'file_url']
+    
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+
+
+
+
 class DocumentSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    files = DocumentFileSerializer(
+        many=True, 
+        read_only=True,
+        source='document_files',
+    )
+    
+    uploaded_files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False
+    )
 
-    slug = serializers.SlugField(read_only=True)
-
+    display_image = serializers.ReadOnlyField()
+    
     class Meta:
         model = models.Document
-        fields = "__all__"
+        fields = [
+            'id', 
+            'user', 
+            'section', 
+            
+            'title', 
+            'description',
+            'image', 
+            'image_url', 
+            
+            'display_image', 
+
+            'uploaded_files_old', 
+            
+            'is_visible',
+            
+            'slug', 
+            'created_at', 
+            'updated_at',
+            
+            'files', 
+            'uploaded_files',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'slug']
     
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data  # لعرض تفاصيل المستخدم
-        return representation
+    def create(self, validated_data):
+        # استخراج الملفات من validated_data
+        uploaded_files = validated_data.pop('uploaded_files', [])
+        
+        # إنشاء Document
+        document = models.Document.objects.create(**validated_data)
+        
+        # إنشاء DocumentFile لكل ملف
+        for file in uploaded_files:
+            models.DocumentFile.objects.create(
+                document=document,
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type
+            )
+        
+        return document
+    
+    def update(self, instance, validated_data):
+        # استخراج الملفات من validated_data
+        uploaded_files = validated_data.pop('uploaded_files', [])
+        
+        # تحديث Document
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # إضافة ملفات جديدة إذا تم رفعها
+        for file in uploaded_files:
+            models.DocumentFile.objects.create(
+                document=instance,
+                file=file,
+                file_name=file.name,
+                file_size=file.size,
+                file_type=file.content_type
+            )
+        
+        return instance
+
+
+
+
 
 
 

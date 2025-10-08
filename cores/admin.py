@@ -31,6 +31,7 @@ admin.site.register(models.SectionCourse)
 admin.site.register(models.Course)
 admin.site.register(models.SectionInCourse)
 admin.site.register(models.LessonInCourse)
+admin.site.register(models.LessonInCourseFile)
 admin.site.register(models.FileInCourse)
 admin.site.register(models.QuestionInCourse)
 
@@ -89,6 +90,7 @@ admin.site.register(models.StudentCertificate)
 # ==============================================================================
 # *** Subscribe Course *** #
 admin.site.register(models.SubscribeCourse)
+admin.site.register(models.SubscribeCourseFile)
 
 
 
@@ -97,6 +99,7 @@ admin.site.register(models.SubscribeCourse)
 # ==============================================================================
 # *** Documents *** #
 admin.site.register(models.Document)
+admin.site.register(models.DocumentFile)
 
 
 

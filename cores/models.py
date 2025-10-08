@@ -87,10 +87,15 @@ class Startapp(models.Model):
         
         if self.pk:
 
-            # image
+            # Image
             old_instance_image = Startapp.objects.get(pk=self.pk)
             if old_instance_image.image and old_instance_image.image != self.image:
                 default_storage.delete(old_instance_image.image.path)
+
+            # File
+            old_instance_file = Startapp.objects.get(pk=self.pk)
+            if old_instance_file.file and old_instance_file.file != self.file:
+                default_storage.delete(old_instance_file.file.path)
 
         super(Startapp, self).save(*args, **kwargs)
 
@@ -459,7 +464,8 @@ class LessonInCourse(models.Model):
     content = models.TextField(max_length=10_000, null=True, blank=True)
 
     # For Files Lessons
-    uploaded_files  = models.JSONField(default=list)
+    uploaded_files_old  = models.JSONField(default=list, null=True, blank=True)
+
 
     is_visible = models.BooleanField(default=True) #
     is_free = models.BooleanField(default=False)
@@ -480,11 +486,74 @@ class LessonInCourse(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Video File
             old_instance = LessonInCourse.objects.get(pk=self.pk)
             if old_instance.video_file and old_instance.video_file != self.video_file:
                 default_storage.delete(old_instance.video_file.path)
 
         super(LessonInCourse, self).save(*args, **kwargs)
+
+
+
+
+
+
+
+class LessonInCourseFile(models.Model):
+    lesson = models.ForeignKey(
+        LessonInCourse, 
+        on_delete=models.CASCADE, 
+        related_name='lesson_in_course_file'
+    )
+    
+    file = models.FileField(upload_to='course/lesson/files/', null=True, blank=True)
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    file_size = models.IntegerField()  # in bytes
+    file_type = models.CharField(max_length=100, null=True, blank=True)
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.id}) {self.file_name} - {self.lesson.title}"
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # Delete old file if it exists
+            old_instance = LessonInCourseFile.objects.get(pk=self.pk)
+            if old_instance.file and old_instance.file != self.file:
+                default_storage.delete(old_instance.file.path)
+
+        super(LessonInCourseFile, self).save(*args, **kwargs)
+
+
+    def delete(self, *args, **kwargs):
+        # Delete the file when the model instance is deleted
+        if self.file:
+            default_storage.delete(self.file.path)
+            
+        super(LessonInCourseFile, self).delete(*args, **kwargs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -858,8 +927,9 @@ class SubscribeCourse(models.Model):
     full_name = models.CharField(max_length=1_000)
     email = models.EmailField()
 
-  
-    uploaded_files  = models.JSONField(default=list)
+    
+    # 
+    uploaded_files_old  = models.JSONField(default=list, null=True, blank=True)
 
 
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -879,6 +949,45 @@ class SubscribeCourse(models.Model):
             self.slug = slugify(self.full_name) + "-" + shortuuid.uuid()[:2]
         super(SubscribeCourse, self).save(*args, **kwargs)
     
+
+
+class SubscribeCourseFile(models.Model):
+    subscribecourse = models.ForeignKey(
+        SubscribeCourse, 
+        on_delete=models.CASCADE, 
+        related_name='subscribe_course_file'
+    )
+
+    file = models.FileField(upload_to='course/subscribe/files/', null=True, blank=True)
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    file_size = models.IntegerField()  # in bytes
+    file_type = models.CharField(max_length=100, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.id}) {self.file_name}  "
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # Delete old file if it exists
+            old_instance = SubscribeCourseFile.objects.get(pk=self.pk)
+            if old_instance.file and old_instance.file != self.file:
+                default_storage.delete(old_instance.file.path)
+
+        super(SubscribeCourseFile, self).save(*args, **kwargs)
+
+
+    def delete(self, *args, **kwargs):
+        # Delete the file when the model instance is deleted
+        if self.file:
+            default_storage.delete(self.file.path)
+
+        super(SubscribeCourseFile, self).delete(*args, **kwargs)
 
 
 
@@ -1055,7 +1164,7 @@ class Document(models.Model):
     image_url = models.URLField(null=True, blank=True)
     
     # For Files Lessons
-    uploaded_files  = models.JSONField(default=list)
+    uploaded_files_old  = models.JSONField(default=list, null=True, blank=True)
 
     
     is_visible = models.BooleanField(default=True)
@@ -1095,6 +1204,8 @@ class Document(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Image
             old_instance = Document.objects.get(pk=self.pk)
             if old_instance.image and old_instance.image != self.image:
                 default_storage.delete(old_instance.image.path)
@@ -1103,6 +1214,44 @@ class Document(models.Model):
 
 
 
+
+
+class DocumentFile(models.Model):
+    document = models.ForeignKey(
+        Document, 
+        on_delete=models.CASCADE, 
+        related_name='document_files'
+    )
+    file = models.FileField(upload_to='documents/files/', null=True, blank=True)
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    file_size = models.IntegerField()  # in bytes
+    file_type = models.CharField(max_length=100, null=True, blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.id}) {self.file_name} - {self.document.title}"
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # Delete old file if it exists
+            old_instance = DocumentFile.objects.get(pk=self.pk)
+            if old_instance.file and old_instance.file != self.file:
+                default_storage.delete(old_instance.file.path)
+
+        super(DocumentFile, self).save(*args, **kwargs)
+
+
+    def delete(self, *args, **kwargs):
+        # Delete the file when the model instance is deleted
+        if self.file:
+            default_storage.delete(self.file.path)
+
+        super(DocumentFile, self).delete(*args, **kwargs)
 
 
 
