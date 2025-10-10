@@ -1206,6 +1206,74 @@ urlpatterns = [
 
 
 
+    path(
+        '---------------------------------------------------------------------------------------------------------------/', 
+        views.Space.as_view(),
+    ),
+    # =================================================================
+    # *** PublicChat *** #
+    path(
+        'public-chat/list/', 
+        views.PublicChatList.as_view(), 
+        name="public-chat-list",
+    ),
+    path(
+        'public-chat/<int:pk>/', 
+        views.PublicChatPK.as_view(), 
+        name="public-chat-details-pk",
+    ),
+
+
+
+    # (Get Message)
+    path(
+        'public-chat/get-message-teacher-student/<int:teacher_id>/<int:student_id>/', 
+        views.PublicChatGetMessageTeacherStudent.as_view(), 
+        name="public-chat-get-message-teacher-student",
+    ),
+
+    # (Send Message)
+    path(
+        'public-chat/send-message-teacher-student/<int:teacher_id>/<int:student_id>/', 
+        views.PublicChatSendMessageTeacherStudent.as_view(), 
+        name="public-chat-send-message-teacher-student",
+    ),
+
+
+    # 
+    # path(
+    #     'send-group-message-teacher-student-chat/<int:teacher_id>/', 
+    #     views.GroupTeacherStudentChatBot, 
+    #     name="Group-Chat-Bot",
+    # ),
+
+    
+    # 
+    path(
+        'public-chat/teacher-all-chat/<int:teacher_id>/', 
+        views.PublicChatTeacherAllChatListAPI.as_view(), 
+        name="public-chat-teacher-all-chat-List",
+    ),
+    # 
+    path(
+        'public-chat/student-all-chat/<int:student_id>/', 
+        views.PublicChatStudentAllChatListAPI.as_view(), 
+        name="public-chat-student-all-chat-List",
+    ),
+
+    # 
+    path(
+        'public-chat/teacher-with-students/', 
+        views.PublicChatTeacherWithStudentsListView.as_view(), 
+        name='public-chat-teacher-with-student-list',
+    ),
+    # 
+    path(
+        'public-chat/teacher-specific-students/<int:teacher_id>/', 
+        views.PublicChatTeacherSpecificStudentsListView.as_view(), 
+        name='teacher-specific-students-list',
+    ),
+
 
     path(
         '---------------------------------------------------------------------------------------------------------------/', 

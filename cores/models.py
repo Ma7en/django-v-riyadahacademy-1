@@ -639,6 +639,8 @@ class QuestionInCourse(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Image
             old_instance = QuestionInCourse.objects.get(pk=self.pk)
             if old_instance.image_file and old_instance.image_file != self.image_file:
                 default_storage.delete(old_instance.image_file.path)
@@ -1698,6 +1700,55 @@ class ReviewUser(models.Model):
         if self.slug == "" or self.slug == None:
             self.slug = slugify(self.first_name) + "-" + shortuuid.uuid()[:2]
         super(ReviewUser, self).save(*args, **kwargs)
+
+
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
+# *** Public Chat *** #
+class PublicChat(models.Model):
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='public_chat_teacher'
+    )
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='public_chat_student'
+    )
+
+    msg_to=models.TextField()
+    msg_from=models.CharField(max_length=10_000)
+    
+    image = models.ImageField(upload_to="publicchat/images", null=True, blank=True)
+    
+    msg_time=models.DateTimeField(auto_now_add=True)
+    
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural="1-12. Teacher Student ChatBot"
+
+    def __str__(self):
+        return f"{self.id}): [{self.teacher}] - [{self.student}]"
+
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+
+            # Image
+            old_instance = PublicChat.objects.get(pk=self.pk)
+            if old_instance.image and old_instance.image != self.image:
+                default_storage.delete(old_instance.image.path)
+
+        super(PublicChat, self).save(*args, **kwargs)
 
 
 

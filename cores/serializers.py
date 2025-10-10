@@ -1532,6 +1532,38 @@ class ReviewUserSerializer(serializers.ModelSerializer):
 
 # ******************************************************************************
 # ==============================================================================
+# *** PublicChat  *** #
+class PublicChatSerializer(serializers.ModelSerializer):
+    teacher = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())    
+    student = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())    
+
+    class Meta :
+        model = models.PublicChat
+        fields = "__all__"
+
+    def to_representation(self,instance):
+        representation = super(PublicChatSerializer, self).to_representation(instance)
+        representation['teacher'] = UserSerializer(instance.teacher).data  # لعرض تفاصيل المستخدم
+        representation['student'] = UserSerializer(instance.student).data  # لعرض تفاصيل المستخدم
+        representation['msg_time'] = instance.msg_time.strftime("%Y-%m-%d %H:%M")
+        return representation
+
+    
+
+
+class PublicChatTeacherWithStudentsSerializer(serializers.Serializer):
+    """
+    Serializer مخصص لعرض المعلم مع قائمة الطلاب الذين تحدث معهم.
+    """
+    teacher = UserSerializer()
+    students = UserSerializer(many=True)
+
+
+
+
+
+# ******************************************************************************
+# ==============================================================================
 # ***  *** #
 # class CategoryPostSerializer(serializers.ModelSerializer):
 #     slug = serializers.SlugField(read_only=True)

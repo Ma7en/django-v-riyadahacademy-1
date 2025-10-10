@@ -3252,6 +3252,197 @@ class ReviewUserSearchList(generics.ListCreateAPIView):
 
 
 
+# ******************************************************************************
+# ==============================================================================
+# *** Teacher Student Chat ***
+class PublicChatList(generics.ListCreateAPIView):
+    queryset = models.PublicChat.objects.all()
+    serializer_class = serializers.PublicChatSerializer
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+
+class PublicChatPK(generics.RetrieveUpdateDestroyAPIView):
+    queryset = models.PublicChat.objects.all()
+    serializer_class = serializers.PublicChatSerializer
+    # permission_classes = [IsAuthenticated]
+
+
+
+
+class PublicChatGetMessageTeacherStudent(generics.ListAPIView):
+    queryset = models.PublicChat.objects.all()
+    serializer_class = serializers.PublicChatSerializer
+
+    def get_queryset(self):
+        teacher_id = self.kwargs['teacher_id']
+        student_id = self.kwargs['student_id']
+        teacher = models.User.objects.get(pk=teacher_id)
+        student = models.User.objects.get(pk=student_id)
+        return models.PublicChat.objects.filter(teacher=teacher, student=student).exclude(msg_to='')
+
+
+
+
+class PublicChatSendMessageTeacherStudent(generics.CreateAPIView):
+    serializer_class = serializers.PublicChatSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def create(self, request, teacher_id, student_id):
+        try:
+            # Validate participants
+            # teacher = get_object_or_404(models.User, id=teacher_id, user_type='teacher')
+            # student = get_object_or_404(models.User, id=student_id, user_type='student')
+            
+            # # Check if the authenticated user is either the teacher or student
+            # if request.user not in [teacher, student]:
+            #     return Response(
+            #         {"error": "You are not authorized to send messages in this chat"},
+            #         status=status.HTTP_403_FORBIDDEN
+            #     )
+
+            # Prepare chat data
+            chat_data = {
+                'teacher': teacher_id,
+                'student': student_id,
+                'msg_to': request.data.get('msg_to'),
+                'msg_from': request.data.get('msg_from'),
+                'image': request.data.get('image'),
+            }
+
+            serializer = self.get_serializer(data=chat_data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            
+            headers = self.get_success_headers(serializer.data)
+            return Response({
+                "bool": True,
+                "msg": "Message sent successfully",
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED, headers=headers)
+
+        except Exception as e:
+            return Response({
+                "bool": False,
+                "msg": str(e),
+                "error": "Failed to send message"
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+
+
+
+
+
+
+
+
+
+class PublicChatTeacherAllChatListAPI(generics.ListAPIView):
+    queryset = models.PublicChat.objects.all()
+    serializer_class = serializers.PublicChatSerializer
+
+    def get_queryset(self):
+        teacher_id = self.kwargs['teacher_id'] 
+        teacher = models.User.objects.get(pk=teacher_id) 
+        return models.PublicChat.objects.filter(teacher=teacher)
+
+
+
+class PublicChatStudentAllChatListAPI(generics.ListAPIView):
+    queryset = models.PublicChat.objects.all()
+    serializer_class = serializers.PublicChatSerializer
+
+    def get_queryset(self):
+        student_id = self.kwargs['student_id'] 
+        student = models.User.objects.get(pk=student_id) 
+        return models.PublicChat.objects.filter(student=student)
+
+
+
+
+
+
+
+
+class PublicChatTeacherWithStudentsListView(APIView):
+    """
+    View لعرض قائمة فريدة بكل معلم والطلاب الذين تحدث معهم.
+    """
+    def get(self, request, *args, **kwargs):
+        # 1. إنشاء قاموس لتخزين الطلاب لكل معلم
+        #    استخدام set يضمن عدم وجود تكرار للطلاب
+        teacher_students_map = {}
+
+        # 2. جلب جميع محادثات الشات
+        #    select_related يقوم بتحسين الأداء عن طريق جلب بيانات المعلم والطالب في استعلام واحد
+        chats = models.PublicChat.objects.select_related('teacher', 'student').all()
+
+        # 3. المرور على جميع المحادثات وتجميع البيانات
+        for chat in chats:
+            teacher_id = chat.teacher.id
+            student = chat.student
+
+            if teacher_id not in teacher_students_map:
+                # إذا كان هذا أول ظهور للمعلم، قم بإنشاء إدخال جديد له
+                teacher_students_map[teacher_id] = {
+                    'teacher': chat.teacher,
+                    'students': set() # استخدم set لتجنب تكرار الطلاب
+                }
+            
+            # أضف الطالب إلى مجموعة الطلاب الخاصة بالمعلم
+            teacher_students_map[teacher_id]['students'].add(student)
+
+        # 4. تحويل البيانات المجمعة إلى قائمة من القواميس
+        #    وتحويل مجموعة الطلاب (set) إلى قائمة (list)
+        results = [
+            {
+                'teacher': data['teacher'],
+                'students': list(data['students'])
+            }
+            for data in teacher_students_map.values()
+        ]
+
+        # 5. استخدام الـ Serializer لتحويل البيانات إلى JSON
+        serializer = serializers.PublicChatTeacherWithStudentsSerializer(results, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class PublicChatTeacherSpecificStudentsListView(APIView):
+    """
+    View لعرض قائمة فريدة بالطلاب الذين تواصل معهم معلم معين.
+    """
+    def get(self, request, teacher_id, *args, **kwargs):
+        # 1. التحقق من وجود المعلم، وإرجاع خطأ 404 إذا لم يكن موجودًا
+        teacher = get_object_or_404(models.User, id=teacher_id)
+
+        # 2. جلب جميع الطلاب الفريدين الذين لديهم محادثات مع هذا المعلم
+        #    - نقوم بتصفية المحادثات حسب `teacher_id`.
+        #    - `values_list('student_id', flat=True)`: نختار فقط IDs الطلاب.
+        #    - `.distinct()`: هذا هو الجزء الأهم، يضمن عدم تكرار IDs الطلاب.
+        student_ids = models.PublicChat.objects.filter(
+            teacher=teacher
+        ).values_list('student_id', flat=True).distinct()
+
+        # 3. الآن، جلب كائنات المستخدمين (الطلاب) بناءً على الـ IDs التي حصلنا عليها
+        students = models.User.objects.filter(id__in=student_ids)
+
+        # 4. استخدام الـ Serializer لتحويل بيانات الطلاب إلى JSON
+        #    `many=True` لأننا نعرض قائمة من الطلاب
+        serializer = UserSerializer(students, many=True)
+        
+        # 5. إرجاع البيانات كاستجابة
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+
 
 # ******************************************************************************
 # ==============================================================================
