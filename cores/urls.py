@@ -1212,11 +1212,13 @@ urlpatterns = [
     ),
     # =================================================================
     # *** PublicChat *** #
+    # 
     path(
         'public-chat/list/', 
         views.PublicChatList.as_view(), 
         name="public-chat-list",
     ),
+    # 
     path(
         'public-chat/<int:pk>/', 
         views.PublicChatPK.as_view(), 
@@ -1248,30 +1250,39 @@ urlpatterns = [
     # ),
 
     
-    # 
+    # (Teacher All Chat)
     path(
         'public-chat/teacher-all-chat/<int:teacher_id>/', 
         views.PublicChatTeacherAllChatListAPI.as_view(), 
         name="public-chat-teacher-all-chat-List",
     ),
-    # 
+    # (Student All Chat)
     path(
         'public-chat/student-all-chat/<int:student_id>/', 
         views.PublicChatStudentAllChatListAPI.as_view(), 
         name="public-chat-student-all-chat-List",
     ),
 
-    # 
+    # (Teachers With Students)
     path(
         'public-chat/teacher-with-students/', 
         views.PublicChatTeacherWithStudentsListView.as_view(), 
         name='public-chat-teacher-with-student-list',
     ),
-    # 
+    # (Teacher Specific Students)
     path(
         'public-chat/teacher-specific-students/<int:teacher_id>/', 
         views.PublicChatTeacherSpecificStudentsListView.as_view(), 
         name='teacher-specific-students-list',
+    ),
+    
+    
+    
+    # (Student Specific Teachers)
+    path(
+        'public-chat/student-specific-teachers/<int:student_id>/', 
+        views.PublicChatStudentSpecificTeachersListView.as_view(), 
+        name='student-specific-teachers-list',
     ),
 
 

@@ -3254,7 +3254,7 @@ class ReviewUserSearchList(generics.ListCreateAPIView):
 
 # ******************************************************************************
 # ==============================================================================
-# *** Teacher Student Chat ***
+# *** Public Chats ***
 class PublicChatList(generics.ListCreateAPIView):
     queryset = models.PublicChat.objects.all()
     serializer_class = serializers.PublicChatSerializer
@@ -3279,7 +3279,11 @@ class PublicChatGetMessageTeacherStudent(generics.ListAPIView):
         student_id = self.kwargs['student_id']
         teacher = models.User.objects.get(pk=teacher_id)
         student = models.User.objects.get(pk=student_id)
-        return models.PublicChat.objects.filter(teacher=teacher, student=student).exclude(msg_to='')
+    
+        # return models.PublicChat.objects.filter(teacher=teacher, student=student).exclude(msg_to='')
+    
+        # تم حذف .exclude(msg_to='') لجلب جميع الرسائل، بما في ذلك التي تحتوي على صور فقط
+        return models.PublicChat.objects.filter(teacher=teacher, student=student)
 
 
 
@@ -3290,24 +3294,24 @@ class PublicChatSendMessageTeacherStudent(generics.CreateAPIView):
 
     def create(self, request, teacher_id, student_id):
         try:
-            # Validate participants
-            # teacher = get_object_or_404(models.User, id=teacher_id, user_type='teacher')
-            # student = get_object_or_404(models.User, id=student_id, user_type='student')
-            
-            # # Check if the authenticated user is either the teacher or student
-            # if request.user not in [teacher, student]:
-            #     return Response(
-            #         {"error": "You are not authorized to send messages in this chat"},
-            #         status=status.HTTP_403_FORBIDDEN
-            #     )
+            msg_to = request.data.get('msg_to')
+            image = request.data.get('image')
+
+            # التحقق من أن الرسالة تحتوي على نص أو صورة على الأقل
+            if not msg_to and not image:
+                return Response({
+                    "bool": False,
+                    "msg": "Cannot send an empty message. Provide text or an image.",
+                    "error": "empty_message"
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             # Prepare chat data
             chat_data = {
                 'teacher': teacher_id,
                 'student': student_id,
-                'msg_to': request.data.get('msg_to'),
+                'msg_to': msg_to,
                 'msg_from': request.data.get('msg_from'),
-                'image': request.data.get('image'),
+                'image': image,
             }
 
             serializer = self.get_serializer(data=chat_data)
@@ -3434,6 +3438,36 @@ class PublicChatTeacherSpecificStudentsListView(APIView):
         # 4. استخدام الـ Serializer لتحويل بيانات الطلاب إلى JSON
         #    `many=True` لأننا نعرض قائمة من الطلاب
         serializer = UserSerializer(students, many=True)
+        
+        # 5. إرجاع البيانات كاستجابة
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+class PublicChatStudentSpecificTeachersListView(APIView):
+    """
+    View لعرض قائمة فريدة بالطلاب الذين تواصل معهم معلم معين.
+    """
+    def get(self, request, student_id, *args, **kwargs):
+        # 1. التحقق من وجود المعلم، وإرجاع خطأ 404 إذا لم يكن موجودًا
+        student = get_object_or_404(models.User, id=student_id)
+
+        # 2. جلب جميع الطلاب الفريدين الذين لديهم محادثات مع هذا المعلم
+        #    - نقوم بتصفية المحادثات حسب `student_id`.
+        #    - `values_list('student_id', flat=True)`: نختار فقط IDs الطلاب.
+        #    - `.distinct()`: هذا هو الجزء الأهم، يضمن عدم تكرار IDs الطلاب.
+        teacher_ids = models.PublicChat.objects.filter(
+            student=student
+        ).values_list('teacher_id', flat=True).distinct()
+
+        # 3. الآن، جلب كائنات المستخدمين (الطلاب) بناءً على الـ IDs التي حصلنا عليها
+        teachers = models.User.objects.filter(id__in=teacher_ids)
+
+        # 4. استخدام الـ Serializer لتحويل بيانات الطلاب إلى JSON
+        #    `many=True` لأننا نعرض قائمة من الطلاب
+        serializer = UserSerializer(teachers, many=True)
         
         # 5. إرجاع البيانات كاستجابة
         return Response(serializer.data, status=status.HTTP_200_OK)

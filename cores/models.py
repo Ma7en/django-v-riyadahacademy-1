@@ -1722,7 +1722,7 @@ class PublicChat(models.Model):
         related_name='public_chat_student'
     )
 
-    msg_to=models.TextField()
+    msg_to=models.TextField(blank=True, null=True)
     msg_from=models.CharField(max_length=10_000)
     
     image = models.ImageField(upload_to="publicchat/images", null=True, blank=True)
