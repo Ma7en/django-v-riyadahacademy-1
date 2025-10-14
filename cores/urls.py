@@ -1062,6 +1062,20 @@ urlpatterns = [
     ),
     
 
+    # 
+    path(
+        'question-bank/<int:bank_id>/questions/bulk-create/', 
+        views.BulkQuestionCreateView.as_view(), 
+        name='bulk-question-create',
+    ),
+    
+    # 
+    path(
+        'question-bank/<int:bank_id>/questions/bulk-create-with-images/', 
+        views.BulkQuestionCreateWithImagesView.as_view(), 
+        name='bulk-question-create-with-images',
+    ),
+
 
     path(
         '---------------------------------------------------------------------------------------------------------------/', 
@@ -1283,6 +1297,13 @@ urlpatterns = [
         'public-chat/student-specific-teachers/<int:student_id>/', 
         views.PublicChatStudentSpecificTeachersListView.as_view(), 
         name='student-specific-teachers-list',
+    ),
+
+    # (Teacher Delete Student Chat)
+    path(
+        'public-chat/teacher-delete-student-chat/<int:teacher_id>/<int:student_id>/', 
+        views.PublicChatTeacherDeleteStudentChat.as_view(), 
+        name='teacher-delete-student-chat',
     ),
 
 

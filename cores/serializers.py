@@ -5,7 +5,7 @@ from django.contrib.flatpages.models import FlatPage
 
 #
 from rest_framework import serializers
-
+from django.shortcuts import get_object_or_404
 
 
 # 
@@ -1240,6 +1240,15 @@ class ChoiceQuestionInBankSerializer(serializers.ModelSerializer):
         return representation
     
 
+
+
+
+
+
+
+
+
+# 
 class QuestionInBankSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     question_bank = serializers.PrimaryKeyRelatedField(queryset=models.QuestionBank.objects.all()) 
@@ -1335,6 +1344,117 @@ class QuestionInBankDetailSerializer(serializers.ModelSerializer):
 
 
 
+
+
+
+
+
+
+
+# في ملف serializers.py
+class QuestionInBankListSerializer(serializers.ListSerializer):
+    """
+    Serializer مخصص للتعامل مع قائمة من الأسئلة لإنشائها دفعة واحدة.
+    """
+    def create(self, validated_data):
+        # استخراج 'user' و 'question_bank' من السياق (context)
+        user = self.context['request'].user
+        question_bank_id = self.context['view'].kwargs.get('bank_id')
+        question_bank = get_object_or_404(models.QuestionBank, id=question_bank_id)
+
+        questions = []
+        for item in validated_data:
+            item['user'] = user
+            item['question_bank'] = question_bank
+            # لا حاجة لتمرير 'choices' هنا، سيتم التعامل معها في 'create' الخاص بـ QuestionInBankDetailSerializer
+            questions.append(models.QuestionInBank.objects.create(**item))
+        return questions
+
+
+class QuestionInBankDetailsSerializer(serializers.ModelSerializer):
+    # ... (باقي الحقول كما هي)
+    choices = ChoiceQuestionInBankSerializer(many=True, source='choices_question_in_bank', required=False)
+
+    class Meta:
+        model = models.QuestionInBank
+        fields = "__all__"
+        # استخدم ListSerializer عند التعامل مع many=True
+        list_serializer_class = QuestionInBankListSerializer
+
+    def create(self, validated_data):
+        choices_data = validated_data.pop('choices_question_in_bank', [])
+        question = models.QuestionInBank.objects.create(**validated_data)
+        
+        for choice_data in choices_data:
+            models.ChoiceQuestionInBank.objects.create(question=question, user=question.user, **choice_data)
+        return question
+
+    # ... (باقي دوال الـ Serializer مثل update و to_representation)
+
+
+
+
+
+
+
+
+
+
+# 
+class QuestionInBankDetailImageSerializer(serializers.ModelSerializer):
+    # اجعل حقل الصورة للقراءة فقط في Serializer لأنه سيتم التعامل معه في الـ View
+    image = serializers.ImageField(read_only=True)
+    # choices = ChoiceQuestionInBankSerializer(many=True, source='choices_question_in_bank', required=False)
+
+    class Meta:
+        model = models.QuestionInBank
+        fields = [
+            'id', 
+            'user', 
+            
+            'question_bank', 
+            'text', 
+            
+            'image', 
+            'image_url', 
+            
+            'choices', 
+            'correct_answer', 
+            
+            'is_visible', 
+            
+            'slug', 
+            'created_at', 
+            'updated_at',
+        ]
+        # لا نحتاج list_serializer_class هنا لأننا سنقوم بالمعالجة يدويًا في الـ View
+
+    def create(self, validated_data):
+        # هذه الدالة ستُستخدم الآن للإنشاء الفردي، وليس الجماعي
+        choices_data = validated_data.pop('choices_question_in_bank', [])
+        question = models.QuestionInBank.objects.create(**validated_data)
+        
+        # for choice_data in choices_data:
+        #     # تأكد من تمرير المستخدم للاختيار أيضًا
+        #     models.ChoiceQuestionInBank.objects.create(question=question, user=question.user, **choice_data)
+        # return question
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        representation['question_bank'] = QuestionBankSerializer(instance.question_bank).data
+        # تأكد من أن حقل الاختيارات يتم عرضه بشكل صحيح
+        # representation['choices'] = ChoiceQuestionInBankSerializer(instance.choices_question_in_bank, many=True).data
+        return representation
+
+
+
+
+
+
+
+
+
 class QuestionBankSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
     section = serializers.PrimaryKeyRelatedField(queryset=models.SectionCourse.objects.all()) 
@@ -1355,6 +1475,8 @@ class QuestionBankSerializer(serializers.ModelSerializer):
             
             'title', 
             'description', 
+            'duration', 
+            
             'image', 
             'image_url', 
 

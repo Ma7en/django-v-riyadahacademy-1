@@ -112,11 +112,14 @@ urlpatterns = [
         name="admin-confirm-reset-password",
     ),
 
+    # 
     path(
         'admins/search/<str:searchstring>/', 
         views.AdminsSearchList.as_view(),
         name="admins-search-list",
     ),
+
+
 
 
     path(
@@ -452,6 +455,13 @@ urlpatterns = [
         views.PublicUsersListView.as_view(),
         name="public-users-list-api",
     ),
+    # (Admins And Teachers)
+    path(
+        "public/admins-and-trachers/",
+        views.PublicAdminsAndTeachersListView.as_view(),
+        name="public-admins-and-trachers-list-api",
+    ),
+    
     # (User ID)
     path(
         "public/user/<int:pk>/",
@@ -512,6 +522,7 @@ urlpatterns = [
         views.PublicConfirmResetPasswordView.as_view(),
         name="public-confirm-reset-password",
     ),
+    # 
     path(
         'public/user/search/<str:searchstring>/', 
         views.PublicUserSearchList.as_view(),

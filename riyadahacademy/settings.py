@@ -75,6 +75,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 
+    # 'accounts.middleware.PreventConcurrentLoginMiddleware',
 ]
 
 
@@ -151,7 +153,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.IsAuthenticated',
+    #     'accounts.permissions.IsTokenValid', # <-- أضف هذا السطر
+    # ],
+    # ..
 }
 
 
@@ -260,6 +267,16 @@ DEFAULT_FROM_EMAIL = "riyadahacademy684@gmail.com"
 # DEFAULT_FROM_EMAIL = "no-reply@localhost"
 # FROM_EMAIL = "no-reply@localhost"
 # EMAIL_HOST_USER = "no-reply@localhost"
+
+
+
+# =====================================================================================
+# settings.py
+
+# SESSION_COOKIE_AGE = 86400  # يوم واحد بالثواني
+# SESSION_SAVE_EVERY_REQUEST = True
+
+
 
 
 

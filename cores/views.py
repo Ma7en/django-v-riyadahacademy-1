@@ -2,6 +2,7 @@
 import random
 import requests
 import uuid
+import json
 
 
 
@@ -17,6 +18,11 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import F
+from django.core.files.storage import default_storage 
+
+
+
+
 
 # 
 from reportlab.lib.pagesizes import letter
@@ -41,6 +47,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
+from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
@@ -2278,7 +2286,7 @@ class DocumentFileDetail(generics.RetrieveDestroyAPIView):
 
 # ******************************************************************************
 # ==============================================================================
-# ***    *** #
+# ***  Question Bank  *** #
 # Question Bank Views
 class QuestionBankList(generics.ListCreateAPIView):
     queryset = models.QuestionBank.objects.all()
@@ -2385,6 +2393,11 @@ class BankQuestionsListView(generics.ListAPIView):
     def get_queryset(self):
         bank_id = self.kwargs['bank_id']
         return models.QuestionInBank.objects.filter(question_bank=bank_id)
+
+
+
+
+
 
 
 
@@ -2526,6 +2539,103 @@ class ChoiceRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+class BulkQuestionCreateView(generics.CreateAPIView):
+    """
+    View لإنشاء مجموعة من الأسئلة دفعة واحدة داخل بنك اختبار معين.
+    """
+    serializer_class = serializers.QuestionInBankDetailsSerializer
+    # permission_classes = [IsAuthenticated]
+
+    def get_serializer(self, *args, **kwargs):
+        # عند تمرير many=True، سيتم استخدام list_serializer_class
+        kwargs['many'] = True
+        return super().get_serializer(*args, **kwargs)
+
+    def perform_create(self, serializer):
+        # لا حاجة لكتابة منطق هنا، تم نقله إلى ListSerializer
+        pass
+
+
+
+ 
+
+
+
+# 
+class BulkQuestionCreateWithImagesView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, bank_id, *args, **kwargs):
+        question_bank = get_object_or_404(models.QuestionBank, id=bank_id)
+        user = request.user
+
+        questions_str = request.data.get('questions_data')
+        if not questions_str:
+            return Response({'error': 'بيانات الأسئلة (questions_data) مفقودة.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            questions_data = json.loads(questions_str)
+        except json.JSONDecodeError:
+            return Response({'error': 'بيانات الأسئلة غير صالحة (Invalid JSON).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        created_questions = []
+        errors = []
+        uploaded_files = request.FILES
+
+        for index, question_item in enumerate(questions_data):
+            image_file = uploaded_files.get(f'image_{index}')
+            
+            # =======================> بداية التصحيح <=======================
+            # يجب إضافة ID المستخدم والبنك إلى بيانات السؤال قبل تمريرها للـ Serializer
+            question_item['user'] = user.id
+            question_item['question_bank'] = question_bank.id
+            # =======================> نهاية التصحيح <=======================
+
+            # الآن نقوم بتمرير البيانات المكتملة للـ Serializer
+            serializer = serializers.QuestionInBankDetailImageSerializer(data=question_item, context={'request': request})
+            
+            if serializer.is_valid():
+                validated_data = serializer.validated_data
+                choices_data = validated_data.pop('choices_question_in_bank', [])
+
+                # عند الإنشاء، لا نمرر user و question_bank مرة أخرى لأنهما موجودان بالفعل في validated_data
+                question_instance = models.QuestionInBank.objects.create(
+                    image=image_file,
+                    **validated_data
+                )
+
+                # إنشاء الاختيارات المرتبطة
+                for choice_data in choices_data:
+                    models.ChoiceQuestionInBank.objects.create(
+                        question=question_instance,
+                        user=user, # الاختيارات تحتاج أيضًا إلى مستخدم
+                        text=choice_data.get('text', ''),
+                        is_correct=choice_data.get('is_correct', False)
+                    )
+                
+                result_serializer = serializers.QuestionInBankDetailSerializer(question_instance)
+                created_questions.append(result_serializer.data)
+            else:
+                # إذا فشل التحقق، أضف الأخطاء إلى القائمة
+                errors.append({f'question_{index}': serializer.errors})
+
+        if errors:
+            return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(created_questions, status=status.HTTP_201_CREATED)
 
 
 
@@ -3416,6 +3526,9 @@ class PublicChatTeacherWithStudentsListView(APIView):
 
 
 
+
+
+
 class PublicChatTeacherSpecificStudentsListView(APIView):
     """
     View لعرض قائمة فريدة بالطلاب الذين تواصل معهم معلم معين.
@@ -3471,6 +3584,63 @@ class PublicChatStudentSpecificTeachersListView(APIView):
         
         # 5. إرجاع البيانات كاستجابة
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+
+ 
+
+
+class PublicChatTeacherDeleteStudentChat(APIView):
+    """
+    View لحذف جميع رسائل المحادثة بين معلم وطالب، بما في ذلك الصور المرتبطة.
+    """
+    # permission_classes = [IsAuthenticated]
+
+    def delete(self, request, teacher_id, student_id):
+        try:
+            teacher = get_object_or_404(models.User, pk=teacher_id)
+            student = get_object_or_404(models.User, pk=student_id)
+
+            # العثور على جميع الرسائل في هذه المحادثة
+            messages_to_delete = models.PublicChat.objects.filter(teacher=teacher, student=student)
+
+            if not messages_to_delete.exists():
+                return Response({
+                    "bool": True,
+                    "msg": "No messages found to delete."
+                }, status=status.HTTP_200_OK)
+
+            # --- الجزء الجديد: حذف الصور ---
+            # المرور على كل رسالة لحذف الصورة المرتبطة بها أولاً
+            for message in messages_to_delete:
+                # التحقق من وجود صورة وأنها ليست فارغة
+                if message.image:
+                    # التحقق من أن الملف موجود فعلاً على الخادم قبل محاولة حذفه
+                    if default_storage.exists(message.image.path):
+                        default_storage.delete(message.image.path)
+            # -----------------------------
+
+            # الآن، حذف جميع سجلات الرسائل من قاعدة البيانات
+            count, _ = messages_to_delete.delete()
+
+            return Response({
+                "bool": True,
+                "msg": f"Successfully deleted {count} messages and their associated images."
+            }, status=status.HTTP_204_NO_CONTENT)
+
+        except Exception as e:
+            return Response({
+                "bool": False,
+                "msg": str(e),
+                "error": "Failed to delete conversation"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 
 
 

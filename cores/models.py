@@ -1294,6 +1294,11 @@ class QuestionBank(models.Model):
     
     title = models.CharField(max_length=1_000)
     description = models.TextField(max_length=10_000, null=True, blank=True)
+
+    duration = models.PositiveIntegerField(
+        default=0, 
+        help_text="مدة الاختبار بالدقائق. أدخل 0 لاختبار بدون وقت محدد."
+    )
     
     image = models.ImageField(upload_to='questionsbanks/banks/', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
@@ -1334,6 +1339,8 @@ class QuestionBank(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Image
             old_instance = QuestionBank.objects.get(pk=self.pk)
             if old_instance.image and old_instance.image != self.image:
                 default_storage.delete(old_instance.image.path)
@@ -1385,11 +1392,14 @@ class QuestionInBank(models.Model):
 
     def save(self, *args, **kwargs):
         if self.pk:
+
+            # Image
             old_instance = QuestionInBank.objects.get(pk=self.pk)
             if old_instance.image and old_instance.image != self.image:
                 default_storage.delete(old_instance.image.path)  
              
         super(QuestionInBank, self).save(*args, **kwargs)
+
 
 
 

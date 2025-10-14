@@ -34,6 +34,9 @@ from .managers import UserManager
 # ==============================================================================
 # *** User *** #
 class User(AbstractUser, PermissionsMixin):
+    # logged_in_user_session_key = models.CharField(max_length=255, blank=True, null=True)
+    # jwt_token_key = models.UUIDField(default=uuid.uuid4)
+
     email = models.EmailField(
         # verbose_name="email address",
         max_length=1_000,

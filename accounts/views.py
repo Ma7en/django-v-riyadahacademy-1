@@ -1,6 +1,6 @@
 #
 import jwt
-
+import uuid
 
 
 #
@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Q
+from django.contrib.sessions.models import Session
 
 
 
@@ -2273,11 +2274,26 @@ class PublicUsersListView(generics.ListCreateAPIView):
     # permission_classes = [IsAuthenticated]
 
 
+
+# *** Admins And Teachers (Users) -> [GET, POST] *** #
+class PublicAdminsAndTeachersListView(generics.ListCreateAPIView):
+    serializer_class = serializers.UserSerializer
+    queryset = models.User.objects.filter(
+        Q(is_admin=True) | Q(is_teacher=True)
+    ).distinct()
+    pagination_class = StandardResultSetPagination
+    # permission_classes = [IsAuthenticated]
+
+
+
 # *** User (User ID) -> [GET, POST, PUT, DELETE] *** #
 class PublicUserPKAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
     # permission_classes = [IsAuthenticated]
+
+
+
 
 
 # *** Public (Login) -> [POST] *** #
@@ -2326,6 +2342,89 @@ class PublicLoginView(generics.GenericAPIView):
             "refresh_token": str(refresh),
         }
         return Response(response, status=status.HTTP_200_OK)
+
+
+
+
+
+
+# *** Public (Login) -> [POST] *** #
+# class PublicLoginView(generics.GenericAPIView):
+#     serializer_class = serializers.PublicLoginSerializer
+#     permission_classes = [AllowAny] # مهم: السماح للجميع بالوصول لنقطة تسجيل الدخول
+
+#     def post(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         if not serializer.is_valid():
+#             message = serializer.errors
+#             return utils.FunReturn(1, message, status.HTTP_400_BAD_REQUEST)
+
+#         user = serializer.validated_data
+
+#         if not user.is_verified:
+#             user_data = serializers.UserSerializer(user).data
+#             message = "Your account is not verified. Please verify your account to proceed."
+#             return utils.FunReturn(1, message, status.HTTP_403_FORBIDDEN, user_data)
+
+#         # --- جملة طباعة للتشخيص ---
+#         old_key = user.jwt_token_key
+#         # ---------------------------
+
+#         # تحديث مفتاح التوكن في قاعدة البيانات لإبطال كل الجلسات/التوكنات القديمة
+#         user.jwt_token_key = uuid.uuid4()
+#         user.save(update_fields=['jwt_token_key'])
+
+#         # --- جمل طباعة للتشخيص ---
+#         print(f"\n[DEBUG] LoginView: User '{user.email}' logged in.")
+#         print(f"[DEBUG] LoginView: Old token key was: {old_key}")
+#         print(f"[DEBUG] LoginView: NEW token key is:  {user.jwt_token_key}")
+#         # ---------------------------
+
+#         # جلب بيانات المستخدم وملفه الشخصي
+#         user_data = serializers.UserSerializer(user).data
+#         user_profile = None
+#         # ... (الكود الخاص بجلب البروفايل كما هو لديك)
+#         try:
+#             if user.is_admin:
+#                 profile = models.AdminProfile.objects.get(user=user)
+#                 user_profile = serializers.AdminProfileSerializer(profile).data
+#             elif user.is_superuser:
+#                 profile = models.SuperuserProfile.objects.get(user=user)
+#                 user_profile = serializers.SuperuserProfileSerializer(profile).data
+#             elif user.is_teacher:
+#                 profile = models.TeacherProfile.objects.get(user=user)
+#                 user_profile = serializers.TeacherProfileSerializer(profile).data
+#             elif user.is_staff:
+#                 profile = models.StaffProfile.objects.get(user=user)
+#                 user_profile = serializers.StaffProfileSerializer(profile).data
+#             elif user.is_student:
+#                 profile = models.StudentProfile.objects.get(user=user)
+#                 user_profile = serializers.StudentProfileSerializer(profile).data
+#         except models.ObjectDoesNotExist:
+#             user_profile = None
+
+#         # إنشاء توكنات JWT جديدة
+#         refresh = RefreshToken.for_user(user)
+
+#         # إضافة المفتاح الجديد إلى بيانات التوكن
+#         refresh['jwt_token_key'] = str(user.jwt_token_key)
+        
+#         # بناء وإرسال الـ Response
+#         response_data = {
+#             "success": True,
+#             "code": 0,
+#             "message": "User Login Successfully.",
+#             "status_code": status.HTTP_200_OK,
+#             "data": user_data,
+#             "profile": user_profile,
+#             "access_token": str(refresh.access_token),
+#             "refresh_token": str(refresh),
+#         }
+#         return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+
 
 
 # *** Public (ID) -> [GET] *** #
