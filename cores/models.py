@@ -1162,7 +1162,7 @@ class Document(models.Model):
     title = models.CharField(max_length=1_000)
     description = models.TextField(max_length=10_000, null=True, blank=True)
     
-    image = models.ImageField(upload_to='documents/iamges/', null=True, blank=True)
+    image = models.ImageField(upload_to='documents/iamges', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
     
     # For Files Lessons
@@ -1300,7 +1300,7 @@ class QuestionBank(models.Model):
         help_text="مدة الاختبار بالدقائق. أدخل 0 لاختبار بدون وقت محدد."
     )
     
-    image = models.ImageField(upload_to='questionsbanks/banks/', null=True, blank=True)
+    image = models.ImageField(upload_to='questionsbanks/banks', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
     
     is_visible = models.BooleanField(default=True)
@@ -1364,7 +1364,7 @@ class QuestionInBank(models.Model):
 
     text = models.TextField(max_length=10_000, null=True, blank=True)
     
-    image = models.ImageField(upload_to='questionsbanks/questions/', null=True, blank=True)
+    image = models.ImageField(upload_to='questionsbanks/questions', null=True, blank=True)
     image_url = models.URLField(null=True, blank=True)
         
     choices = models.JSONField(default=list)
